@@ -61,6 +61,40 @@
     }
     for (const [k, v] of Object.entries(QT.firms)) if (!v.sources.every(([, u]) => https(u))) fail(`firm ${k}: sources`);
 
+    // Estimation facts: positive, finite, unique.
+    if (QT.estimateFacts) {
+      const seen = new Set();
+      for (const [q, , a] of QT.estimateFacts) {
+        if (!(Number.isFinite(a) && a > 0)) fail(`estimate "${q}": bad answer ${a}`);
+        if (seen.has(q)) fail(`estimate "${q}": duplicate`);
+        seen.add(q);
+      }
+    }
+
+    // Spaced repetition: a missed card is due after 1 day, survives 3 correct reviews,
+    // retires on the 4th, and a wrong review resets it. (Runs on a scratch copy of the store.)
+    if (QT.mistakes) {
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      const p = { q: 'test <b>card</b>', a: 1, sol: 's', sim: () => 1 };
+      QT.mistakes.add('Test', p);
+      const m = QT.mistakes.all()[0];
+      if (QT.mistakes.due().length !== 0) fail('mistakes: new card should not be due immediately');
+      if ('sim' in m.p) fail('mistakes: simulation function should not be stored');
+      QT.mistakes.add('Test', p);
+      if (QT.mistakes.all().length !== 1) fail('mistakes: duplicate card added');
+      const steps = [];
+      for (let i = 0; i < 4; i++) { m.due = 0; steps.push(QT.mistakes.review(m, true)); }
+      if (steps.join('|') !== 'next in 3 days|next in 7 days|next in 21 days|mastered') fail(`mistakes: schedule ${steps.join('|')}`);
+      if (QT.mistakes.all().length !== 0 || QT.store.get().mastered !== 1) fail('mistakes: card not retired');
+      QT.mistakes.add('Test', p);
+      const m2 = QT.mistakes.all()[0];
+      QT.mistakes.review(m2, true);
+      QT.mistakes.review(m2, false);
+      if (m2.box !== 0) fail('mistakes: wrong review should reset the card');
+      QT.store.importJson(saved);
+    }
+
     // Answer parsing.
     const parse = [['5/36', 5 / 36], ['13.9%', 0.139], ['1,250', 1250], ['-0.7', -0.7], ['.5', 0.5]];
     for (const [s, v] of parse) if (Math.abs(QT.parseAnswer(s) - v) > 1e-12) fail(`parse ${s}`);
@@ -78,7 +112,7 @@
     if (files.pkg && JSON.parse(files.pkg).version !== QT.VERSION) fail(`version mismatch: package.json vs core.js ${QT.VERSION}`);
 
     const fails = out.length;
-    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated)`);
+    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated) · ${(QT.estimateFacts || []).length} estimation facts`);
     out.push(fails ? `${fails} FAILURE(S)` : 'ALL CHECKS PASSED');
     return { lines: out, fails };
   }
