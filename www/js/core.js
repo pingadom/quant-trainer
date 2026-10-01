@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.5.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.6.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -90,7 +90,7 @@
 
   // ---- Progress storage (localStorage, per browser) ----
   const KEY = 'quant-trainer:v1';
-  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
+  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
   let state;
 
   function load() {

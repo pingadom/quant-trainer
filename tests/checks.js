@@ -95,6 +95,42 @@
       QT.store.importJson(saved);
     }
 
+    // Coach: skill labels line up with generators; error diagnosis; status model; recommendations.
+    if (QT.coach) {
+      for (const t of QT.topics) {
+        if (!t.skills || t.skills.length !== t.gens.length) fail(`coach: ${t.id} has ${t.skills ? t.skills.length : 0} skill labels for ${t.gens.length} generators`);
+        if (!(t.target > 0)) fail(`coach: ${t.id} has no speed target`);
+      }
+      const cases = [[0.7, 0.3, 'complement'], [25, 0.25, 'scale'], [-1.2, 1.2, 'sign'], [0.25, 4, 'reciprocal'], [6, 3, 'factor2'],
+        [0.04, 0.2, 'square'], [0.52, 0.5, 'precision'], [undefined, 0.5, 'skipped'], [7, 0.3, 'method']];
+      for (const [user, ans, want] of cases) {
+        const got = QT.coach.classify(user, ans);
+        if (got !== want) fail(`coach: classify(${user}, ${ans}) = ${got}, expected ${want}`);
+      }
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      if (QT.coach.recommend()[0].kind !== 'start') fail('coach: a new user should be offered the diagnostic first');
+      const early = QT.coach.allIds()[5];
+      QT.coach.observe(early, false, 0);
+      if (!QT.coach.recommend().some((r) => r.kind === 'missed' && r.href.endsWith(early.replace('.', '/')))) fail('coach: a skill missed on its first try should be recommended');
+      const [a, b] = QT.coach.allIds().slice(0, 2);
+      [1, 1, 1].forEach((x) => QT.coach.observe(a, !!x, 20000));
+      [0, 0, 1].forEach((x) => QT.coach.observe(b, !!x, 20000));
+      if (QT.coach.stat(a).status !== 'strong') fail(`coach: 3/3 should be strong, got ${QT.coach.stat(a).status}`);
+      if (QT.coach.stat(b).status !== 'weak') fail(`coach: 1/3 should be weak, got ${QT.coach.stat(b).status}`);
+      if (!(QT.coach.need(b) > QT.coach.need(a))) fail('coach: weak skill should be needed more than a strong one');
+      for (let i = 0; i < 3; i++) QT.coach.logError('complement', b, 't');
+      const recs = QT.coach.recommend();
+      if (!recs.some((r) => r.kind === 'weak' && r.href === `#/drill/${b.replace('.', '/')}`)) fail('coach: weak skill not recommended for a drill');
+      if (!recs.some((r) => r.kind === 'habit')) fail('coach: repeated slip not flagged as a habit');
+      if (!QT.coach.focus().includes(b)) fail('coach: session focus should include the weak skill');
+      const src = QT.coach.source(QT.coach.allIds(), { limit: 3 });
+      let served = 0, item;
+      while ((item = src())) { served++; if (!QT.coach.parse(item.skill) || !Number.isFinite(item.p.a)) fail('coach: bad session item'); item.record(true); }
+      if (served !== 3) fail(`coach: session limit not respected (${served})`);
+      QT.store.importJson(saved);
+    }
+
     // Answer parsing.
     const parse = [['5/36', 5 / 36], ['13.9%', 0.139], ['1,250', 1250], ['-0.7', -0.7], ['.5', 0.5]];
     for (const [s, v] of parse) if (Math.abs(QT.parseAnswer(s) - v) > 1e-12) fail(`parse ${s}`);

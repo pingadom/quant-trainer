@@ -60,5 +60,30 @@
     },
   ];
 
+  // One named skill per generator (same order as `gens`), so the coach can pinpoint
+  // exactly which technique is weak rather than just the topic.
+  const SKILLS = {
+    dice: ['Two-dice sums', 'Complement rule', 'Binomial counts', 'Three-dice tails', 'Variance of sums'],
+    cards: ['Same-suit hands', 'At least one ace', 'Arrangements with repeats', 'Birthday problem', 'Committees with a chair'],
+    bayes: ['Base rates (medical test)', 'Odds-form Bayes', 'Conditioning on "at least one"', 'Conditioning on dice sums', 'Two-urn Bayes'],
+    ev: ['Reroll games (backward induction)', 'Expected maximum (tail sum)', 'Coupon collector', 'Indicator variables', 'Runs of heads', 'Convex payoffs', 'Broken stick'],
+    walks: ["Fair gambler's ruin", 'Expected ruin duration', "Biased gambler's ruin", 'Return to origin'],
+    options: ['Put–call parity', 'ATM rule of thumb', 'Implied vol from a straddle', 'One-step binomial pricing', 'Calls on dice', 'Delta hedging'],
+    puzzles: ['Monty Hall (n doors)', 'Coin-pattern waiting times', 'First special card', 'Points in a semicircle', 'Uniform sums', 'Airplane seat', 'Broken-stick triangle'],
+    sequences: ['Arithmetic', 'Geometric', 'Squares ± c', 'Fibonacci-style', 'Second differences', 'Interleaved sequences', 'Multiply-and-add', 'Cubes'],
+    dist: ['Normal tails', 'Poisson probabilities', 'Exponential memorylessness', 'Uniform variance', 'Binomial "at most one"'],
+    moments: ['Var(aX + bY)', 'Correlation from covariance', 'Discrete variance', 'Var(X − Y) for independents'],
+    inference: ['z-statistic', 'Confidence-interval width', 'Two-sided p-value', 'Sample size', 'SE of a proportion', 'Sharpe t-statistic'],
+    regression: ['Beta from covariance', 'OLS slope by hand', 'Slope from correlation', 'R² from two slopes', 'Intercept through the means'],
+    finance: ['Annualised Sharpe', 'Two-asset portfolio vol', 'Kelly fraction', 'Compounding returns', 'Annualising volatility', 'Normal VaR', 'Volatility drag'],
+    timeseries: ['AR(1) variance', 'Mean-reversion half-life', 'AR(1) forecast', 'AR(1) autocorrelation', 'Random-walk scaling'],
+  };
+  // Seconds a confident answer should take, used to flag skills that are right but slow.
+  const TARGET = { sequences: 20, dice: 60, cards: 60, puzzles: 75 };
+  QT.topics.forEach((t) => {
+    t.skills = SKILLS[t.id];
+    t.target = TARGET[t.id] || 90;
+  });
+
   QT.topicById = (id) => QT.topics.find((t) => t.id === id);
 })();
