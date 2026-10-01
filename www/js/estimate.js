@@ -4,7 +4,7 @@
 // Separately we track calibration: treat each range as a 90% interval and see how often
 // the truth actually lands inside. Good traders are both sharp and honest about uncertainty.
 (function () {
-  const R = QT.rand, store = QT.store, f = QT.fmtNum;
+  const store = QT.store, f = QT.fmtNum;
   const ROUND = 10;
 
   // [question, unit, answer, note]. Units are chosen so answers can be typed on the keypad.

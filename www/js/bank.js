@@ -11,7 +11,7 @@
 //   open     for questions with no single number: { model: html } shown for self-grading
 //   note     optional caveat shown under the question
 (function () {
-  const R = QT.rand, M = QT.m, f = QT.fmtNum;
+  const R = QT.rand;
   const EXACT = { abs: 0.5, rel: 0 };
 
   const GD = (path) => `https://www.glassdoor.com/Interview/${path}`;
