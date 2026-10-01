@@ -22,6 +22,7 @@ const ASSETS = [
   'js/mental.js',
   'js/market.js',
   'js/lab.js',
+  'js/demo.js',
   'js/ui.js',
   'js/views/home.js',
   'js/views/practice.js',

@@ -1,8 +1,11 @@
 name: Build Android app
 
 # Builds an installable (debug-signed) APK in the cloud, so no local Node/Android Studio is needed.
-# Run it from the Actions tab ("Run workflow"), or push a tag like v0.4.0 to also attach the
-# APK to a GitHub release. The android/ project is generated fresh each time from www/.
+# Run it from the Actions tab ("Run workflow"), or push a tag like v0.8.0 to also attach the
+# build to a GitHub release. The android/ project is generated fresh each time from www/.
+#
+# Google Play: add the four ANDROID_* repository secrets described in docs/RELEASING.md and the
+# same run also produces a signed release bundle (.aab) ready to upload to the Play Console.
 on:
   workflow_dispatch:
   push:
@@ -14,6 +17,8 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -29,8 +34,16 @@ jobs:
         run: npm test
       - name: Install Capacitor
         run: npm install
+      - name: Remove the web-only Content-Security-Policy
+        # Capacitor injects its native bridge as an inline script, which the website's CSP blocks.
+        run: sed -i '/Content-Security-Policy/d' www/index.html
       - name: Generate the native project
         run: npx cap add android
+      - name: Set the app version from package.json
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i -E "s/versionCode [0-9]+/versionCode ${GITHUB_RUN_NUMBER}/; s/versionName \"[^\"]*\"/versionName \"${VERSION}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
       - name: Generate icons and splash screens from assets/
         run: npx capacitor-assets generate --android
       - name: Copy web app into the native project
@@ -39,14 +52,36 @@ jobs:
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
-
       - name: Name the APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk "quant-trainer-${GITHUB_REF_NAME//\//-}.apk"
+
+      - name: Build signed release bundle for Google Play
+        if: env.HAS_KEYSTORE == 'true'
+        working-directory: android
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          ./gradlew bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
+            -Pandroid.injected.signing.store.password="$KS_PASS" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASS"
+          cp app/build/outputs/bundle/release/app-release.aab "../quant-trainer-${GITHUB_REF_NAME//\//-}.aab"
+          rm "$RUNNER_TEMP/release.keystore"
+
       - uses: actions/upload-artifact@v7
         with:
           name: quant-trainer-android
-          path: quant-trainer-*.apk
+          path: |
+            quant-trainer-*.apk
+            quant-trainer-*.aab
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
-          files: quant-trainer-*.apk
+          files: |
+            quant-trainer-*.apk
+            quant-trainer-*.aab

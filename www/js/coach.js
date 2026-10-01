@@ -196,7 +196,7 @@
 
     for (const s of attempted.filter((x) => x.status === 'weak')) {
       const slip = topErrorFor(s.id);
-      recs.push({ pri: 80 + (0.55 - s.mean) * 40, kind: 'weak', title: `Fix: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct in ${s.topic.name}.${slip ? ` Most common slip: ${slip.toLowerCase()}.` : ''}`, ...drill(s) });
+      recs.push({ pri: 80 + (0.55 - s.mean) * 40, kind: 'weak', title: `Fix: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct in ${s.topic.name}.${slip ? ` Most common mistake: ${slip.toLowerCase()}.` : ''}`, ...drill(s) });
     }
 
     // Too few tries to call it weak yet, but missed more often than not: act on it early.
