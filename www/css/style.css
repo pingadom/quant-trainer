@@ -86,6 +86,7 @@ main { padding: 32px 40px 80px; max-width: 980px; width: 100%; }
   }
   .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .tabbar svg circle { fill: currentColor; stroke: none; }
+  .tabbar svg circle.ring { fill: none; stroke: currentColor; }
   .tabbar a.active { color: var(--accent); font-weight: 600; }
   h1 { font-size: 1.4rem; }
   .question { font-size: 1.05rem; }
@@ -135,6 +136,40 @@ input[readonly] { caret-color: transparent; }
 .badge[hidden] { display: none; }
 .fb-note { font-weight: 400; opacity: 0.85; }
 .due-card { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border-left: 3px solid var(--bad); margin-bottom: 8px; }
+
+/* coach */
+.recs { display: grid; gap: 10px; }
+.rec { display: flex; gap: 14px; align-items: center; justify-content: space-between; }
+.rec-body p { margin: 4px 0 0; }
+.rec .btn { flex: none; }
+@media (max-width: 520px) { .rec { flex-direction: column; align-items: stretch; } .rec .btn { text-align: center; } }
+.coach-tip { margin-top: 10px; padding: 10px 14px; border-radius: 8px; background: var(--accent-soft); font-size: 0.92rem; }
+.habit { margin-bottom: 14px; }
+.habit-row { display: flex; justify-content: space-between; font-weight: 600; }
+.habit .bar { margin: 6px 0 4px; }
+.habit p { margin: 0; }
+
+/* status chips: the reserved status hues on the icon badge, always with an icon + text label */
+:root { --st-good: #0ca30c; --st-warn: #fab219; --st-crit: #d03b3b; }
+.legend, .skill-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.legend { margin: 6px 0 14px; }
+.skill-topic { margin-bottom: 14px; }
+.skill-topic h3 a { color: var(--ink); text-decoration: none; }
+.sk {
+  display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 4px; border-radius: 999px;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink); font-size: 0.82rem; text-decoration: none;
+}
+a.sk:hover { border-color: var(--accent); }
+.sk i {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  font-style: normal; font-weight: 700; font-size: 0.75rem; line-height: 1;
+}
+.st-strong i { background: var(--st-good); color: #fff; }
+.st-shaky i { background: var(--st-warn); color: #1b1d21; }
+.st-weak i { background: var(--st-crit); color: #fff; }
+.st-learning i { border: 1.5px solid var(--muted); color: var(--muted); }
+.st-unseen i { border: 1.5px dashed var(--line); color: var(--muted); }
+.st-unseen { color: var(--muted); }
 
 /* accessibility */
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

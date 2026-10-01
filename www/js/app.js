@@ -17,7 +17,6 @@
     const all = QT.topics.map((t) => ({ t, m: QT.mastery(t.id) }));
     const attempts = all.reduce((a, x) => a + x.m.attempts, 0);
     const correct = Object.values(s.topics).reduce((a, t) => a + t.correct, 0);
-    const weakest = [...all].sort((a, b) => a.m.score - b.m.score).slice(0, 3);
     const mk = s.market;
     const todo = QT.cases.filter((c) => caseProgress(c).answered < c.questions.length);
     const featured = todo.length ? todo[new Date().getDate() % todo.length] : null;
@@ -45,9 +44,10 @@
 
       ${featured ? `<h2>Today's case study</h2>${caseCard(featured)}` : ''}
 
-      <h2>Focus next</h2>
-      <div class="grid">${weakest.map(({ t, m }) => topicCard(t, m)).join('')}</div>
+      <h2>Coach recommends</h2>
+      <div class="recs">${QT.coach.recommend().slice(0, 3).map(recCard).join('')}</div>
       <div class="row" style="margin-top:14px">
+        <a class="btn ghost" href="#/coach">Full coaching plan</a>
         <a class="btn" href="#/review">Start mixed review</a>
         <a class="btn ghost" href="#/mental">Mental maths</a>
         <a class="btn ghost" href="#/market">Market making</a>
@@ -86,19 +86,6 @@
         <div class="grid">${QT.topics.filter((t) => t.track === k).map((t) => topicCard(t, QT.mastery(t.id))).join('')}</div>`).join('')}`;
   }
 
-  // Weighted pick: weak and unseen topics come up more often.
-  function adaptivePick(pool) {
-    const w = pool.map((t) => 1.2 - QT.mastery(t.id).score);
-    let r = Math.random() * w.reduce((a, b) => a + b, 0);
-    for (let i = 0; i < pool.length; i++) if ((r -= w[i]) <= 0) return pool[i];
-    return pool[pool.length - 1];
-  }
-
-  const topicSource = (pickTopic) => () => {
-    const t = pickTopic();
-    return { tag: t.name, p: R.pick(t.gens)(), record: (ok) => store.recordAttempt(t.id, ok) };
-  };
-
   function topicView(el, id) {
     const t = QT.topicById(id);
     if (!t) return practice(el);
@@ -107,25 +94,26 @@
       <h1>${t.name}</h1>
       <p class="lede">${TRACKS[t.track]} · ${t.blurb}</p>
       <details class="notes"><summary>Key formulas</summary>${t.notes}</details>
+      <p class="small">Skills you're weaker at come up more often, and a miss is usually followed by another one like it.</p>
       <div id="qbox"></div>`;
-    questionCard(el.querySelector('#qbox'), topicSource(() => t));
+    questionCard(el.querySelector('#qbox'), QT.coach.source(QT.coach.allIds([t])));
   }
 
   function reviewView(el, track) {
     const pool = QT.topics.filter((t) => !TRACKS[track] || t.track === track);
     el.innerHTML = `
       <h1>Mixed review</h1>
-      <p class="lede">${TRACKS[track] || 'All topics'}. Weak topics come up more often.</p>
+      <p class="lede">${TRACKS[track] || 'All topics'}. Adapts to you: weak and untried skills come up more often, a miss is usually followed by another one like it, and skills you get right three times in a row are rested.</p>
       <div class="row" style="margin-bottom:14px">
         ${[['', 'All'], ['interview', 'Interview'], ['foundations', 'Foundations']].map(([k, l]) => `<a class="btn ${(track || '') === k ? '' : 'ghost'}" href="#/review${k ? '/' + k : ''}">${l}</a>`).join('')}
       </div>
       <div id="qbox"></div>`;
-    questionCard(el.querySelector('#qbox'), topicSource(() => adaptivePick(pool)));
+    questionCard(el.querySelector('#qbox'), QT.coach.source(QT.coach.allIds(pool)));
   }
 
   // A question card driven by `source()`, which returns { tag, p, record(ok) } or null when finished.
   function questionCard(box, source, onDone) {
-    let solved = 0, right = 0, item, answered = false, simToken = 0;
+    let solved = 0, right = 0, item, answered = false, simToken = 0, shownAt = 0;
 
     box.innerHTML = `
       <div class="session"><span id="s-count"></span></div>
@@ -158,6 +146,7 @@
       $btn.textContent = 'Check';
       $skip.hidden = false;
       $('#s-count').textContent = solved ? `This session: ${right}/${solved} correct` : 'New session';
+      shownAt = Date.now();
       if (!kp) $in.focus();
     }
 
@@ -167,7 +156,11 @@
       solved++;
       if (ok) right++;
       const fate = item.record(ok);
+      if (item.skill) QT.coach.observe(item.skill, ok, Date.now() - shownAt);
       if (!ok && !item.isReview) QT.mistakes.add(item.tag, p); // comes back for spaced review
+      // Diagnose what kind of mistake this was, so the advice is about the actual slip.
+      const errType = ok ? null : QT.coach.classify(userVal, p.a);
+      if (errType) QT.coach.logError(errType, item.skill, item.tag);
       updateBadges();
       $in.disabled = true;
       $skip.hidden = true;
@@ -177,7 +170,9 @@
       const head = ok
         ? `<div class="fb ok">✓ Correct: ${f(p.a)}<span class="fb-note">${note}</span></div>`
         : `<div class="fb bad">✗ ${userVal === undefined ? 'Answer' : `You said ${f(userVal)}. Answer`}: ${f(p.a)}<span class="fb-note">${note}</span></div>`;
-      $fb.innerHTML = `${head}<div class="solution">${p.sol}</div>
+      const E = errType && QT.coach.ERRORS[errType], sk = item.skill && QT.coach.parse(item.skill);
+      const tip = E ? `<div class="coach-tip"><b>Coach · ${E.label}.</b> ${E.advice}${sk ? ` <a href="#/drill/${sk.topic.id}/${sk.gi}">Drill “${sk.name}” →</a>` : ''}</div>` : '';
+      $fb.innerHTML = `${head}${tip}<div class="solution">${p.sol}</div>
         ${p.sim ? `<div class="row" style="margin-top:10px"><button type="button" class="ghost" id="p-sim">Check by simulation</button></div><div class="sim-out" id="p-simout"></div>` : ''}`;
       if (p.sim) $('#p-sim').addEventListener('click', runSim);
       if (!kp) $btn.focus();
@@ -394,6 +389,114 @@
     });
   }
 
+  // ---------------------------------------------------------------- coach
+  // Skill status uses the reserved status colours, always paired with an icon and a label.
+  const STATUS = {
+    strong: { icon: '✓', label: 'Strong' },
+    shaky: { icon: '~', label: 'Shaky' },
+    weak: { icon: '✗', label: 'Weak' },
+    learning: { icon: '…', label: 'Learning' },
+    unseen: { icon: '○', label: 'Not started' },
+  };
+
+  const recCard = (r) => `
+    <div class="card rec">
+      <div class="rec-body"><b>${r.title}</b><p class="small">${r.why}</p></div>
+      <a class="btn" href="${r.href}">${r.label}</a>
+    </div>`;
+
+  function skillChip(t, gi) {
+    const s = QT.coach.stat(QT.coach.idOf(t.id, gi)), S = STATUS[s.status], name = t.skills[gi];
+    const detail = s.n ? `${s.recentC}/${s.recentN} recently correct${s.time ? `, median ${f(s.time)}s (target ${t.target}s)` : ''}` : 'not started';
+    return `<a class="sk st-${s.status}" href="#/drill/${t.id}/${gi}" title="${name}: ${S.label}, ${detail}. Tap to drill." aria-label="${name}: ${S.label}, ${detail}. Drill this skill."><i aria-hidden="true">${S.icon}</i>${name}</a>`;
+  }
+
+  function coachView(el, mode) {
+    if (mode === 'session') return coachSession(el);
+    if (mode === 'diagnostic') return diagnosticView(el);
+    const recs = QT.coach.recommend();
+    const ids = QT.coach.allIds(), counts = {};
+    ids.forEach((id) => { const s = QT.coach.stat(id).status; counts[s] = (counts[s] || 0) + 1; });
+    const habits = QT.coach.habits(50), focus = QT.coach.focus().map((id) => QT.coach.parse(id).name);
+    const fresh = (counts.unseen || 0) === ids.length;
+
+    el.innerHTML = `
+      <h1>Coach</h1>
+      <p class="lede">I watch every answer: which skills you miss, what kind of mistake it was, and how long you take. This page turns that into what to practise next.</p>
+
+      ${fresh ? '' : `<div class="card rec">
+        <div class="rec-body"><b>10-question coaching session</b><p class="small">Targets: ${focus.slice(0, 4).join(', ')}${focus.length > 4 ? ` and ${focus.length - 4} more` : ''}. It adapts as you go.</p></div>
+        <a class="btn" href="#/coach/session">Start</a></div>`}
+
+      <h2>Recommended next</h2>
+      <div class="recs">${recs.slice(0, 6).map(recCard).join('')}</div>
+
+      <h2>Error habits</h2>
+      ${habits.length ? `<div class="card">${habits.map((h) => `
+        <div class="habit">
+          <div class="habit-row"><span>${h.label}</span><span class="mono">${h.n}</span></div>
+          <div class="bar"><i style="width:${Math.round((100 * h.n) / habits[0].n)}%"></i></div>
+          <p class="small">${h.advice}</p>
+        </div>`).join('')}<p class="small">From your last ${Math.min(store.get().errors.length, 50)} mistakes.</p></div>`
+      : `<div class="card"><p class="small" style="margin:0">No mistakes yet. When you get one wrong, I'll work out what kind of slip it was: a complement mix-up, % vs decimal, a factor of 2, variance vs SD, rounding, and so on.</p></div>`}
+
+      <h2>Skill map</h2>
+      <p class="small">Each of the ${ids.length} skills, by your recent accuracy. Tap one to drill it.</p>
+      <div class="legend" role="list">${Object.entries(STATUS).map(([k, v]) => `<span class="sk st-${k}" role="listitem"><i aria-hidden="true">${v.icon}</i>${v.label} · ${counts[k] || 0}</span>`).join('')}</div>
+      ${QT.topics.map((t) => `
+        <div class="skill-topic">
+          <h3><a href="#/topic/${t.id}">${t.name}</a></h3>
+          <div class="skill-chips">${t.skills.map((_, gi) => skillChip(t, gi)).join('')}</div>
+        </div>`).join('')}`;
+  }
+
+  function coachSession(el) {
+    const focus = QT.coach.focus();
+    el.innerHTML = `
+      <a class="back" href="#/coach">← Coach</a>
+      <h1>Coaching session</h1>
+      <p class="lede">10 questions on: ${focus.map((id) => QT.coach.parse(id).name).join(', ')}. Miss one and you'll usually get another like it straight away.</p>
+      <div id="qbox"></div>`;
+    questionCard(el.querySelector('#qbox'), QT.coach.source(focus, { limit: 10, label: (i) => `Q${i}/10` }), (box, r) => {
+      box.innerHTML = `<div class="card"><h3>Session done: ${r.right}/${r.solved} correct</h3><p class="small">Your recommendations have been updated.</p></div>
+        <div class="recs">${QT.coach.recommend().slice(0, 3).map(recCard).join('')}</div>
+        <div class="row" style="margin-top:12px"><a class="btn ghost" href="#/coach">Back to coach</a></div>`;
+    });
+  }
+
+  function diagnosticView(el) {
+    el.innerHTML = `
+      <a class="back" href="#/coach">← Coach</a>
+      <h1>Diagnostic</h1>
+      <p class="lede">One question from each of the ${QT.topics.length} topics. Answer as you would in an interview, estimating rather than skipping if you're unsure. Afterwards you'll see your gaps and a plan.</p>
+      <div id="qbox"></div>`;
+    questionCard(el.querySelector('#qbox'), QT.coach.diagnosticSource(), (box, r) => {
+      box.innerHTML = `<div class="card"><h3>Diagnostic complete: ${r.right}/${r.solved}</h3><p class="small">Your skill map and recommendations are ready.</p><a class="btn" href="#/coach">See your plan</a></div>`;
+    });
+  }
+
+  function drillView(el, topicId, giStr) {
+    const t = QT.topicById(topicId), gi = +giStr;
+    if (!t || !t.skills[gi]) return coachView(el);
+    const id = QT.coach.idOf(t.id, gi), name = t.skills[gi], before = QT.coach.stat(id).status;
+    el.innerHTML = `
+      <a class="back" href="#/coach">← Coach</a>
+      <h1>Drill: ${name}</h1>
+      <p class="lede">${t.name} · 5 questions on this one skill${t.target ? `, aiming for under ${t.target}s each` : ''}.</p>
+      <details class="notes"><summary>Key formulas</summary>${t.notes}</details>
+      <div id="qbox"></div>`;
+    let k = 0;
+    const source = () => (k++ < 5 ? { tag: `Drill ${k}/5 · ${name}`, p: t.gens[gi](), skill: id, record: (ok) => store.recordAttempt(t.id, ok) } : null);
+    questionCard(el.querySelector('#qbox'), source, (box, r) => {
+      const after = QT.coach.stat(id);
+      box.innerHTML = `<div class="card">
+        <h3>${r.right}/${r.solved} correct · ${STATUS[before].label} → ${STATUS[after.status].label}</h3>
+        <p class="small">${after.status === 'strong' ? 'Solid. It will come back occasionally to stay fresh.' : after.status === 'weak' ? 'Still weak. Reread the worked solutions and the key formulas, then try again later today.' : 'Getting there. One more round should make it reliable.'}</p>
+        <div class="row"><button id="again">Another 5</button><a class="btn ghost" href="#/coach">Back to coach</a></div></div>`;
+      box.querySelector('#again').addEventListener('click', () => route());
+    });
+  }
+
   // ---------------------------------------------------------------- mistakes deck
   function updateBadges() {
     const n = QT.mistakes.due().length;
@@ -453,6 +556,7 @@
     el.innerHTML = `
       <h1>More</h1>
       <div class="menu">
+        <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
         <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 format and a 2-minute sprint</span></a>
         <a class="card" href="#/market"><b>Market making</b><span class="small">Quote on hidden dice against informed flow</span></a>
         <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
@@ -614,6 +718,8 @@
     iq: bankQuestion,
     mock: mockView,
     mistakes: mistakesView,
+    coach: coachView,
+    drill: drillView,
     estimate: (el) => QT.estimate.render(el),
     more: moreView,
     mental: (el) => QT.mental.render(el),
@@ -622,15 +728,15 @@
     roadmap,
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
-  const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', mock: 'bank' };
-  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', case: 'cases', iq: 'bank', mock: 'bank', mental: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more' };
+  const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', mock: 'bank', drill: 'coach' };
+  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', drill: 'coach', cases: 'more', case: 'more', iq: 'bank', mock: 'bank', mental: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more' };
 
   function route() {
     if (QT.cleanup) QT.cleanup();
     QT.cleanup = null;
-    const [name = '', arg] = location.hash.replace(/^#\/?/, '').split('/');
+    const [name = '', ...args] = location.hash.replace(/^#\/?/, '').split('/');
     const key = name in routes ? name : '';
-    routes[key](main, arg);
+    routes[key](main, ...args);
     const navKey = NAV_PARENT[key] ?? key, tabKey = TAB_PARENT[key] ?? key;
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));
