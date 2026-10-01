@@ -1,6 +1,6 @@
 // Options and classic-brainteaser generators (same shape as gens-interview.js).
 (function () {
-  const R = QT.rand, M = QT.m, f = QT.fmtNum;
+  const R = QT.rand, f = QT.fmtNum;
   const EXACT = { abs: 0.5, rel: 0 };
   QT.gens = QT.gens || {};
 
