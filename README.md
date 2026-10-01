@@ -2,10 +2,7 @@
 
 Practice for quant trading interviews: probability, statistics, mental maths, market making, real reported interview questions and market case studies.
 
-**One codebase, two targets.** Everything lives in [`www/`](www/), a plain HTML/JS/CSS app with no build step. The same files are:
 
-- **a website** (an installable PWA that works offline), deployed by GitHub Actions to GitHub Pages, or to Netlify, Vercel or Cloudflare Pages
-- **a native Android/iOS app**, wrapped with [Capacitor](https://capacitorjs.com/). An Android APK can be built in the cloud with no local tooling.
 
 ## Run it locally
 
