@@ -119,6 +119,15 @@
       if (QT.coach.stat(a).status !== 'strong') fail(`coach: 3/3 should be strong, got ${QT.coach.stat(a).status}`);
       if (QT.coach.stat(b).status !== 'weak') fail(`coach: 1/3 should be weak, got ${QT.coach.stat(b).status}`);
       if (!(QT.coach.need(b) > QT.coach.need(a))) fail('coach: weak skill should be needed more than a strong one');
+      // Elo: correct answers raise the estimate, misses lower it, and an untried skill sits at overall ability.
+      if (!(QT.coach.prob(a) > 0.5 && QT.coach.prob(b) < QT.coach.prob(a))) fail(`coach: Elo estimates out of order (${QT.coach.prob(a)}, ${QT.coach.prob(b)})`);
+      const untried = QT.coach.allIds()[40], E = QT.store.get().elo;
+      if (Math.abs(QT.coach.prob(untried) - 1 / (1 + Math.exp(-E.theta))) > 1e-12) fail('coach: untried skill should predict from overall ability');
+      // Migration: a pre-0.8 profile (no Elo state) is rebuilt from its answer history.
+      const snap = JSON.parse(QT.store.exportJson());
+      delete snap.elo;
+      QT.store.importJson(JSON.stringify(snap));
+      if (Math.abs(QT.coach.prob(a) - (1 / (1 + Math.exp(-(E.theta + E.b[a]))))) > 1e-9) fail('coach: Elo state not rebuilt identically from the log');
       for (let i = 0; i < 3; i++) QT.coach.logError('complement', b, 't');
       const recs = QT.coach.recommend();
       if (!recs.some((r) => r.kind === 'weak' && r.href === `#/drill/${b.replace('.', '/')}`)) fail('coach: weak skill not recommended for a drill');

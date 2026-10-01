@@ -170,6 +170,10 @@
     const es = obj(r.estimate);
     s.estimate = { rounds: num(es.rounds), best: es.best == null ? null : num(es.best), hits: num(es.hits), n: num(es.n) };
     s.demo = !!r.demo;
+    if (r.elo) {
+      const e = obj(r.elo), skillKey = (k) => /^[a-z]+\.\d+$/.test(k);
+      s.elo = { theta: num(e.theta), b: mapKeys(e.b, (v) => num(v), skillKey), n: mapKeys(e.n, (v) => num(v), skillKey) };
+    }
     s.log = arr(r.log, LOG_CAP).map((x) => ({ s: text(obj(x).s, 40), ok: obj(x).ok ? 1 : 0, ms: num(obj(x).ms), t: num(obj(x).t) }));
     return s;
   }
