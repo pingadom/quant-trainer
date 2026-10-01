@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Quant Trainer checks</title>
+  <style>
+    body { font: 14px/1.5 ui-monospace, Consolas, monospace; margin: 24px; background: #fff; color: #111; }
+    .pass { color: #1d8a4b; } .fail { color: #c2410c; } pre { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Quant Trainer checks</h1>
+  <p>Serve the project root (<code>npm run serve</code>) and open <code>/tests/check.html</code>. The same suite runs in CI with <code>npm test</code>.</p>
+  <pre id="out">Running…</pre>
+
+  <script src="../www/js/core.js"></script>
+  <script src="../www/js/gens-interview.js"></script>
+  <script src="../www/js/gens-foundations.js"></script>
+  <script src="../www/js/gens-extra.js"></script>
+  <script src="../www/js/topics.js"></script>
+  <script src="../www/js/cases.js"></script>
+  <script src="../www/js/bank.js"></script>
+  <script src="checks.js"></script>
+  <script>
+    (async () => {
+      const text = (p) => fetch(p, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : undefined)).catch(() => undefined);
+      const files = { index: await text('../www/index.html'), sw: await text('../www/sw.js'), pkg: await text('../package.json') };
+      const { lines, fails } = runChecks(QT, files);
+      const el = document.getElementById('out');
+      el.textContent = lines.join('\n');
+      el.className = fails ? 'fail' : 'pass';
+      document.title = fails ? 'FAIL' : 'PASS';
+    })();
+  </script>
+</body>
+</html>

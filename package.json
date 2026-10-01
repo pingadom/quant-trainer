@@ -1,0 +1,32 @@
+{
+  "name": "quant-trainer",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Quant trading interview practice. One codebase in www/, deployed as a website (PWA) and wrapped as a native app with Capacitor.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "serve": "python -m http.server 8765 --bind 127.0.0.1",
+    "test": "node tests/run-node.js",
+    "assets": "capacitor-assets generate",
+    "cap:sync": "cap sync",
+    "android": "cap sync android && cap open android",
+    "ios": "cap sync ios && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/filesystem": "^8.1.3",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.2"
+  }
+}

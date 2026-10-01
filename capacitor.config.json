@@ -1,0 +1,19 @@
+{
+  "appId": "dev.quanttrainer.app",
+  "appName": "Quant Trainer",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#f6f6f3",
+      "showSpinner": false
+    }
+  }
+}

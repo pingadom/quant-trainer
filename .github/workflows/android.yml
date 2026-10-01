@@ -1,0 +1,52 @@
+name: Build Android app
+
+# Builds an installable (debug-signed) APK in the cloud, so no local Node/Android Studio is needed.
+# Run it from the Actions tab ("Run workflow"), or push a tag like v0.4.0 to also attach the
+# APK to a GitHub release. The android/ project is generated fresh each time from www/.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v4
+
+      - name: Test
+        run: npm test
+      - name: Install Capacitor
+        run: npm install
+      - name: Generate the native project
+        run: npx cap add android
+      - name: Generate icons and splash screens from assets/
+        run: npx capacitor-assets generate --android
+      - name: Copy web app into the native project
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Name the APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "quant-trainer-${GITHUB_REF_NAME//\//-}.apk"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: quant-trainer-android
+          path: quant-trainer-*.apk
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: quant-trainer-*.apk
