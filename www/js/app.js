@@ -14,43 +14,65 @@
   // ---------------------------------------------------------------- dashboard
   function dashboard(el) {
     const s = store.get();
-    const all = QT.topics.map((t) => ({ t, m: QT.mastery(t.id) }));
-    const attempts = all.reduce((a, x) => a + x.m.attempts, 0);
+    const attempts = Object.values(s.topics).reduce((a, t) => a + t.attempts, 0);
     const correct = Object.values(s.topics).reduce((a, t) => a + t.correct, 0);
-    const mk = s.market;
+    const strong = QT.coach.allIds().filter((id) => QT.coach.stat(id).status === 'strong').length;
     const todo = QT.cases.filter((c) => caseProgress(c).answered < c.questions.length);
     const featured = todo.length ? todo[new Date().getDate() % todo.length] : null;
+    const hour = new Date().getHours(), hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const streak = store.streak();
 
+    // First visit: one clear first step instead of a wall of empty stats.
+    if (store.isEmpty()) {
+      el.innerHTML = `
+        <div class="hero">
+          <div class="eyebrow">Welcome</div>
+          <h1>Get ready for quant trading interviews</h1>
+          <p>Probability, statistics, mental maths and market making, plus real questions candidates report from firms like Jane Street, SIG and Optiver.</p>
+          <a class="btn btn-lg" href="#/coach/diagnostic">Start with a 15-minute diagnostic</a>
+          <a class="hero-alt" href="#/review">or jump straight into practice →</a>
+        </div>
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li><b>Diagnose.</b> One question from each of the ${QT.topics.length} topics shows where you stand.</li>
+          <li><b>Practise what the coach suggests.</b> It tracks ${QT.coach.allIds().length} skills, spots the kind of mistakes you make, and picks the next exercise.</li>
+          <li><b>Test yourself for real.</b> Timed mental maths, a market-making game, and mock interviews built from reported questions.</li>
+        </ol>
+        <p class="small">Everything is saved on this device. No account needed.</p>`;
+      return;
+    }
+
+    const [top, ...more] = QT.coach.recommend();
     el.innerHTML = `
-      <h1>Dashboard</h1>
-      <p class="lede">A daily routine: 15 mixed-review problems, one mental-maths sprint and one market-making game. Consistency beats cramming.</p>
+      <h1>${hello}</h1>
+      <p class="lede">${streak > 1 ? `${streak}-day streak. Keep it going.` : streak === 1 ? 'You practised today. Nice.' : 'Pick up where you left off.'}</p>
+
+      ${top ? `<div class="card upnext">
+        <div class="eyebrow">Up next</div>
+        <h2>${top.title}</h2>
+        <p>${top.why}</p>
+        <a class="btn btn-lg" href="${top.href}">${top.label}</a>
+      </div>` : ''}
+
+      ${more.length ? `<h2>Also recommended</h2><div class="recs">${more.slice(0, 2).map(recCard).join('')}</div>
+      <p><a href="#/coach">See your full coaching plan →</a></p>` : ''}
+
+      <h2>Your progress</h2>
       <div class="tiles">
-        <div class="tile"><div class="v">${store.streak()}</div><div class="k">day streak</div></div>
-        <div class="tile"><div class="v">${attempts}</div><div class="k">problems attempted</div></div>
-        <div class="tile"><div class="v">${attempts ? pctStr(correct / attempts) : '–'}</div><div class="k">overall accuracy</div></div>
-        <div class="tile"><div class="v">${s.mental.full?.best ?? '–'}</div><div class="k">80-in-8 best (net)</div></div>
-        <div class="tile"><div class="v">${mk.games ? f(mk.total / mk.games) : '–'}</div><div class="k">avg market P&amp;L</div></div>
-        <div class="tile"><div class="v">${casesDone()}/${QT.cases.length}</div><div class="k">case studies</div></div>
-        <div class="tile"><div class="v">${bankDone()}/${QT.bank.length}</div><div class="k">interview questions</div></div>
+        <a class="tile" href="#/coach"><div class="v">${strong}<span class="of">/${QT.coach.allIds().length}</span></div><div class="k">skills strong</div></a>
+        <div class="tile"><div class="v">${attempts}</div><div class="k">problems solved</div></div>
+        <div class="tile"><div class="v">${attempts ? pctStr(correct / attempts) : '–'}</div><div class="k">accuracy</div></div>
+        <div class="tile"><div class="v">${streak}</div><div class="k">day streak</div></div>
       </div>
 
-      <h2>Real interview questions</h2>
-      <div class="card">
-        <p style="margin-top:0">Questions candidates report from Jane Street, SIG, Optiver, IMC, Citadel, Five Rings, Two Sigma and Flow Traders, with worked solutions and each firm's reported process.</p>
-        <div class="row"><a class="btn" href="#/bank">Browse questions</a><a class="btn ghost" href="#/mock">Start a mock interview</a></div>
-      </div>
-
-      ${QT.mistakes.due().length ? `<div class="card due-card"><b>${QT.mistakes.due().length} mistake${QT.mistakes.due().length > 1 ? 's' : ''} due for review.</b> Spaced review is the fastest way to stop repeating them. <a class="btn" href="#/mistakes/due">Review now</a></div>` : ''}
-
-      ${featured ? `<h2>Today's case study</h2>${caseCard(featured)}` : ''}
-
-      <h2>Coach recommends</h2>
-      <div class="recs">${QT.coach.recommend().slice(0, 3).map(recCard).join('')}</div>
-      <div class="row" style="margin-top:14px">
-        <a class="btn ghost" href="#/coach">Full coaching plan</a>
-        <a class="btn" href="#/review">Start mixed review</a>
-        <a class="btn ghost" href="#/mental">Mental maths</a>
-        <a class="btn ghost" href="#/market">Market making</a>
+      <h2>Keep sharp</h2>
+      <div class="shortcuts">
+        <a class="card shortcut" href="#/bank"><b>Interview questions</b><span>${bankDone()}/${QT.bank.length} done · mock interviews</span></a>
+        <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${s.mental.full?.best != null ? `80-in-8 best: ${s.mental.full.best} net` : 'Not tried yet'}</span></a>
+        <a class="card shortcut" href="#/market"><b>Market making</b><span>${s.market.games ? `${s.market.games} games · avg P&amp;L ${f(s.market.total / s.market.games)}` : 'Not tried yet'}</span></a>
+        <a class="card shortcut" href="#/estimate"><b>Estimation</b><span>${s.estimate.n ? `${Math.round((100 * s.estimate.hits) / s.estimate.n)}% of ranges correct` : 'Not tried yet'}</span></a>
+        ${featured ? `<a class="card shortcut" href="#/case/${featured.id}"><b>Case of the day</b><span>${featured.title} (${featured.year})</span></a>` : ''}
+        <a class="card shortcut" href="#/roadmap"><b>Roadmap</b><span>Books, projects and milestones</span></a>
       </div>`;
   }
 
@@ -78,9 +100,12 @@
   // ---------------------------------------------------------------- practice
   function practice(el) {
     el.innerHTML = `
-      <h1>Topics</h1>
-      <p class="lede">Every problem is randomly generated, so you can drill a topic indefinitely. The bar shows mastery: recent accuracy, discounted until you've done about 20 problems.</p>
-      <div class="row"><a class="btn" href="#/review">Mixed review</a><a class="btn ghost" href="#/mistakes">Mistakes deck <span class="badge" data-badge="mistakes" hidden></span></a><a class="btn ghost" href="#/bank">Real interview questions</a></div>
+      <h1>Practice</h1>
+      <div class="shortcuts two">
+        <a class="card shortcut primary" href="#/review"><b>Mixed practice</b><span>Questions from every topic, weighted towards your weak spots</span></a>
+        <a class="card shortcut" href="#/mistakes"><b>Mistakes to review <span class="badge" data-badge="mistakes" hidden></span></b><span>${QT.mistakes.all().length ? `${QT.mistakes.due().length} due now · ${QT.mistakes.all().length} saved` : 'Questions you get wrong come back here'}</span></a>
+      </div>
+      <p class="small">Or pick a topic. Every question is freshly generated, and the bar shows your recent accuracy.</p>
       ${Object.entries(TRACKS).map(([k, label]) => `
         <h2>${label}</h2>
         <div class="grid">${QT.topics.filter((t) => t.track === k).map((t) => topicCard(t, QT.mastery(t.id))).join('')}</div>`).join('')}`;
@@ -90,22 +115,21 @@
     const t = QT.topicById(id);
     if (!t) return practice(el);
     el.innerHTML = `
-      <a class="back" href="#/practice">← Topics</a>
+      <a class="back" href="#/practice">← Practice</a>
       <h1>${t.name}</h1>
       <p class="lede">${TRACKS[t.track]} · ${t.blurb}</p>
       <details class="notes"><summary>Key formulas</summary>${t.notes}</details>
-      <p class="small">Skills you're weaker at come up more often, and a miss is usually followed by another one like it.</p>
       <div id="qbox"></div>`;
-    questionCard(el.querySelector('#qbox'), QT.coach.source(QT.coach.allIds([t])));
+    questionCard(el.querySelector('#qbox'), QT.coach.source(QT.coach.allIds([t]), { showTopic: false }));
   }
 
   function reviewView(el, track) {
     const pool = QT.topics.filter((t) => !TRACKS[track] || t.track === track);
     el.innerHTML = `
-      <h1>Mixed review</h1>
-      <p class="lede">${TRACKS[track] || 'All topics'}. Adapts to you: weak and untried skills come up more often, a miss is usually followed by another one like it, and skills you get right three times in a row are rested.</p>
-      <div class="row" style="margin-bottom:14px">
-        ${[['', 'All'], ['interview', 'Interview'], ['foundations', 'Foundations']].map(([k, l]) => `<a class="btn ${(track || '') === k ? '' : 'ghost'}" href="#/review${k ? '/' + k : ''}">${l}</a>`).join('')}
+      <h1>Mixed practice</h1>
+      <p class="lede">Questions from every topic, chosen for you: weaker skills come up more, and a miss is followed by a similar question.</p>
+      <div class="seg" role="tablist" aria-label="Which questions">
+        ${[['', 'All topics'], ['interview', 'Interview'], ['foundations', 'Foundations']].map(([k, l]) => `<a role="tab" aria-selected="${(track || '') === k}" class="${(track || '') === k ? 'on' : ''}" href="#/review${k ? '/' + k : ''}">${l}</a>`).join('')}
       </div>
       <div id="qbox"></div>`;
     questionCard(el.querySelector('#qbox'), QT.coach.source(QT.coach.allIds(pool)));
@@ -116,22 +140,31 @@
     let solved = 0, right = 0, item, answered = false, simToken = 0, shownAt = 0;
 
     box.innerHTML = `
-      <div class="session"><span id="s-count"></span></div>
-      <div class="card">
-        <div class="tag" id="p-tag"></div>
+      <div class="card qcard" id="qcard">
+        <div class="q-top"><span class="tag" id="p-tag"></span><span class="q-score" id="s-count"></span></div>
         <div class="question" id="p-q"></div>
         <form class="answer-row" id="p-form">
-          <input type="text" id="p-in" inputmode="decimal" autocomplete="off" placeholder="e.g. 5/36, 0.139 or 13.9%" aria-label="Your answer">
+          <input type="text" id="p-in" inputmode="decimal" autocomplete="off" placeholder="Your answer" aria-label="Your answer" aria-describedby="p-hint">
           <button id="p-btn">Check</button>
-          <button type="button" class="ghost" id="p-skip">Show answer</button>
         </form>
+        <div class="q-actions" id="p-actions">
+          <span class="small" id="p-hint">Decimal, fraction (5/36) or percent (13.9%)</span>
+          <button type="button" class="link" id="p-skip">Show answer</button>
+        </div>
         <div id="p-fb" aria-live="polite"></div>
-      </div>
-      <p class="small" style="margin-top:12px">Answers can be decimals, fractions or percentages; small rounding differences are accepted. Press Enter (↵) again for the next problem.</p>`;
+      </div>`;
 
     const $ = (s) => box.querySelector(s);
-    const $in = $('#p-in'), $fb = $('#p-fb'), $btn = $('#p-btn'), $skip = $('#p-skip'), form = $('#p-form');
-    const kp = QT.keypad.attach(form, [$in], () => form.requestSubmit());
+    const $in = $('#p-in'), $fb = $('#p-fb'), $skip = $('#p-skip'), form = $('#p-form'), $actions = $('#p-actions'), card = $('#qcard');
+    // On touch screens the on-screen pad replaces the Check button (its ↵ key checks).
+    const kp = QT.keypad.attach($actions, [$in], () => form.requestSubmit());
+    if (kp) card.classList.add('has-keypad');
+
+    // Bring part of the card into view if it's off-screen (phones: the keypad pushes things down).
+    const reveal_ = (node, where = 'start') => {
+      const r = node.getBoundingClientRect(), bottomBar = window.innerWidth <= 760 ? 80 : 0;
+      if (r.top < 0 || r.top > window.innerHeight - bottomBar - 120) node.scrollIntoView({ block: where, behavior: 'smooth' });
+    };
 
     function next() {
       item = source();
@@ -143,11 +176,14 @@
       $fb.innerHTML = '';
       $in.value = '';
       $in.disabled = false;
-      $btn.textContent = 'Check';
-      $skip.hidden = false;
-      $('#s-count').textContent = solved ? `This session: ${right}/${solved} correct` : 'New session';
+      $actions.hidden = false;
+      $('#p-hint').classList.remove('nudge');
+      $('#p-hint').textContent = 'Decimal, fraction (5/36) or percent (13.9%)';
+      if (kp) kp.pad.hidden = false;
+      $('#s-count').textContent = solved ? `${right}/${solved} correct` : '';
       shownAt = Date.now();
-      if (!kp) $in.focus();
+      if (solved) reveal_(card);
+      if (!kp) $in.focus({ preventScroll: true });
     }
 
     function reveal(ok, userVal) {
@@ -163,19 +199,24 @@
       if (errType) QT.coach.logError(errType, item.skill, item.tag);
       updateBadges();
       $in.disabled = true;
-      $skip.hidden = true;
-      $btn.textContent = 'Next →';
-      $('#s-count').textContent = `This session: ${right}/${solved} correct`;
-      const note = item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok ? ' · saved to your mistakes deck' : '';
+      $actions.hidden = true;
+      if (kp) kp.pad.hidden = true; // nothing to type now; keeps the result on screen
+      $('#s-count').textContent = `${right}/${solved} correct`;
+      const note = item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok ? ' · saved to review later' : '';
       const head = ok
         ? `<div class="fb ok">✓ Correct: ${f(p.a)}<span class="fb-note">${note}</span></div>`
         : `<div class="fb bad">✗ ${userVal === undefined ? 'Answer' : `You said ${f(userVal)}. Answer`}: ${f(p.a)}<span class="fb-note">${note}</span></div>`;
       const E = errType && QT.coach.ERRORS[errType], sk = item.skill && QT.coach.parse(item.skill);
       const tip = E ? `<div class="coach-tip"><b>Coach · ${E.label}.</b> ${E.advice}${sk ? ` <a href="#/drill/${sk.topic.id}/${sk.gi}">Drill “${sk.name}” →</a>` : ''}</div>` : '';
-      $fb.innerHTML = `${head}${tip}<div class="solution">${p.sol}</div>
-        ${p.sim ? `<div class="row" style="margin-top:10px"><button type="button" class="ghost" id="p-sim">Check by simulation</button></div><div class="sim-out" id="p-simout"></div>` : ''}`;
+      // Verdict, then the way forward, then the explanation: the button never ends up below a long solution.
+      $fb.innerHTML = `${head}<button type="button" class="next-btn" id="p-next">Next question →</button>${tip}
+        <details class="solution-box" open><summary>Worked solution</summary><div class="solution">${p.sol}</div>
+        ${p.sim ? `<div class="row" style="margin-top:10px"><button type="button" class="ghost" id="p-sim">Check by simulation</button></div><div class="sim-out" id="p-simout"></div>` : ''}</details>`;
       if (p.sim) $('#p-sim').addEventListener('click', runSim);
-      if (!kp) $btn.focus();
+      const $next = $('#p-next');
+      $next.addEventListener('click', next);
+      $next.focus({ preventScroll: true }); // Enter goes to the next question
+      reveal_($fb.firstElementChild);
     }
 
     function runSim() {
@@ -197,11 +238,20 @@
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       if (answered) return next();
-      const v = QT.parseAnswer($in.value);
-      if (Number.isNaN(v)) {
-        $fb.innerHTML = `<div class="fb bad">Couldn't read that. Try a number like 0.25, 1/4 or 25%.</div>`;
+      const hint = $('#p-hint');
+      if (!$in.value.trim()) {
+        hint.textContent = 'Type an answer first, or tap "Show answer".';
+        hint.classList.add('nudge');
         return;
       }
+      const v = QT.parseAnswer($in.value);
+      if (Number.isNaN(v)) {
+        hint.textContent = "Couldn't read that. Try 0.25, 1/4 or 25%.";
+        hint.classList.add('nudge');
+        return;
+      }
+      hint.classList.remove('nudge');
+      hint.textContent = 'Decimal, fraction (5/36) or percent (13.9%)';
       reveal(QT.isCorrect(v, item.p.a, item.p.tol), v);
     });
     $skip.addEventListener('click', () => reveal(false));
@@ -399,10 +449,11 @@
     unseen: { icon: '○', label: 'Not started' },
   };
 
+  // Secondary styling: on any screen only the single most important action is a filled button.
   const recCard = (r) => `
     <div class="card rec">
       <div class="rec-body"><b>${r.title}</b><p class="small">${r.why}</p></div>
-      <a class="btn" href="${r.href}">${r.label}</a>
+      <a class="btn ghost" href="${r.href}">${r.label}</a>
     </div>`;
 
   function skillChip(t, gi) {
@@ -511,7 +562,7 @@
     const reviewing = mode === 'due' ? due : mode === 'all' ? [...all] : null;
     if (reviewing && reviewing.length) {
       el.innerHTML = `
-        <a class="back" href="#/mistakes">← Mistakes deck</a>
+        <a class="back" href="#/mistakes">← Mistakes to review</a>
         <h1>Reviewing ${reviewing.length} mistake${reviewing.length > 1 ? 's' : ''}</h1>
         <p class="lede">Get one right and it comes back later (${QT.mistakes.INTERVALS.slice(1).join(', ')} days). Get it right at every step and it's retired.</p>
         <div id="qbox"></div>`;
@@ -531,7 +582,7 @@
       return d <= 0 ? 'due now' : d === 1 ? 'tomorrow' : `in ${d} days`;
     };
     el.innerHTML = `
-      <h1>Mistakes deck</h1>
+      <h1>Mistakes to review</h1>
       <p class="lede">Every problem you get wrong is saved here exactly as you saw it. It returns after 1 day; each correct review pushes it out further (3, 7, 21 days) until it's retired. Revisiting mistakes at growing intervals is one of the most effective ways to learn.</p>
       <div class="tiles">
         <div class="tile"><div class="v">${due.length}</div><div class="k">due now</div></div>
@@ -555,12 +606,15 @@
     try { pref = localStorage.getItem('qt-keypad') || 'auto'; } catch { /* ignore */ }
     el.innerHTML = `
       <h1>More</h1>
+      <h2 class="menu-head">Interview prep</h2>
       <div class="menu">
-        <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
         <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 format and a 2-minute sprint</span></a>
         <a class="card" href="#/market"><b>Market making</b><span class="small">Quote on hidden dice against informed flow</span></a>
         <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
-        <a class="card" href="#/mistakes"><b>Mistakes deck <span class="badge" data-badge="mistakes" hidden></span></b><span class="small">Spaced review of everything you got wrong</span></a>
+      </div>
+      <h2 class="menu-head">Learn</h2>
+      <div class="menu">
+        <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
         <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
         <a class="card" href="#/roadmap"><b>Roadmap</b><span class="small">Stages, books and milestones</span></a>
       </div>
@@ -741,6 +795,8 @@
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));
     updateBadges();
+    const h1 = main.querySelector('h1');
+    document.title = key && h1 ? `${h1.textContent} · Quant Trainer` : 'Quant Trainer';
     window.scrollTo(0, 0);
   }
 
