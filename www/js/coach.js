@@ -23,6 +23,33 @@
   };
   const allIds = (topics = QT.topics) => topics.flatMap((t) => t.skills.map((_, gi) => idOf(t.id, gi)));
 
+  // ---------------------------------------------------------------- Elo ability model
+  // P(correct on skill k) = σ(θ + b_k): one learner ability θ shared across all skills plus a
+  // per-skill easiness b_k whose step size shrinks with evidence. Chosen by out-of-sample evaluation
+  // against six alternatives on simulated learners (research/REPORT.md): unlike a per-skill average
+  // it shrinks noisy skills towards your overall ability, which removes the bias that comes from
+  // repeatedly selecting skills that merely *look* weak. Settings fitted on training learners only.
+  const ELO = { kTheta: 0.05, kBeta: 0.6, decay: 0.05 };
+  const sig = (x) => 1 / (1 + Math.exp(-x));
+
+  function elo() {
+    const st = store.get();
+    if (!st.elo) {
+      // Migrate: rebuild from the answer log, or (pre-0.8 data) from each skill's recent answers.
+      st.elo = { theta: 0, b: {}, n: {} };
+      const replay = st.log && st.log.length ? st.log.map((e) => [e.s, e.ok]) : Object.entries(st.skills || {}).flatMap(([id, s]) => s.recent.map((ok) => [id, ok]));
+      for (const [id, ok] of replay) eloUpdate(st.elo, id, ok);
+    }
+    return st.elo;
+  }
+  function eloUpdate(E, id, ok) {
+    const n = E.n[id] || 0, err = (ok ? 1 : 0) - sig(E.theta + (E.b[id] || 0));
+    E.theta += ELO.kTheta * err;
+    E.b[id] = (E.b[id] || 0) + (ELO.kBeta / (1 + ELO.decay * n)) * err;
+    E.n[id] = n + 1;
+  }
+  const prob = (id) => { const E = elo(); return sig(E.theta + (E.b[id] || 0)); };
+
   // ---------------------------------------------------------------- skill statistics
   function stat(id) {
     const s = skills()[id];
@@ -31,11 +58,13 @@
     const mean = (c + 1) / (k + 2); // posterior mean accuracy, Beta(1,1) prior
     const times = [...s.times].sort((a, b) => a - b);
     const time = times.length ? times[Math.floor(times.length / 2)] : null; // median seconds, correct answers only
+    // Labels use the recent-window rate; the study found they track next-attempt accuracy well.
     const status = k < 3 ? 'learning' : mean < 0.55 ? 'weak' : mean < 0.8 ? 'shaky' : 'strong';
-    return { n: s.n, recentC: c, recentN: k, mean, time, last: s.last, status };
+    return { n: s.n, recentC: c, recentN: k, mean, p: prob(id), time, last: s.last, status };
   }
 
   function observe(skillId, ok, ms) {
+    eloUpdate(elo(), skillId, ok);
     const s = (skills()[skillId] ||= { n: 0, c: 0, recent: [], times: [], last: 0 });
     s.n++;
     if (ok) s.c++;
@@ -103,8 +132,8 @@
   // How much a skill needs work right now (higher = sooner).
   function need(id) {
     const s = stat(id);
-    if (s.status === 'unseen') return 0.9;
-    let w = 1 - s.mean;
+    if (s.status === 'unseen') return 0.9; // keep exploring untried skills
+    let w = 1 - s.p; // Elo estimate, not the raw recent rate (see the ELO note above)
     if (s.status === 'weak') w += 0.3;
     if (s.last && Date.now() - s.last > 14 * DAY) w += 0.2; // spacing: revisit stale skills
     const t = parse(id);
@@ -253,5 +282,5 @@
     return recs.sort((a, b) => b.pri - a.pri);
   }
 
-  QT.coach = { ERRORS, idOf, parse, allIds, stat, observe, classify, logError, habits, need, pick, focus, source, diagnosticSource, recommend };
+  QT.coach = { ELO, prob, ERRORS, idOf, parse, allIds, stat, observe, classify, logError, habits, need, pick, focus, source, diagnosticSource, recommend };
 })();

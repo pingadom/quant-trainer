@@ -53,7 +53,7 @@
 
   function skillChip(t, gi) {
     const s = QT.coach.stat(QT.coach.idOf(t.id, gi)), S = STATUS[s.status], name = t.skills[gi];
-    const detail = s.n ? `${s.recentC}/${s.recentN} recently correct${s.time ? `, median ${f(s.time)}s (target ${t.target}s)` : ''}` : 'not started';
+    const detail = s.n ? `${s.recentC}/${s.recentN} recently correct, model estimate ${Math.round(s.p * 100)}%${s.time ? `, median ${f(s.time)}s (target ${t.target}s)` : ''}` : 'not started';
     return `<a class="sk st-${s.status}" href="#/drill/${t.id}/${gi}" title="${name}: ${S.label}, ${detail}. Tap to drill." aria-label="${name}: ${S.label}, ${detail}. Drill this skill."><i aria-hidden="true">${S.icon}</i>${name}</a>`;
   }
 
