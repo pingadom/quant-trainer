@@ -1,0 +1,42 @@
+name: Submit an interview question
+description: Share a question you were asked in a quant / trading interview.
+title: "Question: "
+labels: ["interview-question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Please **paraphrase** the question in your own words. Don't paste copyrighted material or anything covered by an NDA you signed.
+  - type: input
+    id: firm
+    attributes:
+      label: Firm
+      placeholder: e.g. Optiver (leave blank to stay vague)
+  - type: input
+    id: role
+    attributes:
+      label: Role and stage
+      placeholder: e.g. Graduate trader, final round
+  - type: input
+    id: when
+    attributes:
+      label: Roughly when
+      placeholder: e.g. Autumn 2026
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+      description: As close to how it was asked as you can, including any follow-ups.
+    validations:
+      required: true
+  - type: textarea
+    id: answer
+    attributes:
+      label: Your answer or the expected answer (optional)
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Permission
+      options:
+        - label: I'm allowed to share this, and it may be paraphrased into the app under the MIT licence.
+          required: true

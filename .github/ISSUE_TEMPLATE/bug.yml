@@ -1,0 +1,16 @@
+name: Report a bug or wrong answer
+description: Something broken, confusing or mathematically wrong.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: For a wrong answer, include the question text and why you think it's wrong.
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      placeholder: e.g. website on iPhone Safari, Android app 0.8.0 (version is under More)
