@@ -95,6 +95,21 @@
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sync);
   }
 
+  // Optional, privacy-friendly page-view counts (website only; configure in js/config.js).
+  // GoatCounter sets no cookies and stores no personal data; we also honour Do Not Track.
+  P.track = () => {};
+  const gc = (window.QT_CONFIG || {}).goatcounter;
+  if (!native && gc && /^[a-z0-9-]+$/.test(gc) && navigator.doNotTrack !== '1' && location.protocol === 'https:') {
+    window.goatcounter = { no_onload: true }; // we count route changes ourselves (hash routing)
+    P.track = () => window.goatcounter.count && window.goatcounter.count({ path: location.pathname + (location.hash || '#/'), title: document.title });
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://gc.zgo.at/count.js';
+    s.dataset.goatcounter = `https://${gc}.goatcounter.com/count`;
+    s.onload = () => P.track();
+    document.head.appendChild(s);
+  }
+
   // Offline support for the website. Native builds bundle the files, so they don't need it.
   if (!native && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
