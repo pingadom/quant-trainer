@@ -1,14 +1,19 @@
 {
   "name": "quant-trainer",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "description": "Quant trading interview practice. One codebase in www/, deployed as a website (PWA) and wrapped as a native app with Capacitor.",
+  "license": "MIT",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "serve": "python -m http.server 8765 --bind 127.0.0.1",
     "test": "node tests/run-node.js",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "verify": "node tests/export-answers.js > answers.json && python research/verify_results.py --js answers.json",
+    "research": "python research/learner_models.py",
     "assets": "capacitor-assets generate",
     "cap:sync": "cap sync",
     "android": "cap sync android && cap open android",
@@ -26,7 +31,13 @@
     "@capacitor/status-bar": "^8.0.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^8.5.2"
+    "@capacitor/cli": "^8.5.2",
+    "@eslint/js": "^10.0.1",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.63.0",
+    "eslint": "^10.11.0",
+    "globals": "^17.13.0"
   }
 }

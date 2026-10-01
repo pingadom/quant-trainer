@@ -3,3 +3,8 @@ android/
 ios/
 .DS_Store
 *.log
+test-results/
+playwright-report/
+.lighthouseci/
+answers.json
+__pycache__/
