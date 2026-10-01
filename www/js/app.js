@@ -20,6 +20,15 @@
     const [name = '', ...args] = location.hash.replace(/^#\/?/, '').split('/');
     const key = name in routes ? name : '';
     routes[key](main, ...args.map(decodeURIComponent));
+    if (store.get().demo) {
+      // Sample data must never be mistaken for real progress.
+      main.insertAdjacentHTML('afterbegin', `<div class="demo-banner" role="status"><span><b>Sample data.</b> You're exploring a demo profile.</span><button type="button" class="link" id="demo-off">Start my own →</button></div>`);
+      main.querySelector('#demo-off').addEventListener('click', () => {
+        store.reset();
+        location.hash = '#/';
+        route();
+      });
+    }
     const navKey = NAV_PARENT[key] ?? key, tabKey = TAB_PARENT[key] ?? key;
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));
@@ -30,6 +39,12 @@
     QT.platform.track();
   }
   QT.route = route;
+
+  // Shareable link that opens straight into the demo profile: …/quant-trainer/?demo
+  if (new URLSearchParams(location.search).has('demo')) {
+    if (store.isEmpty()) QT.demo.load();
+    history.replaceState(null, '', location.pathname + location.hash); // so "Start my own" sticks after a reload
+  }
 
   window.addEventListener('hashchange', route);
   route();

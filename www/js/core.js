@@ -91,7 +91,7 @@
   // ---- Progress storage (localStorage, per browser) ----
   const KEY = 'quant-trainer:v1';
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
-  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
+  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
   let state;
 
   function load() {
@@ -169,6 +169,7 @@
     s.errors = arr(r.errors, 100).map((e) => ({ type: text(obj(e).type, 20), skill: obj(e).skill ? text(e.skill, 40) : null, tag: text(obj(e).tag, 120), t: num(obj(e).t) }));
     const es = obj(r.estimate);
     s.estimate = { rounds: num(es.rounds), best: es.best == null ? null : num(es.best), hits: num(es.hits), n: num(es.n) };
+    s.demo = !!r.demo;
     s.log = arr(r.log, LOG_CAP).map((x) => ({ s: text(obj(x).s, 40), ok: obj(x).ok ? 1 : 0, ms: num(obj(x).ms), t: num(obj(x).t) }));
     return s;
   }

@@ -21,6 +21,7 @@
           <a class="btn btn-lg" href="#/coach/diagnostic">Start with a 15-minute diagnostic</a>
           <a class="hero-alt" href="#/review">or jump straight into practice →</a>
         </div>
+        <p class="small">Just looking around? <button type="button" class="link" id="demo">See it with sample data</button> to explore the coach and skill map without practising first.</p>
         <h2>How it works</h2>
         <ol class="steps">
           <li><b>Diagnose.</b> One question from each of the ${QT.topics.length} topics shows where you stand.</li>
@@ -28,6 +29,10 @@
           <li><b>Test yourself for real.</b> Timed mental maths, a market-making game, and mock interviews built from reported questions.</li>
         </ol>
         <p class="small">Everything is saved on this device. No account needed.</p>`;
+      el.querySelector('#demo').addEventListener('click', () => {
+        QT.demo.load();
+        QT.route();
+      });
       return;
     }
 

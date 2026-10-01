@@ -251,6 +251,11 @@ details.notes summary { cursor: pointer; color: var(--accent); font-weight: 600;
 details.notes ul { margin: 8px 0 0; padding-left: 20px; }
 .session { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; color: var(--muted); font-size: 0.9rem; }
 
+.demo-banner {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between;
+  padding: 8px 14px; margin-bottom: 16px; border-radius: 10px; background: var(--accent-soft); font-size: 0.9rem;
+}
+
 /* standalone documents (privacy) */
 main.doc { margin: 0 auto; max-width: 720px; display: block; }
 
