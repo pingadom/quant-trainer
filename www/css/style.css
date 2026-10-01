@@ -5,11 +5,13 @@
   --ink: #1b1d21;
   --muted: #676c74;
   --line: #e2e2dd;
-  --accent: #2f6fed;
+  --accent: #1d5bd8;
+  --on-accent: #ffffff;
+  --on-bad: #ffffff;
   --accent-soft: #e5edfd;
-  --ok: #1d8a4b;
+  --ok: #17703d;
   --ok-soft: #e3f4ea;
-  --bad: #c2410c;
+  --bad: #b4380b;
   --bad-soft: #fcebe2;
   --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
   --radius: 10px;
@@ -29,6 +31,8 @@
     --ok-soft: #173325;
     --bad: #ff8a5c;
     --bad-soft: #3a2219;
+    --on-accent: #0b1220; /* dark text: white on the light-blue accent is only 2.7:1 */
+    --on-bad: #1a0b05;
     color-scheme: dark;
   }
 }
@@ -107,7 +111,7 @@ button, .btn { min-height: 40px; }
   min-height: 46px; font: 600 1.2rem var(--mono); background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
 }
 .keypad button:active { background: var(--accent-soft); }
-.keypad .kp-enter { background: var(--accent); color: #fff; border-color: var(--accent); }
+.keypad .kp-enter { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .keypad.kp-disabled { opacity: 0.5; }
 input.kp-active { outline: 2px solid var(--accent); outline-offset: -1px; }
 input[readonly] { caret-color: transparent; }
@@ -133,7 +137,7 @@ input[readonly] { caret-color: transparent; }
 /* mistakes deck */
 .badge {
   display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; margin-left: 4px;
-  background: var(--bad); color: #fff; font-size: 0.72rem; font-weight: 700; line-height: 20px; text-align: center; vertical-align: 1px;
+  background: var(--bad); color: var(--on-bad); font-size: 0.72rem; font-weight: 700; line-height: 20px; text-align: center; vertical-align: 1px;
 }
 .badge[hidden] { display: none; }
 .fb-note { font-weight: 400; opacity: 0.85; }
@@ -185,7 +189,7 @@ a.sk:hover { border-color: var(--accent); }
 /* interview bank */
 .chips.filter { margin-bottom: 12px; }
 .chips.filter .chip { text-decoration: none; padding: 5px 11px; font-size: 0.8rem; }
-.chips.filter .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.chips.filter .chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .tag.firm { margin-bottom: 0; }
 .qlist { display: grid; gap: 10px; }
 .qitem { display: block; color: var(--ink); text-decoration: none; }
@@ -214,7 +218,7 @@ h1.q-title { font-size: 1.3rem; }
 
 button, .btn {
   font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--accent);
-  background: var(--accent); color: #fff; padding: 8px 16px; font-weight: 600; text-decoration: none; display: inline-block;
+  background: var(--accent); color: var(--on-accent); padding: 8px 16px; font-weight: 600; text-decoration: none; display: inline-block;
 }
 button:hover, .btn:hover { filter: brightness(1.08); }
 button.ghost, .btn.ghost { background: transparent; color: var(--accent); }
