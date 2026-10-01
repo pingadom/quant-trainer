@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Only same-origin scripts may run (plus the optional, cookie-free GoatCounter analytics).
+       Native builds strip this line in CI because Capacitor injects its bridge as an inline script. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.goatcounter.com; connect-src 'self' https://*.goatcounter.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self'; manifest-src 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Quant Trainer</title>
   <meta name="description" content="Practice for quant trading interviews: probability, statistics, mental maths, market making, real reported interview questions and market case studies.">
   <meta property="og:type" content="website">
@@ -64,21 +68,30 @@
     </a>
   </nav>
 
-  <script src="js/core.js"></script>
-  <script src="js/platform.js"></script>
-  <script src="js/gens-interview.js"></script>
-  <script src="js/gens-foundations.js"></script>
-  <script src="js/gens-extra.js"></script>
-  <script src="js/topics.js"></script>
-  <script src="js/cases.js"></script>
-  <script src="js/bank.js"></script>
-  <script src="js/keypad.js"></script>
-  <script src="js/review.js"></script>
-  <script src="js/coach.js"></script>
-  <script src="js/estimate.js"></script>
-  <script src="js/mental.js"></script>
-  <script src="js/market.js"></script>
-  <script src="js/lab.js"></script>
-  <script src="js/app.js"></script>
+  <script defer src="js/config.js"></script>
+  <script defer src="js/core.js"></script>
+  <script defer src="js/platform.js"></script>
+  <script defer src="js/gens-interview.js"></script>
+  <script defer src="js/gens-foundations.js"></script>
+  <script defer src="js/gens-extra.js"></script>
+  <script defer src="js/topics.js"></script>
+  <script defer src="js/cases.js"></script>
+  <script defer src="js/bank.js"></script>
+  <script defer src="js/keypad.js"></script>
+  <script defer src="js/review.js"></script>
+  <script defer src="js/coach.js"></script>
+  <script defer src="js/estimate.js"></script>
+  <script defer src="js/mental.js"></script>
+  <script defer src="js/market.js"></script>
+  <script defer src="js/lab.js"></script>
+  <script defer src="js/ui.js"></script>
+  <script defer src="js/views/home.js"></script>
+  <script defer src="js/views/practice.js"></script>
+  <script defer src="js/views/coach.js"></script>
+  <script defer src="js/views/bank.js"></script>
+  <script defer src="js/views/cases.js"></script>
+  <script defer src="js/views/more.js"></script>
+  <script defer src="js/views/roadmap.js"></script>
+  <script defer src="js/app.js"></script>
 </body>
 </html>

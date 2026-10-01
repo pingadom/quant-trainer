@@ -192,6 +192,7 @@ a.sk:hover { border-color: var(--accent); }
 .qitem:hover { border-color: var(--accent); }
 .qitem .qtext { margin: 8px 0; }
 .stem { margin: 0 0 10px; }
+h1.q-title { font-size: 1.3rem; }
 .card.note { border-left: 3px solid var(--bad); margin: 10px 0; font-size: 0.92rem; }
 .intel ul { padding-left: 20px; margin: 8px 0; }
 .intel summary { cursor: pointer; }
@@ -249,6 +250,9 @@ details.notes { margin-bottom: 14px; }
 details.notes summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 details.notes ul { margin: 8px 0 0; padding-left: 20px; }
 .session { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; color: var(--muted); font-size: 0.9rem; }
+
+/* standalone documents (privacy) */
+main.doc { margin: 0 auto; max-width: 720px; display: block; }
 
 /* home */
 .eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }

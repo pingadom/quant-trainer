@@ -1,0 +1,89 @@
+// More: secondary sections, install prompt, settings and data import/export.
+(function () {
+  const store = QT.store;
+
+  function more(el) {
+    let pref = 'auto';
+    try { pref = localStorage.getItem('qt-keypad') || 'auto'; } catch { /* storage blocked: use default */ }
+    el.innerHTML = `
+      <h1>More</h1>
+      <h2 class="menu-head">Interview prep</h2>
+      <div class="menu">
+        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 format and a 2-minute sprint</span></a>
+        <a class="card" href="#/market"><b>Market making</b><span class="small">Quote on hidden dice against informed flow</span></a>
+        <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
+      </div>
+      <h2 class="menu-head">Learn</h2>
+      <div class="menu">
+        <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
+        <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
+        <a class="card" href="#/roadmap"><b>Roadmap</b><span class="small">Stages, books and milestones</span></a>
+      </div>
+
+      <div id="install"></div>
+
+      <h2>Settings</h2>
+      <div class="card">
+        <label for="kp">On-screen number pad</label>
+        <select id="kp" style="margin-left:8px">
+          ${['auto', 'on', 'off'].map((v) => `<option value="${v}" ${pref === v ? 'selected' : ''}>${v === 'auto' ? 'Automatic (touch screens)' : v === 'on' ? 'Always' : 'Never'}</option>`).join('')}
+        </select>
+      </div>
+
+      <h2>Your data</h2>
+      <p class="small">Progress is saved on this device only. Export a backup to move it between devices. <a href="privacy.html">Privacy</a></p>
+      <div class="row">
+        <button class="ghost" id="exp">Export progress</button>
+        <label class="btn ghost" style="margin:0">Import<input type="file" id="imp" accept=".json,application/json" hidden></label>
+        <button class="ghost" id="rst">Reset</button>
+      </div>
+      <p class="small" id="exp-msg"></p>
+      <p class="small version">Quant Trainer ${QT.VERSION} · running as ${QT.platform.mode()}</p>`;
+
+    // "Install as an app" card: only on the website, and only where installing is possible.
+    const installBox = el.querySelector('#install');
+    const drawInstall = () => {
+      const P = QT.platform;
+      if (P.native || P.standalone()) return (installBox.innerHTML = '');
+      if (P.canInstall()) {
+        installBox.innerHTML = `<h2>Install the app</h2><div class="card"><p style="margin-top:0">Add Quant Trainer to your home screen. It opens full-screen and works offline.</p><button id="do-install">Install</button></div>`;
+        installBox.querySelector('#do-install').addEventListener('click', async () => { if (await P.install()) drawInstall(); });
+      } else if (P.isIOS) {
+        installBox.innerHTML = `<h2>Install the app</h2><div class="card"><p style="margin:0">In Safari, tap <b>Share</b> then <b>Add to Home Screen</b>. It opens full-screen and works offline.</p></div>`;
+      } else installBox.innerHTML = '';
+    };
+    drawInstall();
+    document.addEventListener('qt:installable', drawInstall, { once: true });
+
+    el.querySelector('#kp').addEventListener('change', (e) => {
+      try { localStorage.setItem('qt-keypad', e.target.value); } catch { /* storage blocked */ }
+    });
+    el.querySelector('#exp').addEventListener('click', async () => {
+      const msg = el.querySelector('#exp-msg');
+      try {
+        const how = await QT.platform.exportFile(`quant-trainer-progress-${new Date().toISOString().slice(0, 10)}.json`, store.exportJson());
+        msg.textContent = how === 'copied' ? 'Progress copied to the clipboard. Paste it somewhere safe.' : how === 'downloaded' ? 'Progress file downloaded.' : '';
+      } catch {
+        msg.textContent = 'Export failed. Try again.';
+      }
+    });
+    el.querySelector('#imp').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        store.importJson(await file.text()); // validated and sanitised in core.js
+        location.hash = '#/';
+      } catch {
+        el.querySelector('#exp-msg').textContent = 'That file could not be read as a progress export.';
+      }
+    });
+    el.querySelector('#rst').addEventListener('click', () => {
+      if (confirm('Erase all progress? This cannot be undone.')) {
+        store.reset();
+        location.hash = '#/';
+      }
+    });
+  }
+
+  QT.views = Object.assign(QT.views || {}, { more });
+})();
