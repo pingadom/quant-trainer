@@ -132,7 +132,7 @@
 
   // A question source for questionCard (app.js). Responsive: after a miss, 65% of the time
   // the same skill comes straight back with new numbers; after 3 correct in a row it rests.
-  function source(ids, { limit = Infinity, label = null } = {}) {
+  function source(ids, { limit = Infinity, label = null, showTopic = true } = {}) {
     let last = null, served = 0;
     const streak = {}, rested = new Set();
     return () => {
@@ -145,7 +145,7 @@
       served++;
       const { topic, gi, name } = parse(id);
       return {
-        tag: `${label ? label(served) + ' · ' : ''}${topic.name} · ${name}${again ? ' · another one like that' : ''}`,
+        tag: `${label ? label(served) + ' · ' : ''}${showTopic ? topic.name + ' · ' : ''}${name}${again ? ' · another one like that' : ''}`,
         p: topic.gens[gi](),
         skill: id,
         topicId: topic.id,
@@ -207,7 +207,7 @@
       for (const e of errors().slice(-30)) if (e.type === h.type && e.skill) where[e.skill] = (where[e.skill] || 0) + 1;
       const worst = Object.entries(where).sort((a, b) => b[1] - a[1])[0];
       const s = worst && parse(worst[0]);
-      recs.push({ pri: 70 + h.n, kind: 'habit', title: `Habit: ${h.label.toLowerCase()} (${h.n} of your last ${Math.min(errors().length, 30)} mistakes)`, why: h.advice, ...(s ? { href: `#/drill/${s.topic.id}/${s.gi}`, label: `Drill ${s.name}` } : { href: '#/review', label: 'Mixed review' }) });
+      recs.push({ pri: 70 + h.n, kind: 'habit', title: `Habit: ${h.label.toLowerCase()} (${h.n} of your last ${Math.min(errors().length, 30)} mistakes)`, why: h.advice, ...(s ? { href: `#/drill/${s.topic.id}/${s.gi}`, label: `Drill ${s.name}` } : { href: '#/review', label: 'Mixed practice' }) });
     }
 
     for (const s of attempted.filter((x) => x.status === 'shaky')) {

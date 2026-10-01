@@ -19,7 +19,7 @@ Then open <http://localhost:8765/www/>. Any static file server works; opening `w
 | **Interview questions** | 24 questions candidates report from Jane Street, SIG, Optiver, IMC, Citadel, Five Rings, Two Sigma and Flow Traders, plus common formats. Each is paraphrased with a source link, has worked solutions and follow-ups, shows each firm's reported process, and can be run as a timed mock interview. |
 | **Practice** | 14 topics, 79 randomised generators, worked solutions, Monte Carlo "check by simulation", and adaptive mixed review. |
 | **Coach** | Tracks all 79 skills individually (accuracy and speed), diagnoses each wrong answer (complement slip, % vs decimal, sign, inverted ratio, factor of 2, variance vs SD, rounding, method), and ranks recommendations with reasons and one-tap drills. Includes a 14-question diagnostic, a skill map, error habits, and responsive sessions that repeat a missed skill straight away and rest mastered ones. |
-| **Mistakes deck** | Every wrong answer is saved exactly as you saw it and comes back for spaced review after 1, 3, 7 and 21 days until mastered. |
+| **Mistakes to review** | Every wrong answer is saved exactly as you saw it and comes back for spaced review after 1, 3, 7 and 21 days until mastered. |
 | **Estimation & calibration** | Quote a low–high range on 43 fact-checked quantities. You score low/high if the truth is inside (the interval format reported for Optiver), and it tracks whether your ranges are honest 90% intervals. |
 | **Case studies** | 14 real market events (LTCM, Black Monday, Volmageddon, negative oil, Archegos, …), each with verified facts, the statistical lesson, questions and sources. |
 | **Mental maths** | "80 in 8" (multiple choice, net scoring, no going back) and a 2-minute sprint. |
