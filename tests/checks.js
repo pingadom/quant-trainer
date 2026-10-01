@@ -131,6 +131,25 @@
       QT.store.importJson(saved);
     }
 
+    // Security: an imported progress file can't smuggle in script, and junk fields are dropped.
+    {
+      const saved = QT.store.exportJson();
+      const evil = {
+        topics: { dice: { attempts: '7', correct: 5, recent: [1, 0, 'x'] }, '<img src=x onerror=alert(1)>': {} },
+        mistakes: [{ key: '<b onclick=x>k</b>', tag: '<script>alert(1)</script>t', p: { q: 'Q <img src=x onerror=alert(1)><sup>2</sup><script>alert(2)</script>', a: '0.5', sol: '<a href="javascript:alert(1)">s</a>' }, box: 99 }, 'not an object', { p: { a: 'NaN' } }],
+        errors: [{ type: '<i>x</i>', skill: 'dice.1' }],
+        estimate: { n: 'lots' },
+        __proto__evil: 1, unknownField: '<script>',
+      };
+      QT.store.importJson(JSON.stringify(evil));
+      const s = QT.store.get(), dump = JSON.stringify(s);
+      if (/onerror|<script|javascript:|onclick/i.test(dump)) fail(`security: unsafe markup survived import: ${dump.match(/.{0,40}(onerror|<script|javascript:|onclick).{0,20}/i)[0]}`);
+      if (s.topics.dice.attempts !== 7 || s.topics.dice.recent.join('') !== '101') fail('security: numeric fields not coerced');
+      if (s.mistakes.length !== 1 || s.mistakes[0].p.a !== 0.5 || s.mistakes[0].box !== 3) fail(`security: mistakes not validated (${s.mistakes.length})`);
+      if ('unknownField' in s || s.estimate.n !== 0) fail('security: unknown or invalid fields kept');
+      QT.store.importJson(saved);
+    }
+
     // Answer parsing.
     const parse = [['5/36', 5 / 36], ['13.9%', 0.139], ['1,250', 1250], ['-0.7', -0.7], ['.5', 0.5]];
     for (const [s, v] of parse) if (Math.abs(QT.parseAnswer(s) - v) > 1e-12) fail(`parse ${s}`);
@@ -139,7 +158,8 @@
     // Build consistency: every script the page loads must be precached for offline use,
     // and the version must match everywhere.
     if (files.index && files.sw) {
-      const scripts = [...files.index.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
+      const scripts = [...files.index.matchAll(/<script(?: defer)? src="([^"]+)"/g)].map((m) => m[1]);
+      if (scripts.length < 10) fail(`build: only found ${scripts.length} scripts in index.html`);
       const cached = [...files.sw.matchAll(/'([^']+)'/g)].map((m) => m[1]);
       for (const s of scripts) if (!cached.includes(s)) fail(`sw.js does not precache ${s}`);
       const swVer = (files.sw.match(/VERSION = 'qt-([^']+)'/) || [])[1];

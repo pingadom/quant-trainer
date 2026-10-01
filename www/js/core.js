@@ -90,7 +90,8 @@
 
   // ---- Progress storage (localStorage, per browser) ----
   const KEY = 'quant-trainer:v1';
-  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
+  const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
+  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
   let state;
 
   function load() {
@@ -110,6 +111,70 @@
     }
     if (QT.platform) QT.platform.persist(KEY, json); // native: mirror to durable storage
   }
+  // ---- Untrusted input: imported progress files ----
+  // Saved problems contain HTML (sup/sub/b…), so an imported file could smuggle in markup
+  // that runs script when rendered. Every field is rebuilt from a schema: numbers are coerced,
+  // plain-text fields lose all tags, and HTML fields keep only a small inert allow-list.
+  const ALLOWED = new Set(['B', 'I', 'EM', 'STRONG', 'SUP', 'SUB', 'P', 'BR', 'UL', 'OL', 'LI', 'SPAN']);
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  function sanitizeHtml(html) {
+    html = String(html ?? '').slice(0, 20000);
+    if (typeof document === 'undefined') return escapeHtml(html.replace(/<[^>]*>/g, '')); // no DOM (tests): plain text
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html; // template content is inert: nothing runs or loads while we clean it
+    const clean = (node) => {
+      for (const child of [...node.childNodes]) {
+        if (child.nodeType === 3) continue;
+        if (child.nodeType !== 1 || !ALLOWED.has(child.tagName)) {
+          child.replaceWith(document.createTextNode(child.nodeType === 1 ? child.textContent : ''));
+          continue;
+        }
+        for (const a of [...child.attributes]) if (!(a.name === 'class' && /^[\w -]*$/.test(a.value))) child.removeAttribute(a.name);
+        clean(child);
+      }
+    };
+    clean(tpl.content);
+    const out = document.createElement('div');
+    out.appendChild(tpl.content);
+    return out.innerHTML;
+  }
+  const num = (x, d = 0) => (x !== null && x !== '' && Number.isFinite(+x) ? +x : d);
+  const obj = (x) => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
+  const arr = (x, cap) => (Array.isArray(x) ? x.slice(-cap) : []);
+  const text = (x, len = 300) => String(x ?? '').replace(/<[^>]*>/g, '').slice(0, len);
+  const bits = (a, cap) => arr(a, cap).map((v) => (v ? 1 : 0));
+  const results = (r) => ({ results: arr(obj(r).results, 50).map((v) => (v === null || v === undefined ? null : !!v)) });
+  const mapKeys = (o, fn, keyOk = () => true) => Object.fromEntries(Object.entries(obj(o)).filter(([k]) => keyOk(k)).slice(0, 500).map(([k, v]) => [text(k, 80), fn(v)]));
+
+  function sanitizeState(raw) {
+    const r = obj(raw), s = blank();
+    s.topics = mapKeys(r.topics, (t) => ({ attempts: num(obj(t).attempts), correct: num(obj(t).correct), recent: bits(obj(t).recent, 20) }));
+    s.days = arr(r.days, 3650).filter((d) => /^\d{4}-\d\d-\d\d$/.test(d));
+    s.mental = mapKeys(r.mental, (m) => ({ best: obj(m).best == null ? null : num(obj(m).best), runs: arr(obj(m).runs, 50).map((x) => ({ date: text(obj(x).date, 40), correct: num(obj(x).correct), wrong: num(obj(x).wrong) })) }), (k) => ['sprint', 'full'].includes(k));
+    const mk = obj(r.market);
+    s.market = { games: num(mk.games), total: num(mk.total), best: mk.best == null ? null : num(mk.best), history: arr(mk.history, 100).map((x) => ({ date: text(obj(x).date, 40), pnl: num(obj(x).pnl), midErr: num(obj(x).midErr) })) };
+    s.roadmap = mapKeys(r.roadmap, (v) => !!v);
+    s.cases = mapKeys(r.cases, results);
+    s.bank = mapKeys(r.bank, results);
+    s.mistakes = arr(r.mistakes, 500).map((raw) => {
+      const m = obj(raw), p = obj(m.p), tol = obj(p.tol);
+      return {
+        key: text(m.key, 240), tag: text(m.tag, 120),
+        p: { q: sanitizeHtml(p.q), a: num(p.a), sol: sanitizeHtml(p.sol), ...(p.tol ? { tol: { abs: num(tol.abs, 1e-4), rel: num(tol.rel, 0.01) } } : {}) },
+        box: Math.min(3, Math.max(0, Math.floor(num(m.box)))), due: num(m.due), added: num(m.added),
+      };
+    }).filter((m) => m.key && Number.isFinite(m.p.a));
+    s.mastered = num(r.mastered);
+    s.skills = mapKeys(r.skills, (k) => ({ n: num(obj(k).n), c: num(obj(k).c), recent: bits(obj(k).recent, 10), times: arr(obj(k).times, 10).map((x) => num(x)), last: num(obj(k).last) }), (k) => /^[a-z]+\.\d+$/.test(k));
+    s.errors = arr(r.errors, 100).map((e) => ({ type: text(obj(e).type, 20), skill: obj(e).skill ? text(e.skill, 40) : null, tag: text(obj(e).tag, 120), t: num(obj(e).t) }));
+    const es = obj(r.estimate);
+    s.estimate = { rounds: num(es.rounds), best: es.best == null ? null : num(es.best), hits: num(es.hits), n: num(es.n) };
+    s.log = arr(r.log, LOG_CAP).map((x) => ({ s: text(obj(x).s, 40), ok: obj(x).ok ? 1 : 0, ms: num(obj(x).ms), t: num(obj(x).t) }));
+    return s;
+  }
+  QT.escapeHtml = escapeHtml;
+  QT.sanitizeHtml = sanitizeHtml;
+
   // True when nothing has been recorded yet (used to decide whether to restore a native backup).
   const isEmpty = () => !state.days.length && !Object.keys(state.topics).length && !Object.keys(state.bank).length && !Object.keys(state.cases).length && !state.market.games;
   const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -144,8 +209,9 @@
       return n;
     },
     exportJson: () => JSON.stringify(state, null, 2),
+    // Imported files are untrusted: rebuild the state from known fields only (see sanitizeState).
     importJson(text) {
-      state = Object.assign(blank(), JSON.parse(text));
+      state = sanitizeState(JSON.parse(text));
       save();
     },
     reset() {
