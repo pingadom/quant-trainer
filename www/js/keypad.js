@@ -3,6 +3,7 @@
 (function () {
   const KEYS = ['7', '8', '9', 'back', '4', '5', '6', '/', '1', '2', '3', '%', '-', '0', '.', 'enter'];
   const LABEL = { back: '⌫', enter: '↵', '-': '−' };
+  const ARIA = { back: 'Delete', enter: 'Enter', '-': 'Minus', '/': 'Divide', '%': 'Percent', '.': 'Decimal point' };
 
   function enabled() {
     try {
@@ -30,7 +31,9 @@
 
     const pad = document.createElement('div');
     pad.className = 'keypad';
-    pad.innerHTML = KEYS.map((k) => `<button type="button" data-k="${k}" class="${k === 'enter' ? 'kp-enter' : ''}">${LABEL[k] || k}</button>`).join('');
+    pad.setAttribute('role', 'group');
+    pad.setAttribute('aria-label', 'Number pad');
+    pad.innerHTML = KEYS.map((k) => `<button type="button" data-k="${k}" class="${k === 'enter' ? 'kp-enter' : ''}"${ARIA[k] ? ` aria-label="${ARIA[k]}"` : ''}>${LABEL[k] || k}</button>`).join('');
     pad.addEventListener('pointerdown', (e) => {
       const btn = e.target.closest('button');
       if (!btn) return;

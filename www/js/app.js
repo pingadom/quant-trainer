@@ -41,6 +41,8 @@
         <div class="row"><a class="btn" href="#/bank">Browse questions</a><a class="btn ghost" href="#/mock">Start a mock interview</a></div>
       </div>
 
+      ${QT.mistakes.due().length ? `<div class="card due-card"><b>${QT.mistakes.due().length} mistake${QT.mistakes.due().length > 1 ? 's' : ''} due for review.</b> Spaced review is the fastest way to stop repeating them. <a class="btn" href="#/mistakes/due">Review now</a></div>` : ''}
+
       ${featured ? `<h2>Today's case study</h2>${caseCard(featured)}` : ''}
 
       <h2>Focus next</h2>
@@ -78,7 +80,7 @@
     el.innerHTML = `
       <h1>Topics</h1>
       <p class="lede">Every problem is randomly generated, so you can drill a topic indefinitely. The bar shows mastery: recent accuracy, discounted until you've done about 20 problems.</p>
-      <div class="row"><a class="btn" href="#/review">Mixed review</a><a class="btn ghost" href="#/bank">Real interview questions</a></div>
+      <div class="row"><a class="btn" href="#/review">Mixed review</a><a class="btn ghost" href="#/mistakes">Mistakes deck <span class="badge" data-badge="mistakes" hidden></span></a><a class="btn ghost" href="#/bank">Real interview questions</a></div>
       ${Object.entries(TRACKS).map(([k, label]) => `
         <h2>${label}</h2>
         <div class="grid">${QT.topics.filter((t) => t.track === k).map((t) => topicCard(t, QT.mastery(t.id))).join('')}</div>`).join('')}`;
@@ -131,11 +133,11 @@
         <div class="tag" id="p-tag"></div>
         <div class="question" id="p-q"></div>
         <form class="answer-row" id="p-form">
-          <input type="text" id="p-in" inputmode="decimal" autocomplete="off" placeholder="e.g. 5/36, 0.139 or 13.9%">
+          <input type="text" id="p-in" inputmode="decimal" autocomplete="off" placeholder="e.g. 5/36, 0.139 or 13.9%" aria-label="Your answer">
           <button id="p-btn">Check</button>
           <button type="button" class="ghost" id="p-skip">Show answer</button>
         </form>
-        <div id="p-fb"></div>
+        <div id="p-fb" aria-live="polite"></div>
       </div>
       <p class="small" style="margin-top:12px">Answers can be decimals, fractions or percentages; small rounding differences are accepted. Press Enter (↵) again for the next problem.</p>`;
 
@@ -164,14 +166,17 @@
       answered = true;
       solved++;
       if (ok) right++;
-      item.record(ok);
+      const fate = item.record(ok);
+      if (!ok && !item.isReview) QT.mistakes.add(item.tag, p); // comes back for spaced review
+      updateBadges();
       $in.disabled = true;
       $skip.hidden = true;
       $btn.textContent = 'Next →';
       $('#s-count').textContent = `This session: ${right}/${solved} correct`;
+      const note = item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok ? ' · saved to your mistakes deck' : '';
       const head = ok
-        ? `<div class="fb ok">✓ Correct: ${f(p.a)}</div>`
-        : `<div class="fb bad">✗ ${userVal === undefined ? 'Answer' : `You said ${f(userVal)}. Answer`}: ${f(p.a)}</div>`;
+        ? `<div class="fb ok">✓ Correct: ${f(p.a)}<span class="fb-note">${note}</span></div>`
+        : `<div class="fb bad">✗ ${userVal === undefined ? 'Answer' : `You said ${f(userVal)}. Answer`}: ${f(p.a)}<span class="fb-note">${note}</span></div>`;
       $fb.innerHTML = `${head}<div class="solution">${p.sol}</div>
         ${p.sim ? `<div class="row" style="margin-top:10px"><button type="button" class="ghost" id="p-sim">Check by simulation</button></div><div class="sim-out" id="p-simout"></div>` : ''}`;
       if (p.sim) $('#p-sim').addEventListener('click', runSim);
@@ -389,6 +394,58 @@
     });
   }
 
+  // ---------------------------------------------------------------- mistakes deck
+  function updateBadges() {
+    const n = QT.mistakes.due().length;
+    document.querySelectorAll('[data-badge="mistakes"]').forEach((b) => {
+      b.textContent = n;
+      b.hidden = !n;
+    });
+  }
+
+  function mistakesView(el, mode) {
+    const all = QT.mistakes.all(), due = QT.mistakes.due();
+    const reviewing = mode === 'due' ? due : mode === 'all' ? [...all] : null;
+    if (reviewing && reviewing.length) {
+      el.innerHTML = `
+        <a class="back" href="#/mistakes">← Mistakes deck</a>
+        <h1>Reviewing ${reviewing.length} mistake${reviewing.length > 1 ? 's' : ''}</h1>
+        <p class="lede">Get one right and it comes back later (${QT.mistakes.INTERVALS.slice(1).join(', ')} days). Get it right at every step and it's retired.</p>
+        <div id="qbox"></div>`;
+      let k = 0;
+      const source = () => {
+        if (k >= reviewing.length) return null;
+        const m = reviewing[k++];
+        return { tag: `${m.tag} · review`, p: m.p, isReview: true, record: (ok) => QT.mistakes.review(m, ok) };
+      };
+      questionCard(el.querySelector('#qbox'), source, (box, r) => {
+        box.innerHTML = `<div class="card"><h3>Review done: ${r.right}/${r.solved} correct</h3><p class="small">${QT.mistakes.all().length} card(s) left in your deck; ${store.get().mastered || 0} mastered so far.</p><a class="btn" href="#/mistakes">Back to deck</a></div>`;
+      });
+      return;
+    }
+    const fmtDue = (t) => {
+      const d = Math.ceil((t - Date.now()) / 864e5);
+      return d <= 0 ? 'due now' : d === 1 ? 'tomorrow' : `in ${d} days`;
+    };
+    el.innerHTML = `
+      <h1>Mistakes deck</h1>
+      <p class="lede">Every problem you get wrong is saved here exactly as you saw it. It returns after 1 day; each correct review pushes it out further (3, 7, 21 days) until it's retired. Revisiting mistakes at growing intervals is one of the most effective ways to learn.</p>
+      <div class="tiles">
+        <div class="tile"><div class="v">${due.length}</div><div class="k">due now</div></div>
+        <div class="tile"><div class="v">${all.length}</div><div class="k">in deck</div></div>
+        <div class="tile"><div class="v">${store.get().mastered || 0}</div><div class="k">mastered</div></div>
+      </div>
+      ${all.length ? `<div class="row" style="margin:6px 0 18px">
+          ${due.length ? `<a class="btn" href="#/mistakes/due">Review ${due.length} due</a>` : ''}
+          <a class="btn ${due.length ? 'ghost' : ''}" href="#/mistakes/all">Review all ${all.length} now</a>
+        </div>
+        <div class="card table-wrap"><table>
+          <tr><th>Problem</th><th>Topic</th><th class="num">Next review</th></tr>
+          ${[...all].sort((a, b) => a.due - b.due).map((m) => `<tr><td>${m.key.slice(0, 90)}${m.key.length > 90 ? '…' : ''}</td><td class="small">${m.tag}</td><td class="num">${fmtDue(m.due)}</td></tr>`).join('')}
+        </table></div>`
+      : `<div class="card"><p style="margin:0">Your deck is empty. Wrong answers in practice, interview questions and case studies land here automatically.</p></div>`}`;
+  }
+
   // ---------------------------------------------------------------- more / settings
   function moreView(el) {
     let pref = 'auto';
@@ -398,6 +455,8 @@
       <div class="menu">
         <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 format and a 2-minute sprint</span></a>
         <a class="card" href="#/market"><b>Market making</b><span class="small">Quote on hidden dice against informed flow</span></a>
+        <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
+        <a class="card" href="#/mistakes"><b>Mistakes deck <span class="badge" data-badge="mistakes" hidden></span></b><span class="small">Spaced review of everything you got wrong</span></a>
         <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
         <a class="card" href="#/roadmap"><b>Roadmap</b><span class="small">Stages, books and milestones</span></a>
       </div>
@@ -495,6 +554,7 @@
       stage: '3 · Markets & trading intuition',
       items: [
         { id: 'cases', text: 'Work through every case study and be able to explain each in two minutes', auto: () => ({ done: casesDone() === QT.cases.length, note: `${casesDone()}/${QT.cases.length}` }) },
+        { id: 'calib', text: 'Reach 80–95% calibration over 50+ estimation questions', auto: () => { const e = store.get().estimate; const c = e.n ? e.hits / e.n : 0; return { done: e.n >= 50 && c >= 0.8 && c <= 0.95, note: `${e.n}/50 · ${e.n ? Math.round(c * 100) + '%' : '–'}` }; } },
         { id: 'mm20', text: 'Play 20 market-making games with a positive average P&L', auto: () => { const m = store.get().market; return { done: m.games >= 20 && m.total > 0, note: `${m.games}/20 · avg ${m.games ? f(m.total / m.games) : '–'}` }; } },
         { id: 'natenberg', text: 'Read "Option Volatility and Pricing" (Natenberg)' },
         { id: 'hull', text: 'Read "Options, Futures, and Other Derivatives" (Hull), chapters on pricing and the Greeks' },
@@ -553,6 +613,8 @@
     bank: bankView,
     iq: bankQuestion,
     mock: mockView,
+    mistakes: mistakesView,
+    estimate: (el) => QT.estimate.render(el),
     more: moreView,
     mental: (el) => QT.mental.render(el),
     market: (el) => QT.market.render(el),
@@ -561,7 +623,7 @@
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
   const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', mock: 'bank' };
-  const TAB_PARENT = { topic: 'practice', review: 'practice', case: 'cases', iq: 'bank', mock: 'bank', mental: 'more', market: 'more', lab: 'more', roadmap: 'more' };
+  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', case: 'cases', iq: 'bank', mock: 'bank', mental: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more' };
 
   function route() {
     if (QT.cleanup) QT.cleanup();
@@ -572,6 +634,7 @@
     const navKey = NAV_PARENT[key] ?? key, tabKey = TAB_PARENT[key] ?? key;
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));
+    updateBadges();
     window.scrollTo(0, 0);
   }
 
