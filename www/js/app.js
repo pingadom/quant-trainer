@@ -17,8 +17,8 @@
     talk: (el, id) => QT.talk.render(el, id),
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
-  const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', mock: 'bank', drill: 'coach', tricks: 'mental' };
-  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', drill: 'coach', cases: 'more', case: 'more', iq: 'bank', mock: 'bank', mental: 'more', tricks: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more', quote: 'more', kelly: 'more', figgie: 'more', oa: 'more', talk: 'bank', daily: '', progress: 'more' };
+  const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', mock: 'bank', drill: 'coach', tricks: 'mental', appearance: 'more' };
+  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', drill: 'coach', cases: 'more', case: 'more', iq: 'bank', mock: 'bank', mental: 'more', tricks: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more', quote: 'more', kelly: 'more', figgie: 'more', oa: 'more', talk: 'bank', daily: '', progress: 'more', appearance: 'more' };
 
   const decode = (s) => {
     try {
@@ -54,6 +54,7 @@
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));
     QT.ui.updateBadges();
+    QT.flair.ticker();
     const h1 = main.querySelector('h1');
     document.title = key && h1 ? `${h1.textContent} · Quant Trainer` : 'Quant Trainer';
     window.scrollTo(0, 0);

@@ -38,7 +38,7 @@
             <h3>Round ${Math.min(revealed + 1, N_DICE)} of ${N_DICE}</h3>
             <span class="mono small">Position: <b>${pos > 0 ? '+' : ''}${pos}</b> · Cash: <b>${f(cash)}</b></span>
           </div>
-          <div class="dice">${dice.map((d, i) => `<div class="die ${i < revealed ? '' : 'hidden'}">${i < revealed ? d : '?'}</div>`).join('')}</div>
+          <div class="dice">${dice.map((d, i) => `<div class="die ${i < revealed ? (i === revealed - 1 ? 'flip' : '') : 'hidden'}">${i < revealed ? QT.flair.dieFace(d) : '?'}</div>`).join('')}</div>
           ${over ? '' : `
           <form class="row" id="quote">
             <label>Bid <input type="text" inputmode="decimal" autocomplete="off" id="bid" style="width:90px"></label>

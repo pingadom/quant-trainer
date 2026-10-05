@@ -90,9 +90,13 @@
   // Match the status bar to the theme.
   const bar = plugin('StatusBar');
   if (bar) {
-    const sync = () => bar.setStyle({ style: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'DARK' : 'LIGHT' }).catch(() => {});
+    const sync = () => {
+      const dark = QT.theme ? QT.theme.dark() : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      bar.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(() => {});
+      if (bar.setBackgroundColor && QT.theme) bar.setBackgroundColor({ color: QT.theme.THEMES[QT.theme.current()].bg }).catch(() => {});
+    };
     sync();
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sync);
+    document.addEventListener('qt:theme', sync); // fired by js/theme.js on any change, including the system's
   }
 
   // Optional, privacy-friendly page-view counts (website only; configure in js/config.js).

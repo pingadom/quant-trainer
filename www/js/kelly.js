@@ -135,6 +135,7 @@
     function finish() {
       const eff = efficiency(bets), st = store.get().kelly;
       const stored = eff === null ? null : Math.max(-9.99, eff);
+      const prevBest = st.best;
       st.games++;
       if (stored !== null) st.best = st.best === null ? stored : Math.max(st.best, stored);
       store.log(st.history, { eff: stored ?? 0, final: round2(bankrolls.you), kelly: round2(bankrolls.kelly) });
@@ -143,7 +144,7 @@
       const over = bets.filter((x) => kellyF(x.p, x.b) > 0 && x.f > 2 * kellyF(x.p, x.b)).length;
       const negTaken = bets.filter((x) => kellyF(x.p, x.b) <= 0 && x.f > 0).length;
       el.innerHTML = `
-        <h1>Results</h1>
+        <h1>Results${stored !== null && (prevBest === null || stored > prevBest) ? QT.flair.milestone('New best') : ''}</h1>
         <div class="tiles">
           <div class="tile"><div class="v">${f(round2(bankrolls.you))}</div><div class="k">your bankroll (from ${START})</div></div>
           <div class="tile"><div class="v">${f(round2(bankrolls.kelly))}</div><div class="k">Kelly</div></div>

@@ -55,6 +55,7 @@
 | **Bet sizing** | 20 bets with known odds; you choose the stake. Compared with Kelly and half-Kelly, scored by expected log-growth so luck doesn't count. |
 | **Market making** | Quote on hidden dice against informed and noise traders. |
 | **Estimation & calibration** | Range quoting on 43 fact-checked quantities; checks whether your 90% ranges really contain the answer 90% of the time. |
+| **Themes** | Notebook, Night desk, Chalkboard and Terminal, with a ticker tape of your numbers, milestone stamps and an optional closing bell. Every theme is checked for WCAG AA contrast in CI. |
 | **Progress** | Charts of accuracy, speed, 80-in-8, calibration and every game over time, an activity heatmap, and speed against target by topic. |
 | **Case studies** | 14 real market events (LTCM, Black Monday, Volmageddon, negative oil, …) as statistics lessons, with sources. |
 

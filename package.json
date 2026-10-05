@@ -1,6 +1,6 @@
 {
   "name": "quant-trainer",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "Quant trading interview practice. One codebase in www/, deployed as a website (PWA) and wrapped as a native app with Capacitor.",
   "license": "MIT",

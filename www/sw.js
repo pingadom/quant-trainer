@@ -1,11 +1,12 @@
 // Offline support. Network-first so updates show up immediately when online;
 // falls back to the cached copy when offline. Bump VERSION when the file list changes.
-const VERSION = 'qt-0.10.0'; // keep in step with QT.VERSION in js/core.js
+const VERSION = 'qt-0.11.0'; // keep in step with QT.VERSION in js/core.js
 const ASSETS = [
   './',
   'index.html',
   'manifest.webmanifest',
   'css/style.css',
+  'js/theme.js',
   'js/config.js',
   'js/core.js',
   'js/platform.js',
@@ -32,6 +33,7 @@ const ASSETS = [
   'js/talk.js',
   'js/demo.js',
   'js/ui.js',
+  'js/flair.js',
   'js/views/home.js',
   'js/views/practice.js',
   'js/views/coach.js',
@@ -40,9 +42,17 @@ const ASSETS = [
   'js/views/more.js',
   'js/views/roadmap.js',
   'js/views/progress.js',
+  'js/views/appearance.js',
   'js/tricks.js',
   'js/app.js',
   'privacy.html',
+  'fonts/plex-sans.woff2',
+  'fonts/plex-mono-400.woff2',
+  'fonts/plex-mono-600.woff2',
+  'fonts/newsreader.woff2',
+  'fonts/newsreader-italic.woff2',
+  'fonts/kalam-400.woff2',
+  'fonts/kalam-700.woff2',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/maskable-512.png',

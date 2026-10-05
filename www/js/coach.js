@@ -225,13 +225,13 @@
 
     for (const s of attempted.filter((x) => x.status === 'weak')) {
       const slip = topErrorFor(s.id);
-      recs.push({ pri: 80 + (0.55 - s.mean) * 40, kind: 'weak', title: `Fix: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct in ${s.topic.name}.${slip ? ` Most common mistake: ${slip.toLowerCase()}.` : ''}`, ...drill(s) });
+      recs.push({ pri: 80 + (0.55 - s.mean) * 40, kind: 'weak', voice: `You're short ${s.name.toLowerCase()}: ${s.recentC} of your last ${s.recentN}. Cover it before you do anything else.`, title: `Fix: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct in ${s.topic.name}.${slip ? ` Most common mistake: ${slip.toLowerCase()}.` : ''}`, ...drill(s) });
     }
 
     // Too few tries to call it weak yet, but missed more often than not: act on it early.
     for (const s of attempted.filter((x) => x.status === 'learning' && x.recentC < x.recentN - x.recentC)) {
       const slip = topErrorFor(s.id, 1), misses = s.recentN - s.recentC;
-      recs.push({ pri: 62 + misses * 4, kind: 'missed', title: `Work on: ${s.name}`, why: `Missed ${misses} of ${s.recentN} so far (${s.topic.name}).${slip ? ` Diagnosis: ${slip.toLowerCase()}.` : ' The method needs work: read the worked solution first.'}`, ...drill(s) });
+      recs.push({ pri: 62 + misses * 4, kind: 'missed', voice: `${misses} misses out of ${s.recentN} on ${s.name.toLowerCase()}. Don't average down: read the solution, then go again.`, title: `Work on: ${s.name}`, why: `Missed ${misses} of ${s.recentN} so far (${s.topic.name}).${slip ? ` Diagnosis: ${slip.toLowerCase()}.` : ' The method needs work: read the worked solution first.'}`, ...drill(s) });
     }
 
     // A specific slip twice is already a pattern (generic method errors are covered by the skill recs).
@@ -240,33 +240,33 @@
       for (const e of errors().slice(-30)) if (e.type === h.type && e.skill) where[e.skill] = (where[e.skill] || 0) + 1;
       const worst = Object.entries(where).sort((a, b) => b[1] - a[1])[0];
       const s = worst && parse(worst[0]);
-      recs.push({ pri: 70 + h.n, kind: 'habit', title: `Habit: ${h.label.toLowerCase()} (${h.n} of your last ${Math.min(errors().length, 30)} mistakes)`, why: h.advice, ...(s ? { href: `#/drill/${s.topic.id}/${s.gi}`, label: `Drill ${s.name}` } : { href: '#/review', label: 'Mixed practice' }) });
+      recs.push({ pri: 70 + h.n, kind: 'habit', voice: `Same slip ${h.n} times. That isn't bad luck, it's a position. Close it.`, title: `Habit: ${h.label.toLowerCase()} (${h.n} of your last ${Math.min(errors().length, 30)} mistakes)`, why: h.advice, ...(s ? { href: `#/drill/${s.topic.id}/${s.gi}`, label: `Drill ${s.name}` } : { href: '#/review', label: 'Mixed practice' }) });
     }
 
     for (const s of attempted.filter((x) => x.status === 'shaky')) {
-      recs.push({ pri: 55 + (0.8 - s.mean) * 20, kind: 'shaky', title: `Firm up: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct (${s.topic.name}). Close, but not reliable yet.`, ...drill(s) });
+      recs.push({ pri: 55 + (0.8 - s.mean) * 20, kind: 'shaky', voice: `${s.name}: right more often than not, but I wouldn't size up on it yet.`, title: `Firm up: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct (${s.topic.name}). Close, but not reliable yet.`, ...drill(s) });
     }
 
     for (const s of attempted.filter((x) => x.status === 'strong' && x.time && x.time > x.topic.target * 1.5)) {
-      recs.push({ pri: 50, kind: 'speed', title: `Speed up: ${s.name}`, why: `Accurate, but your median is ${f(s.time)}s against a ${s.topic.target}s target. Interviews are timed, so drill until it's automatic.`, ...drill(s) });
+      recs.push({ pri: 50, kind: 'speed', voice: `You get there on ${s.name.toLowerCase()}, just slowly. On a timed test, slow is wrong.`, title: `Speed up: ${s.name}`, why: `Accurate, but your median is ${f(s.time)}s against a ${s.topic.target}s target. Interviews are timed, so drill until it's automatic.`, ...drill(s) });
     }
 
     const mm = st.mental || {};
     // Best 80-in-8 net in either answer style (multiple choice or typed).
     const b80 = QT.mental ? QT.mental.best80() : (mm.full?.best ?? null);
-    if (b80 === null) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
-    else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
+    if (b80 === null) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', voice: 'No number on your mental maths yet. Put one on the board.', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
+    else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', voice: `${b80} net. The desk wants 55. Close the gap.`, title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
 
     const e = st.estimate || { n: 0 };
-    if (e.n >= 20 && e.hits / e.n < 0.75) recs.push({ pri: 65, kind: 'calibration', title: `Overconfident: your ranges catch the truth ${Math.round((100 * e.hits) / e.n)}% of the time`, why: 'A 90% range should miss only 1 time in 10. Widen your ranges, especially for unfamiliar quantities.', href: '#/estimate', label: 'Estimation round' });
-    else if (e.n >= 20 && e.hits / e.n > 0.97) recs.push({ pri: 40, kind: 'calibration', title: 'Underconfident: your ranges are wider than they need to be', why: "You're scoring less than you could. Tighten your ranges.", href: '#/estimate', label: 'Estimation round' });
+    if (e.n >= 20 && e.hits / e.n < 0.75) recs.push({ pri: 65, kind: 'calibration', voice: `Your 90% ranges hold ${Math.round((100 * e.hits) / e.n)}% of the time. Overconfidence is how traders blow up.`, title: `Overconfident: your ranges catch the truth ${Math.round((100 * e.hits) / e.n)}% of the time`, why: 'A 90% range should miss only 1 time in 10. Widen your ranges, especially for unfamiliar quantities.', href: '#/estimate', label: 'Estimation round' });
+    else if (e.n >= 20 && e.hits / e.n > 0.97) recs.push({ pri: 40, kind: 'calibration', voice: 'Ranges that wide never lose, and never win either.', title: 'Underconfident: your ranges are wider than they need to be', why: "You're scoring less than you could. Tighten your ranges.", href: '#/estimate', label: 'Estimation round' });
 
     const m = st.market || { games: 0 };
-    if (m.games >= 3 && m.total < 0) recs.push({ pri: 50, kind: 'market', title: `Market making: average P&L ${f(m.total / m.games)}`, why: "You're losing to the informed trader. Centre your quotes on fair value and widen as fewer dice stay hidden, because their information is worth more then.", href: '#/market', label: 'Play a game' });
+    if (m.games >= 3 && m.total < 0) recs.push({ pri: 50, kind: 'market', voice: "You're paying the informed trader. Tighten up around fair value.", title: `Market making: average P&L ${f(m.total / m.games)}`, why: "You're losing to the informed trader. Centre your quotes on fair value and widen as fewer dice stay hidden, because their information is worth more then.", href: '#/market', label: 'Play a game' });
 
     if (totalAttempts >= 10) {
       const untouched = QT.topics.filter((t) => !(st.topics[t.id]?.attempts));
-      untouched.slice(0, 2).forEach((t, i) => recs.push({ pri: 35 - i, kind: 'explore', title: `Start ${t.name}`, why: `You haven't tried this topic yet. ${t.blurb}`, href: `#/topic/${t.id}`, label: 'Practise' }));
+      untouched.slice(0, 2).forEach((t, i) => recs.push({ pri: 35 - i, kind: 'explore', voice: `Nothing on the books for ${t.name.toLowerCase()} yet.`, title: `Start ${t.name}`, why: `You haven't tried this topic yet. ${t.blurb}`, href: `#/topic/${t.id}`, label: 'Practise' }));
     }
 
     const strongShare = attempted.length ? attempted.filter((s) => s.status === 'strong').length / attempted.length : 0;
@@ -274,11 +274,11 @@
       const doneBy = {};
       for (const b of QT.bank) if (store.get().bank[b.id]?.results?.length) doneBy[b.firm] = (doneBy[b.firm] || 0) + 1;
       const firm = Object.keys(QT.firms).filter((k) => k !== 'common' && QT.bank.some((b) => b.firm === k)).sort((a, b) => (doneBy[a] || 0) - (doneBy[b] || 0))[0];
-      recs.push({ pri: 45, kind: 'interview', title: `Ready for real questions: ${QT.firms[firm].name} mock interview`, why: `${Math.round(strongShare * 100)}% of the skills you've tried are strong. Test them on questions candidates report from real interviews.`, href: `#/mock/${firm}`, label: 'Mock interview' });
+      recs.push({ pri: 45, kind: 'interview', voice: `You're ready for a real desk. Let's see how you handle ${QT.firms[firm].name}.`, title: `Ready for real questions: ${QT.firms[firm].name} mock interview`, why: `${Math.round(strongShare * 100)}% of the skills you've tried are strong. Test them on questions candidates report from real interviews.`, href: `#/mock/${firm}`, label: 'Mock interview' });
     }
 
     for (const s of attempted.filter((x) => x.status === 'strong' && Date.now() - x.last > 14 * DAY).slice(0, 2)) {
-      recs.push({ pri: 20, kind: 'refresh', title: `Refresh: ${s.name}`, why: `Strong, but you haven't practised it for ${Math.floor((Date.now() - s.last) / DAY)} days.`, ...drill(s) });
+      recs.push({ pri: 20, kind: 'refresh', voice: `${Math.floor((Date.now() - s.last) / DAY)} days since you touched ${s.name.toLowerCase()}. Keep your book fresh.`, title: `Refresh: ${s.name}`, why: `Strong, but you haven't practised it for ${Math.floor((Date.now() - s.last) / DAY)} days.`, ...drill(s) });
     }
 
     return recs.sort((a, b) => b.pri - a.pri);

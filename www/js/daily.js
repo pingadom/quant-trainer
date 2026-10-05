@@ -112,11 +112,12 @@
     QT.ui.questionCard(el.querySelector('#dc-box'), source, () => {
       clearInterval(t);
       QT.cleanup = null;
-      result(el, day, rec);
+      result(el, day, rec, true);
     });
   }
 
-  function result(el, day, rec) {
+  // `fresh`: just finished (rings the bell for a perfect score), rather than revisiting.
+  function result(el, day, rec, fresh = false) {
     const right = rec.r.filter(Boolean).length, text = shareText(day, rec);
     const recent = [];
     for (let i = 13; i >= 0; i--) {
@@ -130,7 +131,7 @@
     el.innerHTML = `
       <h1>Daily challenge #${dayNo(day)}</h1>
       <div class="card">
-        <p class="daily-squares" aria-label="${right} of ${N} correct">${squares(rec.r)}</p>
+        <p class="daily-squares" role="img" aria-label="${right} of ${N} correct">${rec.r.map((x) => `<span class="dq ${x ? 'ok' : 'bad'}"></span>`).join('')}${right === N ? (fresh ? QT.flair.milestone('Perfect') : QT.flair.stamp('Perfect')) : ''}</p>
         <div class="tiles">
           <div class="tile"><div class="v">${right}/${N}</div><div class="k">correct</div></div>
           <div class="tile"><div class="v">${clock(rec.ms)}</div><div class="k">time</div></div>
