@@ -196,6 +196,22 @@
       if (pos.some((x) => Math.abs(x - n / 4) > 5.5 * Math.sqrt(n * 0.25 * 0.75))) fail(`80-in-8: right answer positions not uniform ${pos}`);
     }
 
+    // Mental-maths review: every question type has a fast method whose own arithmetic reaches
+    // the question's answer, and points to a guide that exists.
+    if (QT.mentalTips && QT.mental) {
+      const kinds = new Set();
+      for (let k = 0; k < 6000; k++) {
+        const g = QT.mental.gens[k % QT.mental.gens.length](), fw = QT.mentalTips.fastWay(g);
+        kinds.add(g.kind);
+        if (!fw) { fail(`mental tips: no fast method for ${g.kind}`); break; }
+        if (Math.abs(fw.value - g.a) > 1e-9 + (g.tol || 0) || /undefined|NaN/.test(fw.steps) || !(QT.tricks || []).some((t) => t.id === fw.guide)) { fail(`mental tips ${g.kind} "${g.q}": method gives ${fw.value}, answer ${g.a} (${fw.name}, guide ${fw.guide})`); break; }
+        if (!QT.mentalTips.KINDS[g.kind]) { fail(`mental tips: no label for ${g.kind}`); break; }
+      }
+      if (kinds.size !== 12) fail(`mental tips: saw ${kinds.size} question types, expected 12`);
+      const html = QT.mental.review([{ ...QT.mental.gens[0](), ok: false, you: '<img src=x>', ms: 9000 }, { ...QT.mental.gens[6](), ok: true, you: '1', ms: 2000 }], 6);
+      if (/<img/.test(html) || !/1 missed, 0 right but slower/.test(html)) fail('mental review: flagging or escaping wrong');
+    }
+
     // A review that started before the state was reloaded (e.g. another tab saved) must not
     // remove the wrong card.
     if (QT.mistakes) {

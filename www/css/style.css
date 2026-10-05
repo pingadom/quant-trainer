@@ -427,3 +427,12 @@ input[type='range'] { accent-color: var(--accent); }
 label.check { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; cursor: pointer; }
 label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
 .transcript { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; margin: 10px 0; max-height: 240px; overflow-y: auto; white-space: pre-wrap; }
+
+/* ---- mental maths review ---- */
+.review-item { padding: 12px 16px; margin-top: 8px; }
+.review-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.review-meta { display: flex; gap: 8px; align-items: baseline; }
+.review-how { margin: 6px 0 0; color: var(--ink); }
+.flag { font-size: 0.78rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+.flag.slow { background: var(--accent-soft); color: var(--ink); }
+.flag.bad { background: var(--bad-soft); color: var(--ink); }

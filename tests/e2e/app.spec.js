@@ -148,6 +148,28 @@ test('80-in-8 offers multiple choice or typed answers', async ({ page, isMobile 
   }
 });
 
+test('slow and missed 80-in-8 questions come back with the fast method', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('./#/mental');
+  await page.getByRole('radio', { name: 'Multiple choice' }).click();
+  await page.locator('[data-mode="full"]').click();
+  await page.clock.runFor(7_000); // dawdle on the first question: over the 6 s threshold
+  await page.locator('#mm-mc button[data-ok="1"]').click();
+  await page.evaluate(() => {
+    for (let i = 0; i < 79; i++) {
+      const b = document.querySelectorAll('#mm-mc button');
+      if (!b.length) break;
+      (i % 4 ? [...b].find((x) => x.dataset.ok === '1') : [...b].find((x) => x.dataset.ok !== '1')).click();
+    }
+  });
+  await expect(page.getByRole('heading', { level: 2, name: 'Review' })).toBeVisible();
+  await expect(page.locator('.review-item .flag.slow')).toHaveCount(1);
+  expect(await page.locator('.review-item .flag.bad').count()).toBeGreaterThan(5);
+  await expect(page.locator('.review-item').first()).toContainText('Faster:');
+  await page.getByRole('button', { name: /Practise these types/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Speed drill');
+});
+
 test('speed-trick lesson and drill', async ({ page }) => {
   await page.goto('./#/tricks');
   await expect(page.locator('.topic-card')).toHaveCount(20);
