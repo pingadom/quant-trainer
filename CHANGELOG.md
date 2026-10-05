@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.1
+
+- **Fix:** rows of tags and filters that wrapped onto a second line (interview-question firm filters, case-study tags) spilled over the content below. The Figgie chip-stack style had reused the `.chips` class name and fixed its height. The chart legend had likewise reused the skill map's `.legend`; both now have their own names.
+- **Layout audit in CI:** every screen, in every theme, on desktop and phone, is checked for overlapping boxes (including content spilling out of its container), sideways scrolling and text clipped inside buttons (`tests/layout-audit.js`).
+
 ## 0.14.0
 
 - **Speed reps:** a mental-maths question type with two or more slow or missed answers in a run is scheduled for a short timed set of 8 questions of just that type. Pass (at most one miss, median under your threshold) and it comes back after 3, then 7, then 21 days before graduating; miss and it's back tomorrow. Due reps appear on the mental maths page, in the ticker and as a coach recommendation.

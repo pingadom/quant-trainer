@@ -2,6 +2,7 @@
 // Every test also fails on any console error, uncaught exception or CSP violation.
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
+const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
@@ -315,6 +316,20 @@ test('progress page charts the demo profile', async ({ page }) => {
   await page.goto('./?demo#/progress');
   await expect(page.locator('.heatmap')).toBeVisible();
   expect(await page.locator('.chart svg').count()).toBeGreaterThanOrEqual(8);
+});
+
+// Overlapping boxes, sideways scrolling and clipped button text, on every screen, in every theme.
+// (A CSS class-name clash once made wrapped filter chips spill over the box below them.)
+test('layout: nothing overlaps, overflows or clips on any screen', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.addInitScript(() => localStorage.setItem('qt-talk-prefs', JSON.stringify({ rec: false, live: false })));
+  await page.goto('./?demo#/');
+  await expect(page.locator('main h1').first()).toBeVisible();
+  for (const theme of ['notebook', 'night', 'chalk', 'terminal']) {
+    await page.evaluate((t) => QT.theme.set('qt-theme', t), theme);
+    const problems = await page.evaluate(layoutAudit, ROUTES);
+    expect(problems, theme).toEqual([]);
+  }
 });
 
 test('themes: pick one, it sticks, and the ticker can be turned off', async ({ page }) => {

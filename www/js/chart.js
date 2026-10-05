@@ -47,7 +47,7 @@
           <div></div>
           <div class="chart-x" aria-hidden="true"><span>${esc(opts.xFirst ?? '1')}</span><span>${esc(opts.xLast ?? String(n))}</span></div>
         </div>
-        ${series.length > 1 || opts.target ? `<figcaption class="legend">${legend}</figcaption>` : ''}
+        ${series.length > 1 || opts.target ? `<figcaption class="chart-legend">${legend}</figcaption>` : ''}
       </figure>`;
   }
 
