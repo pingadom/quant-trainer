@@ -1,6 +1,6 @@
 // Offline support. Network-first so updates show up immediately when online;
 // falls back to the cached copy when offline. Bump VERSION when the file list changes.
-const VERSION = 'qt-0.9.0'; // keep in step with QT.VERSION in js/core.js
+const VERSION = 'qt-0.10.0'; // keep in step with QT.VERSION in js/core.js
 const ASSETS = [
   './',
   'index.html',
@@ -22,6 +22,13 @@ const ASSETS = [
   'js/mental.js',
   'js/market.js',
   'js/lab.js',
+  'js/chart.js',
+  'js/quote.js',
+  'js/kelly.js',
+  'js/figgie.js',
+  'js/daily.js',
+  'js/oa.js',
+  'js/talk.js',
   'js/demo.js',
   'js/ui.js',
   'js/views/home.js',
@@ -31,6 +38,7 @@ const ASSETS = [
   'js/views/cases.js',
   'js/views/more.js',
   'js/views/roadmap.js',
+  'js/views/progress.js',
   'js/tricks.js',
   'js/app.js',
   'privacy.html',

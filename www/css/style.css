@@ -354,3 +354,76 @@ canvas { width: 100%; height: 280px; display: block; background: var(--panel-2);
 .check input { margin-top: 4px; accent-color: var(--accent); }
 .check .auto { margin-left: auto; font-size: 0.8rem; color: var(--muted); white-space: nowrap; font-family: var(--mono); }
 .check.done span.t { color: var(--muted); text-decoration: line-through; }
+
+/* ---- charts (js/chart.js) ---- */
+.chart { margin: 8px 0 0; }
+.chart-plot { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; }
+.chart svg { width: 100%; height: 150px; display: block; overflow: visible; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.chart path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.chart-y { display: flex; flex-direction: column; justify-content: space-between; font-size: 0.75rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.chart-x { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
+.ch-s0 { stroke: var(--accent); }
+.ch-s1 { stroke: var(--ok); }
+.ch-s2 { stroke: var(--muted); }
+.ch-s3 { stroke: var(--bad); }
+.dashed { stroke-dasharray: 5 4; }
+.chart .ch-target { stroke: var(--bad); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .ch-zero { stroke: var(--line); stroke-width: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+.ch-key { display: inline-block; width: 16px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.ch-key.ch-s0 { border-color: var(--accent); }
+.ch-key.ch-s1 { border-color: var(--ok); }
+.ch-key.ch-s2 { border-color: var(--muted); }
+.ch-key.ch-s3, .ch-key.ch-target { border-color: var(--bad); }
+.ch-key.dashed, .ch-key.ch-target { border-top-style: dashed; }
+.chart-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 12px; }
+@media (max-width: 400px) { .chart-grid { grid-template-columns: 1fr; } }
+.chart-card { margin: 0; }
+.heatmap { width: 100%; max-width: 420px; display: block; margin: 6px 0 10px; }
+.hm-on { fill: var(--accent); }
+.hm-off { fill: var(--panel-2); stroke: var(--line); stroke-width: 0.5; }
+.unlock { padding-left: 20px; }
+.h-link { font-size: 0.85rem; font-weight: 600; margin-left: 8px; }
+
+/* ---- daily challenge ---- */
+.daily-card { margin: 18px 0 0; }
+.daily-squares { font-size: 1.8rem; letter-spacing: 4px; margin: 0 0 10px; }
+.share-text { font-family: var(--mono); font-size: 0.85rem; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; word-break: break-all; user-select: all; }
+
+/* ---- make me a market / bet sizing ---- */
+.interviewer { font-weight: 600; margin: 10px 0; }
+.interviewer::before { content: '“'; }
+.interviewer::after { content: '”'; }
+.mm-tape { margin: 0 0 6px; padding-left: 22px; }
+.mm-tape li { margin-bottom: 4px; }
+.mm-tape .say { color: var(--muted); font-style: italic; margin-left: 6px; }
+.formula { font-family: var(--mono); font-size: 1.1rem; background: var(--panel-2); border-radius: 8px; padding: 8px 12px; display: inline-block; }
+.chip-btn { min-height: 34px; padding: 4px 12px; }
+input[type='range'] { accent-color: var(--accent); }
+
+/* ---- Figgie ---- */
+.suit { font-size: 1.25rem; line-height: 1; color: var(--ink); }
+.suit.red { color: var(--bad); }
+.fg-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.fg-row:last-of-type { border-bottom: 0; }
+.fg-suit { display: flex; align-items: baseline; gap: 6px; }
+.fg-suit b { font-size: 1.1rem; }
+.fg-book { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fg-book button { padding: 6px 8px; font-variant-numeric: tabular-nums; }
+.fg-post { display: flex; gap: 6px; align-items: center; }
+.fg-post input { width: 70px; }
+.fg-post button { padding: 6px 10px; }
+.fg-players { width: 100%; }
+.fg-tape { margin: 0; padding-left: 20px; font-variant-numeric: tabular-nums; min-height: 4em; }
+@media (max-width: 700px) {
+  .fg-row { grid-template-columns: 1fr; gap: 6px; }
+  .fg-post input { flex: 1; }
+}
+
+/* ---- online tests ---- */
+.flash { font-family: var(--mono); font-size: 3rem; font-weight: 700; text-align: center; min-height: 1.6em; margin: 10px 0 16px; font-variant-numeric: tabular-nums; }
+
+/* ---- think aloud ---- */
+label.check { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; cursor: pointer; }
+label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+.transcript { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; margin: 10px 0; max-height: 240px; overflow-y: auto; white-space: pre-wrap; }

@@ -63,13 +63,13 @@
       ${b.note ? `<div class="card note">${b.note}</div>` : ''}
       <div id="qbox"></div>
       ${b.followups?.length ? `<h2>Interviewers may push further</h2><ul class="followups">${b.followups.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}
-      <div class="row" style="margin-top:18px"><a class="btn ghost" href="#/iq/${next.id}">Next ${QT.firms[b.firm].name} question →</a></div>`;
+      <div class="row" style="margin-top:18px"><a class="btn ghost" href="#/talk/${b.id}">Practise it out loud</a><a class="btn ghost" href="#/iq/${next.id}">Next ${QT.firms[b.firm].name} question →</a></div>`;
     const box = el.querySelector('#qbox');
     if (b.open) return openCard(box, b);
     U.questionCard(box, bankSource([b]), (bx, r) => {
       bx.innerHTML = `<div class="card"><h3>Done: ${r.right}/${r.solved} parts correct</h3>
         <p class="small">Now answer it again out loud as if to an interviewer: state your approach first, then the numbers, then sanity-check the result.</p>
-        <button class="ghost" id="redo">Try again</button></div>`;
+        <div class="row"><a class="btn" href="#/talk/${b.id}">Practise it out loud</a><button class="ghost" id="redo">Try again</button></div></div>`;
       bx.querySelector('#redo').addEventListener('click', () => QT.route());
     });
   }

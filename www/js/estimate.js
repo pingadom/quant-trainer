@@ -130,6 +130,7 @@
       st.n += ROUND;
       const prevBest = st.best;
       st.best = prevBest === null ? score : Math.max(prevBest, score);
+      store.log(st.history, { score, hits });
       store.touchDay();
       store.save();
       el.innerHTML = `

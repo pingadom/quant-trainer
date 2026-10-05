@@ -26,7 +26,7 @@
         <ol class="steps">
           <li><b>Diagnose.</b> One question from each of the ${QT.topics.length} topics shows where you stand.</li>
           <li><b>Practise what the coach suggests.</b> It tracks ${QT.coach.allIds().length} skills, spots the kind of mistakes you make, and picks the next exercise.</li>
-          <li><b>Test yourself for real.</b> Timed mental maths, a market-making game, and mock interviews built from reported questions.</li>
+          <li><b>Test yourself for real.</b> Timed mental maths and online-test practice, trading games (including Jane Street's Figgie), and mock interviews you answer out loud.</li>
         </ol>
         <p class="small">Everything is saved on this device. No account needed.</p>`;
       el.querySelector('#demo').addEventListener('click', () => {
@@ -37,6 +37,7 @@
     }
 
     const [top, ...more] = QT.coach.recommend();
+    const today = s.daily[QT.dayKey(new Date())], dstreak = QT.daily.streak();
     el.innerHTML = `
       <h1>${hello}</h1>
       <p class="lede">${streak > 1 ? `${streak}-day streak. Keep it going.` : streak === 1 ? 'You practised today. Nice.' : 'Pick up where you left off.'}</p>
@@ -51,7 +52,9 @@
       ${more.length ? `<h2>Also recommended</h2><div class="recs">${more.slice(0, 2).map(U.recCard).join('')}</div>
       <p><a href="#/coach">See your full coaching plan →</a></p>` : ''}
 
-      <h2>Your progress</h2>
+      <a class="card shortcut${today?.done ? '' : ' primary'} daily-card" href="#/daily"><b>Daily challenge${today?.done ? `: ${today.r.filter(Boolean).length}/5 today ✓` : ''}</b><span>${today?.done ? 'Done for today. Share your result or come back tomorrow.' : `5 questions, the same for everyone today${dstreak ? ` · ${dstreak}-day streak` : ''}`}</span></a>
+
+      <h2>Your progress <a class="h-link" href="#/progress">Charts →</a></h2>
       <div class="tiles">
         <a class="tile" href="#/coach"><div class="v">${strong}<span class="of">/${QT.coach.allIds().length}</span></div><div class="k">skills strong</div></a>
         <div class="tile"><div class="v">${attempts}</div><div class="k">problems solved</div></div>
@@ -63,6 +66,9 @@
       <div class="shortcuts">
         <a class="card shortcut" href="#/bank"><b>Interview questions</b><span>${U.bankDone()}/${QT.bank.length} done · mock interviews</span></a>
         <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${QT.mental.best80() !== null ? `80-in-8 best: ${QT.mental.best80()} net` : 'Not tried yet'}</span></a>
+        <a class="card shortcut" href="#/figgie"><b>Figgie</b><span>${s.figgie.games ? `${s.figgie.games} games · avg P&amp;L ${f(s.figgie.total / s.figgie.games)}` : "Jane Street's trading card game"}</span></a>
+        <a class="card shortcut" href="#/quote"><b>Make me a market</b><span>${s.quote.n ? `${Math.round((100 * s.quote.hits) / s.quote.n)}% of final markets right` : 'The live interview format'}</span></a>
+        <a class="card shortcut" href="#/kelly"><b>Bet sizing</b><span>${s.kelly.best !== null ? `best sizing score ${Math.round(s.kelly.best * 100)}%` : 'How much would you stake?'}</span></a>
         <a class="card shortcut" href="#/market"><b>Market making</b><span>${s.market.games ? `${s.market.games} games · avg P&amp;L ${f(s.market.total / s.market.games)}` : 'Not tried yet'}</span></a>
         <a class="card shortcut" href="#/estimate"><b>Estimation</b><span>${s.estimate.n ? `${Math.round((100 * s.estimate.hits) / s.estimate.n)}% of ranges correct` : 'Not tried yet'}</span></a>
         ${featured ? `<a class="card shortcut" href="#/case/${featured.id}"><b>Case of the day</b><span>${featured.title} (${featured.year})</span></a>` : ''}
