@@ -252,8 +252,10 @@
     }
 
     const mm = st.mental || {};
-    if (!mm.full?.runs?.length) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
-    else if (mm.full.best < 55) recs.push({ pri: 60, kind: 'mental', title: `Mental maths: best ${mm.full.best} net, ~55 is the commonly reported pass line`, why: 'Do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/mental', label: 'Practise' });
+    // Best 80-in-8 net in either answer style (multiple choice or typed).
+    const b80 = QT.mental ? QT.mental.best80() : (mm.full?.best ?? null);
+    if (b80 === null) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
+    else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
 
     const e = st.estimate || { n: 0 };
     if (e.n >= 20 && e.hits / e.n < 0.75) recs.push({ pri: 65, kind: 'calibration', title: `Overconfident: your ranges catch the truth ${Math.round((100 * e.hits) / e.n)}% of the time`, why: 'A 90% range should miss only 1 time in 10. Widen your ranges, especially for unfamiliar quantities.', href: '#/estimate', label: 'Estimation round' });

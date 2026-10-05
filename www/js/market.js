@@ -72,7 +72,7 @@
 
       const hidden = [];
       for (let i = revealed; i < N_DICE; i++) hidden.push(i);
-      const seen = hidden.sort(() => Math.random() - 0.5).slice(0, Math.min(2, hidden.length));
+      const seen = R.shuffle(hidden).slice(0, Math.min(2, hidden.length));
       const informedEV = fair() + seen.reduce((s, i) => s + dice[i] - 3.5, 0);
       const acts = [];
       const deal = (who, side) => {

@@ -9,7 +9,8 @@
       <h1>More</h1>
       <h2 class="menu-head">Interview prep</h2>
       <div class="menu">
-        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 format and a 2-minute sprint</span></a>
+        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 (multiple choice or typed) and a 2-minute sprint</span></a>
+        <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">20 guides to faster arithmetic, each with a drill</span></a>
         <a class="card" href="#/market"><b>Market making</b><span class="small">Quote on hidden dice against informed flow</span></a>
         <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
       </div>

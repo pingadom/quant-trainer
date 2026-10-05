@@ -62,7 +62,7 @@
       <h2>Keep sharp</h2>
       <div class="shortcuts">
         <a class="card shortcut" href="#/bank"><b>Interview questions</b><span>${U.bankDone()}/${QT.bank.length} done · mock interviews</span></a>
-        <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${s.mental.full?.best != null ? `80-in-8 best: ${s.mental.full.best} net` : 'Not tried yet'}</span></a>
+        <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${QT.mental.best80() !== null ? `80-in-8 best: ${QT.mental.best80()} net` : 'Not tried yet'}</span></a>
         <a class="card shortcut" href="#/market"><b>Market making</b><span>${s.market.games ? `${s.market.games} games · avg P&amp;L ${f(s.market.total / s.market.games)}` : 'Not tried yet'}</span></a>
         <a class="card shortcut" href="#/estimate"><b>Estimation</b><span>${s.estimate.n ? `${Math.round((100 * s.estimate.hits) / s.estimate.n)}% of ranges correct` : 'Not tried yet'}</span></a>
         ${featured ? `<a class="card shortcut" href="#/case/${featured.id}"><b>Case of the day</b><span>${featured.title} (${featured.year})</span></a>` : ''}

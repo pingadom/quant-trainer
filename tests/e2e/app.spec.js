@@ -4,7 +4,7 @@ const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
-  'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'market', 'estimate', 'lab', 'roadmap', 'more'];
+  'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -115,8 +115,92 @@ test('works offline after the first visit', async ({ page, context, browserName,
   await context.setOffline(false);
 });
 
+test('broken or unknown links never leave a broken screen', async ({ page }) => {
+  for (const [hash, heading] of [['#/topic/%E0%A4%A', 'Practice'], ['#/toString', 'Get ready'], ['#/constructor', 'Get ready'], ['#/mock/nope', 'Mock interview'], ['#/bank/nope', 'Interview questions'], ['#/tricks/nope', 'Speed tricks'], ['#/drill/zz/99', 'Coach']]) {
+    await page.goto(`./${hash}`);
+    await expect(page.locator('main h1').first(), hash).toContainText(heading);
+  }
+  await page.goto('./#/bank/nope');
+  await expect(page.locator('.qitem')).toHaveCount(24); // unknown firm → every question, not none
+});
+
+test('80-in-8 offers multiple choice or typed answers', async ({ page, isMobile }) => {
+  await page.goto('./#/mental');
+  await page.getByRole('radio', { name: 'Type answers' }).click();
+  await expect(page).toHaveURL(/#\/mental$/); // the toggle must not navigate
+  await page.locator('[data-mode="full"]').click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('typed');
+  await expect(page.getByRole('button', { name: 'Pass (−1)' })).toBeVisible();
+  await page.getByRole('button', { name: 'Pass (−1)' }).click();
+  await expect(page.locator('#mm-score')).toContainText('net -1');
+  await page.goto('./#/');
+  await page.goto('./#/mental');
+  await expect(page.getByRole('radio', { name: 'Type answers' })).toHaveAttribute('aria-checked', 'true'); // remembered
+  await page.getByRole('radio', { name: 'Multiple choice' }).click();
+  await page.locator('[data-mode="full"]').click();
+  await expect(page.locator('#mm-mc button')).toHaveCount(4);
+  if (!isMobile) {
+    await page.keyboard.press('Control+1'); // a browser shortcut must not answer
+    await expect(page.locator('#mm-score')).toContainText('Q1/80');
+    await page.keyboard.press('1');
+    await expect(page.locator('#mm-score')).toContainText('Q2/80');
+  }
+});
+
+test('speed-trick lesson and drill', async ({ page }) => {
+  await page.goto('./#/tricks');
+  await expect(page.locator('.topic-card')).toHaveCount(20);
+  await page.getByRole('link', { name: /Multiplying numbers near 100/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Multiplying numbers near 100');
+  for (let i = 0; i < 10; i++) await skip(page);
+  await expect(page.getByText('0/10')).toBeVisible();
+  await page.goto('./#/mistakes');
+  await expect(page.getByText('Your deck is empty')).toBeVisible(); // drills don't fill the mistakes deck
+});
+
+test('two open tabs share progress instead of overwriting it', async ({ context }) => {
+  const a = await context.newPage(), b = await context.newPage();
+  await a.goto('./#/');
+  await b.goto('./#/');
+  await a.evaluate(() => QT.store.recordAttempt('dice', true));
+  await expect(b.locator('main h1')).not.toHaveText('Get ready for quant trading interviews'); // b refreshed
+  await b.evaluate(() => QT.store.recordAttempt('cards', false));
+  await expect.poll(() => a.evaluate(() => [QT.store.get().topics.dice?.attempts, QT.store.get().topics.cards?.attempts].join(','))).toBe('1,1');
+});
+
+test('monkey test: random use never errors or shows junk', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto('./#/');
+  await page.evaluate(() => { window.confirm = () => false; }); // never wipe progress mid-run
+  const junk = await page.evaluate(async () => {
+    let seed = 20261005;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const inputs = ['0.5', '1/4', '25%', '-3', '', 'abc', '0,5', '1 1/2', '−2', '5/0', '½', '1,250', '<b>x</b>'];
+    const routes = ['', 'coach', 'coach/diagnostic', 'practice', 'topic/bayes', 'review', 'mistakes/all', 'bank/sig', 'iq/js-reroll', 'mock', 'case/ltcm', 'mental', 'market', 'estimate', 'tricks', 'tricks/near-100', 'lab', 'roadmap', 'more'];
+    const found = [];
+    for (let step = 0; step < 600; step++) {
+      if (step % 50 === 0) { location.hash = '#/' + routes[Math.floor(rnd() * routes.length)]; await wait(20); }
+      const els = [...document.querySelectorAll('main button, main a[href^="#"], main input[type=text], main select, .keypad button')]
+        .filter((el) => el.offsetParent !== null && !el.disabled && !['rst', 'imp', 'demo-off'].includes(el.id));
+      if (!els.length) { location.hash = '#/'; await wait(10); continue; }
+      const el = els[Math.floor(rnd() * els.length)];
+      if (el.tagName === 'INPUT') { el.value = inputs[Math.floor(rnd() * inputs.length)]; if (el.form) el.form.requestSubmit(); }
+      else if (el.tagName === 'SELECT') { el.selectedIndex = Math.floor(rnd() * el.options.length); el.dispatchEvent(new Event('change')); }
+      else if (el.closest('.keypad')) el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      else el.click();
+      await wait(2);
+      const text = document.querySelector('main').innerText;
+      for (const bad of ['undefined', 'NaN', '[object Object]']) if (text.includes(bad)) found.push(`"${bad}" on ${location.hash}`);
+    }
+    if (window.QT.cleanup) window.QT.cleanup();
+    return [...new Set(found)];
+  });
+  expect(junk).toEqual([]);
+});
+
 test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
-  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate']) {
+  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100']) {
     test(`no serious violations on #/${r}`, async ({ page }) => {
       await page.goto(`./?demo#/${r}`); // demo data so the populated screens are checked too
       await expect(page.locator('main h1').first()).toBeVisible();
