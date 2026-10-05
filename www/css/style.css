@@ -289,6 +289,7 @@ main.doc { margin: 0 auto; max-width: 720px; display: block; }
 .shortcut span { color: var(--muted); font-size: 0.86rem; }
 .shortcut:hover { border-color: var(--accent); }
 .shortcut.primary { border-color: var(--accent); background: var(--accent-soft); }
+.shortcut.primary span { color: var(--ink); opacity: 0.85; } /* muted grey on the tint was 4.4:1, below AA */
 .menu-head { margin-top: 18px; }
 
 /* question card */
