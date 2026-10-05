@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0
+
+- **Wincent:** a firm profile from Wincent's own careers pages (online maths test, 45- and 90-minute quant interviews, on-site betting games in Bratislava) and candidate reports, with the two questions candidates report (table tennis from 10–10 at 40% a point; Conroy's game of Threes, of which a "tricky variant" was asked) and five practice questions, labelled as such, on the topics listed for its online test: a random walk on a cube, branching-process extinction, ants on a string, Bayesian updating and Kelly betting.
+- **More reported questions:** Optiver (every face once in six rolls; a three-card stopping game), IMC (first head wins given B won; a random walk to −100 before +50), Akuna (a fair decision from a 70/30 coin), Da Vinci (picks until the third outlier), DRW (expected heads × tails), Jane Street (four coins with one re-flip). New firms: Wincent, Akuna, Da Vinci, DRW.
+- Every new answer is derived independently in Python (absorbing Markov chains, exact enumeration, dynamic programming, strategy search) and checked against the app in CI: 58/58 agree.
+
 ## 0.12.0
 
 - **The coach uses everything:** mental-maths speed is now remembered by question type across sessions, and your slowest or most-missed type gets a recommendation pointing to the speed trick that fixes it. The coach also reacts to the trading games (losing at Figgie, not moving your market after a trade, sizing bets well below Kelly), suggests games and online tests you haven't tried, and nudges you to answer out loud once you've typed a few interview answers.
