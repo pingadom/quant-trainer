@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- Only same-origin scripts may run (plus the optional, cookie-free GoatCounter analytics).
        Native builds strip this line in CI because Capacitor injects its bridge as an inline script. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.goatcounter.com; connect-src 'self' https://*.goatcounter.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self'; manifest-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.goatcounter.com; connect-src 'self' https://*.goatcounter.com; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Quant Trainer</title>
   <meta name="description" content="Practice for quant trading interviews: probability, statistics, mental maths, market making, real reported interview questions and market case studies.">
@@ -31,16 +31,24 @@
     <nav class="nav" aria-label="Sections">
       <div class="brand">Quant<span>Trainer</span></div>
       <a href="#/" data-route="">Home</a>
+      <a href="#/daily" data-route="daily">Daily challenge</a>
       <a href="#/coach" data-route="coach">Coach</a>
+      <a href="#/progress" data-route="progress">Progress</a>
       <div class="nav-group">Practise</div>
       <a href="#/review" data-route="review">Mixed practice</a>
       <a href="#/practice" data-route="practice">Topics</a>
       <a href="#/mistakes" data-route="mistakes">Mistakes to review <span class="badge" data-badge="mistakes" hidden></span></a>
       <div class="nav-group">Interview prep</div>
       <a href="#/bank" data-route="bank">Interview questions</a>
+      <a href="#/talk" data-route="talk" class="nav-sub">Think aloud</a>
       <a href="#/mental" data-route="mental">Mental maths</a>
       <a href="#/tricks" data-route="tricks" class="nav-sub">Speed tricks</a>
+      <a href="#/oa" data-route="oa">Online tests</a>
+      <div class="nav-group">Trading games</div>
+      <a href="#/figgie" data-route="figgie">Figgie</a>
+      <a href="#/quote" data-route="quote">Make me a market</a>
       <a href="#/market" data-route="market">Market making</a>
+      <a href="#/kelly" data-route="kelly">Bet sizing</a>
       <a href="#/estimate" data-route="estimate">Estimation</a>
       <div class="nav-group">Learn</div>
       <a href="#/cases" data-route="cases">Case studies</a>
@@ -85,6 +93,13 @@
   <script defer src="js/mental.js"></script>
   <script defer src="js/market.js"></script>
   <script defer src="js/lab.js"></script>
+  <script defer src="js/chart.js"></script>
+  <script defer src="js/quote.js"></script>
+  <script defer src="js/kelly.js"></script>
+  <script defer src="js/figgie.js"></script>
+  <script defer src="js/daily.js"></script>
+  <script defer src="js/oa.js"></script>
+  <script defer src="js/talk.js"></script>
   <script defer src="js/demo.js"></script>
   <script defer src="js/ui.js"></script>
   <script defer src="js/views/home.js"></script>
@@ -94,6 +109,7 @@
   <script defer src="js/views/cases.js"></script>
   <script defer src="js/views/more.js"></script>
   <script defer src="js/views/roadmap.js"></script>
+  <script defer src="js/views/progress.js"></script>
   <script defer src="js/tricks.js"></script>
   <script defer src="js/app.js"></script>
 </body>

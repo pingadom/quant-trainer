@@ -14,7 +14,8 @@
 | Platform | `platform.js` | Everything that differs between website, installed PWA and native app: storage mirroring, file export, back button, status bar, service worker, install prompt, analytics |
 | Content | `gens-*.js`, `topics.js`, `cases.js`, `bank.js`, `estimate.js` | Question generators (79 skills in 14 topics), case studies, the interview bank, estimation facts |
 | Learning engine | `coach.js`, `review.js` | Skill statistics, Elo model, error diagnosis, recommendations, adaptive sessions; spaced-repetition deck |
-| UI | `ui.js`, `views/*.js`, `keypad.js`, `mental.js`, `market.js`, `lab.js`, `demo.js` | Shared question card and cards; one file per screen; self-contained mini-apps |
+| UI | `ui.js`, `views/*.js`, `keypad.js`, `chart.js`, `demo.js` | Shared question card and cards, SVG line charts, one file per screen |
+| Mini-apps | `mental.js`, `tricks.js`, `market.js`, `quote.js`, `kelly.js`, `figgie.js`, `daily.js`, `oa.js`, `talk.js`, `lab.js` | Self-contained games and drills. Each keeps its logic in pure functions (exported on `QT.*` and unit-tested) separate from its screen code |
 | Shell | `app.js` | Hash router (`#/topic/dice` → `views.topic(main, 'dice')`), nav state, page titles, demo banner |
 
 ## Data flow for one answer
@@ -32,13 +33,20 @@ question source (coach.source / drill / case / bank)
 
 ## State (`QT.store.get()`)
 
-`topics`, `skills` (recent window and times), `elo` (θ, per-skill b and n), `log` (per-answer history, capped at 5,000), `errors`, `mistakes`, `cases`, `bank`, `mental`, `market`, `estimate`, `roadmap`, `days`, `demo`. Exported as JSON; on import, every field is rebuilt by `sanitizeState` in `core.js`.
+`topics`, `skills` (recent window and times), `elo` (θ, per-skill b and n), `log` (per-answer history, capped at 5,000), `errors`, `mistakes`, `cases`, `bank`, `mental`, `market`, `estimate`, `quote`, `kelly`, `figgie`, `daily` (results by date, last 400 days), `oa`, `talk`, `tricks`, `roadmap`, `days`, `demo`. Game histories are capped at 100 entries. Exported as JSON; on import, every field is rebuilt by `sanitizeState` in `core.js`.
+
+## Notable designs
+
+- **Daily challenge without a server.** The question generators draw from `Math.random`; `daily.js` swaps in a seeded PRNG (mulberry32, seeded by an FNV-1a hash of the date) while it builds the day's five questions, then restores it. Every copy of the app produces the same questions for the same date.
+- **Figgie engine.** Pure functions over a game object (`newGame`, `post`, `buy`, `sell`, `botAct`, `payouts`) with injectable randomness, so tests play whole games and check that cards and chips are conserved. Bots value cards with the exact Bayesian posterior over the 12 possible deck layouts, P(layout | hand) ∝ Π C(suit size, cards held); the posterior is tested for calibration (E[P(true goal)] = E[Σ P²]).
+- **Luck-free scoring.** Bet sizing scores your stakes by expected log-growth relative to Kelly on the same bets, not by the final bankroll, so a lucky run can't hide over-betting.
+- **Charts.** `chart.js` draws an SVG stretched to its container with non-scaling strokes; axis labels are HTML so they stay legible on phones, and colours come from the theme's CSS variables.
 
 ## Testing
 
 | Level | Where | What |
 |---|---|---|
-| Unit | `tests/checks.js` (Node + browser) | Every generator 300×; Monte Carlo vs exact within 5 SE; case/bank data; parsing; security; coach model; build consistency |
+| Unit | `tests/checks.js` (Node + browser) | Every generator 300×; Monte Carlo vs exact within 5 SE; case/bank data; parsing; security; coach model; Kelly optimality; Figgie posterior calibration and conservation; daily determinism; build consistency |
 | Cross-language | `research/verify_results.py` | Independent Python derivations must equal the app's answers |
 | End-to-end | `tests/e2e/` (Playwright) | Real flows on desktop and a touch phone, offline mode, axe accessibility, no console errors or CSP violations |
 | Audit | Lighthouse CI | Accessibility, best practices, SEO, performance |

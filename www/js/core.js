@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.9.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.10.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -118,7 +118,9 @@
   // ---- Progress storage (localStorage, per browser) ----
   const KEY = 'quant-trainer:v1';
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
-  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
+  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
+    quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] } });
   let state;
 
   // Saved data goes through the same schema as imports, so a corrupted or hand-edited value
@@ -209,7 +211,21 @@
     s.skills = mapKeys(r.skills, (k) => ({ n: num(obj(k).n), c: num(obj(k).c), recent: bits(obj(k).recent, 10), times: arr(obj(k).times, 10).map((x) => num(x)), last: num(obj(k).last) }), (k) => /^[a-z]+\.\d+$/.test(k));
     s.errors = arr(r.errors, 100).map((e) => ({ type: text(obj(e).type, 20), skill: obj(e).skill ? text(e.skill, 40) : null, tag: text(obj(e).tag, 120), t: num(obj(e).t) }));
     const es = obj(r.estimate);
-    s.estimate = { rounds: num(es.rounds), best: es.best == null ? null : num(es.best), hits: num(es.hits), n: num(es.n) };
+    const date = (x) => text(x, 40), when = (x) => ({ date: date(obj(x).date) });
+    s.estimate = { rounds: num(es.rounds), best: es.best == null ? null : num(es.best), hits: num(es.hits), n: num(es.n), history: arr(es.history, 100).map((x) => ({ ...when(x), score: num(obj(x).score), hits: num(obj(x).hits) })) };
+    const qu = obj(r.quote);
+    s.quote = { rounds: num(qu.rounds), n: num(qu.n), hits: num(qu.hits), withFlow: num(qu.withFlow), requotes: num(qu.requotes), pnl: num(qu.pnl), history: arr(qu.history, 100).map((x) => ({ ...when(x), pnl: num(obj(x).pnl), hits: num(obj(x).hits), n: num(obj(x).n) })) };
+    const ke = obj(r.kelly);
+    s.kelly = { games: num(ke.games), best: ke.best == null ? null : num(ke.best), history: arr(ke.history, 100).map((x) => ({ ...when(x), eff: num(obj(x).eff), final: num(obj(x).final), kelly: num(obj(x).kelly) })) };
+    const fg = obj(r.figgie);
+    s.figgie = { games: num(fg.games), total: num(fg.total), best: fg.best == null ? null : num(fg.best), wins: num(fg.wins), history: arr(fg.history, 100).map((x) => ({ ...when(x), pnl: num(obj(x).pnl) })) };
+    // Daily results: keep the most recent 400 days (mapKeys alone would keep the oldest 500).
+    const dayOk = (k) => /^\d{4}-\d\d-\d\d$/.test(k);
+    const recentDays = Object.fromEntries(Object.entries(obj(r.daily)).filter(([k]) => dayOk(k)).sort(([a], [b]) => (a < b ? -1 : 1)).slice(-400));
+    s.daily = mapKeys(recentDays, (d) => ({ r: bits(obj(d).r, 5), ms: num(obj(d).ms), start: num(obj(d).start), done: !!obj(d).done }));
+    s.oa = mapKeys(r.oa, (o) => ({ best: obj(o).best == null ? null : num(obj(o).best), runs: arr(obj(o).runs, 50).map((x) => ({ ...when(x), score: num(obj(x).score) })) }), (k) => ['seq', 'span', 'total'].includes(k));
+    const tk = obj(r.talk);
+    s.talk = { sessions: num(tk.sessions), history: arr(tk.history, 100).map((x) => ({ ...when(x), id: text(obj(x).id, 80), secs: num(obj(x).secs), score: num(obj(x).score), of: num(obj(x).of, 6) })) };
     s.demo = !!r.demo;
     s.tricks = mapKeys(r.tricks, (t) => ({ best: Math.min(10, Math.max(0, num(obj(t).best))), runs: num(obj(t).runs) }), (k) => /^[a-z0-9-]+$/.test(k));
     if (r.elo) {
@@ -225,6 +241,8 @@
   // True when nothing has been recorded yet (used to decide whether to restore a native backup).
   const isEmpty = () => !state.days.length && !Object.keys(state.topics).length && !Object.keys(state.bank).length && !Object.keys(state.cases).length && !state.market.games;
   const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  QT.dayKey = dayKey;
 
   QT.store = {
     KEY,
@@ -254,6 +272,11 @@
         d.setDate(d.getDate() - 1);
       }
       return n;
+    },
+    // Append to a history list, keeping the most recent `cap` entries.
+    log(list, entry, cap = 100) {
+      list.push({ date: new Date().toISOString(), ...entry });
+      if (list.length > cap) list.splice(0, list.length - cap);
     },
     exportJson: () => JSON.stringify(state, null, 2),
     // Imported files are untrusted: rebuild the state from known fields only (see sanitizeState).

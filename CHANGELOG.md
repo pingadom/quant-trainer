@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0
+
+- **Figgie:** Jane Street's card trading game against three bots: a careful Bayesian, an aggressive one that leans with order flow, and a noise trader. Real-time, 2 or 4 minutes, with "Show the maths" giving the exact posterior from your hand.
+- **Make me a market:** quote a two-sided price on an unknown quantity; the interviewer (who knows the answer, and is right 7 times in 8) trades against you and asks for a new market. Scored on whether your final market contains the answer, P&L, and whether you moved with the flow.
+- **Bet sizing:** 20 bets with known odds; choose your stake. A Kelly and a half-Kelly bettor play the same bets beside you, and the sizing score uses expected log-growth so it doesn't depend on luck.
+- **Daily challenge:** the same 5 questions for everyone each day, generated from the date (no server), one attempt, timed, with a shareable result and daily streak.
+- **Online tests:** timed number sequences, digit span and running total.
+- **Think aloud:** answer a reported question out loud against the clock, optionally recording yourself (kept on the device) with a live transcript showing pace and filler words, then compare with the worked answer and follow-ups and score yourself.
+- **Progress:** charts of accuracy and speed over time, 80-in-8, calibration and every game; an activity heatmap; speed against target by topic. The demo profile now includes histories.
+- **Tests:** Kelly optimality, Figgie posterior calibration and card/chip conservation over full bot games, daily-challenge determinism, fill informativeness, schema validation of the new data, and end-to-end and accessibility checks for every new screen.
+
 ## 0.9.0
 
 - **Speed tricks:** 20 short guides to faster mental arithmetic (× 5/25/125, × 9/11/99, squares ending in 5, squares near 50 and 100, difference of squares, near-100 multiplication, halve-and-double, complements, fractions as decimals, missing-number questions, percentage shortcuts, last-digit and casting-out-nines checks, estimation, when to guess under negative marking, numbers worth memorising), each with a 10-question drill whose solution walks through the trick.

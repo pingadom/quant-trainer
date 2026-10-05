@@ -39,9 +39,26 @@
       const d = new Date(now - i * DAY);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     });
-    s.mental = { sprint: { best: 17, runs: [] }, full: { best: 48, runs: [{ date: new Date(now - 2 * DAY).toISOString(), correct: 58, wrong: 10 }] } };
-    s.market = { games: 6, total: -4, best: 3, history: [] };
-    s.estimate = { rounds: 3, best: 4.1, hits: 21, n: 30 };
+    // Histories for the progress charts: a learner who is slowly improving, with noise.
+    const ago = (i, n) => new Date(now - (n - i) * DAY * 0.8).toISOString();
+    const trend = (n, from, to, noise) => Array.from({ length: n }, (_, i) => from + ((to - from) * i) / (n - 1) + (rnd() - 0.5) * noise);
+    const fullNet = trend(8, 34, 52, 8).map(Math.round);
+    s.mental = {
+      sprint: { best: 19, runs: trend(6, 12, 18, 4).map((c, i) => ({ date: ago(i, 6), correct: Math.round(c), wrong: 2 })) },
+      full: { best: Math.max(...fullNet), runs: fullNet.map((x, i) => ({ date: ago(i, 8), correct: x + 9, wrong: 9 })) },
+    };
+    const pnl = trend(6, -6, 4, 6).map(Math.round);
+    s.market = { games: 6, total: pnl.reduce((a, b) => a + b, 0), best: Math.max(...pnl), history: pnl.map((x, i) => ({ date: ago(i, 6), pnl: x, midErr: 1 })) };
+    const hits = [6, 7, 7, 8, 8, 9];
+    s.estimate = { rounds: 6, best: 4.1, hits: hits.reduce((a, b) => a + b, 0), n: 60, history: hits.map((h, i) => ({ date: ago(i, 6), score: 2 + h / 4, hits: h })) };
+    s.quote = { rounds: 4, n: 20, hits: 13, withFlow: 27, requotes: 40, pnl: -18, history: trend(4, -12, 3, 4).map((x, i) => ({ date: ago(i, 4), pnl: x, hits: 3, n: 5 })) };
+    const eff = trend(5, 0.35, 0.85, 0.15);
+    s.kelly = { games: 5, best: Math.max(...eff), history: eff.map((e, i) => ({ date: ago(i, 5), eff: e, final: 100 + 80 * e, kelly: 180 })) };
+    const fg = trend(5, -40, 25, 30).map(Math.round);
+    s.figgie = { games: 5, total: fg.reduce((a, b) => a + b, 0), best: Math.max(...fg), wins: 2, history: fg.map((x, i) => ({ date: ago(i, 5), pnl: x })) };
+    s.oa = { seq: { best: 13, runs: [9, 11, 10, 13].map((x, i) => ({ date: ago(i, 4), score: x })) }, span: { best: 7, runs: [6, 6, 7].map((x, i) => ({ date: ago(i, 3), score: x })) } };
+    s.talk = { sessions: 3, history: [3, 4, 5].map((x, i) => ({ date: ago(i, 3), id: QT.bank[i].id, secs: 240, score: x, of: 6 })) };
+    for (const [i, d] of s.days.slice(1).entries()) s.daily[d] = { r: [1, 1, 0, 1, i % 3 ? 1 : 0], ms: 300000, start: now - (i + 1) * DAY, done: true };
     s.cases = { ltcm: { results: [true, true] }, 'black-monday': { results: [true, false] } };
     s.bank = { 'js-reroll': { results: [true, true, false] }, 'sig-three-dice': { results: [true] }, 'opt-tennis': { results: [true, true] } };
     for (const [t, gi] of weak.slice(0, 4)) QT.mistakes.add(`${t.name} · ${t.skills[gi]}`, t.gens[gi]());

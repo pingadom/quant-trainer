@@ -7,11 +7,23 @@
     try { pref = localStorage.getItem('qt-keypad') || 'auto'; } catch { /* storage blocked: use default */ }
     el.innerHTML = `
       <h1>More</h1>
+      <div class="menu">
+        <a class="card" href="#/daily"><b>Daily challenge</b><span class="small">The same 5 questions for everyone today, with a shareable result</span></a>
+        <a class="card" href="#/progress"><b>Progress</b><span class="small">Charts of your accuracy, speed and scores over time</span></a>
+      </div>
       <h2 class="menu-head">Interview prep</h2>
       <div class="menu">
+        <a class="card" href="#/talk"><b>Think aloud</b><span class="small">Talk through a real question out loud, record yourself, review</span></a>
         <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 (multiple choice or typed) and a 2-minute sprint</span></a>
         <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">20 guides to faster arithmetic, each with a drill</span></a>
+        <a class="card" href="#/oa"><b>Online tests</b><span class="small">Number sequences, digit span and running totals, timed</span></a>
+      </div>
+      <h2 class="menu-head">Trading games</h2>
+      <div class="menu">
+        <a class="card" href="#/figgie"><b>Figgie</b><span class="small">Jane Street's card trading game, against three bots</span></a>
+        <a class="card" href="#/quote"><b>Make me a market</b><span class="small">Quote two-sided prices; the interviewer trades against you</span></a>
         <a class="card" href="#/market"><b>Market making</b><span class="small">Quote on hidden dice against informed flow</span></a>
+        <a class="card" href="#/kelly"><b>Bet sizing</b><span class="small">How much to stake: the Kelly criterion in practice</span></a>
         <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
       </div>
       <h2 class="menu-head">Learn</h2>

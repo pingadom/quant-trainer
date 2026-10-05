@@ -4,7 +4,8 @@ const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
-  'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more'];
+  'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -168,6 +169,108 @@ test('two open tabs share progress instead of overwriting it', async ({ context 
   await expect.poll(() => a.evaluate(() => [QT.store.get().topics.dice?.attempts, QT.store.get().topics.cards?.attempts].join(','))).toBe('1,1');
 });
 
+test('Figgie: trade with the bots, then settle when time runs out', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('./#/figgie');
+  await page.getByRole('button', { name: 'Quick game (2 minutes)' }).click();
+  await expect(page.locator('.fg-row')).toHaveCount(4);
+  // Post a bid, then let the bots act for a while.
+  await page.getByRole('textbox', { name: 'Price for spades' }).fill('2');
+  await page.locator('[data-post="bid"][data-s="0"]').click();
+  await expect(page.locator('[data-sell="0"]')).toContainText(/Your bid|Sell|no bid/);
+  await page.clock.runFor(20_000);
+  const trades = await page.locator('#fg-tape li:not(.small)').count();
+  expect(trades).toBeGreaterThan(0);
+  await page.clock.runFor(110_000);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Figgie:');
+  await expect(page.getByText('goal suit')).toBeVisible();
+  const games = await page.evaluate(() => QT.store.get().figgie.games);
+  expect(games).toBe(1);
+});
+
+test('make me a market: wide quotes are refused, fills move the conversation on', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('qt-keypad', 'off')); // type directly, also on the phone project
+  await page.goto('./#/quote');
+  await page.getByRole('button', { name: /Start a round/ }).click();
+  await page.getByLabel('Bid').fill('10');
+  await page.getByLabel('Ask').fill('50');
+  await page.getByRole('button', { name: 'Quote' }).click();
+  await expect(page.locator('#qerr')).toContainText('Too wide');
+  for (let k = 0; k < 3; k++) {
+    await page.getByLabel('Bid').fill('100');
+    await page.getByLabel('Ask').fill('150');
+    await page.getByRole('button', { name: 'Quote' }).click();
+  }
+  await expect(page.locator('.fb')).toContainText('Answer');
+  await expect(page.locator('table tr')).toHaveCount(4); // header + three trades
+});
+
+test('bet sizing: staking nothing is explained', async ({ page }) => {
+  await page.goto('./#/kelly');
+  await page.getByRole('button', { name: /Start 20 bets/ }).click();
+  for (let i = 0; i < 20; i++) {
+    await page.getByRole('button', { name: 'Place bet' }).click();
+    await page.locator('#next').click();
+  }
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Results');
+  await expect(page.getByText('You staked nothing on every bet')).toBeVisible();
+  await expect(page.locator('.chart svg')).toBeVisible();
+});
+
+test('daily challenge: same questions after a reload, one attempt, shareable', async ({ page }) => {
+  await page.goto('./#/daily');
+  const topics = await page.locator('main').getByText("Today's topics").textContent();
+  await page.reload();
+  await expect(page.locator('main').getByText("Today's topics")).toHaveText(topics);
+  await page.getByRole('button', { name: 'Start' }).click();
+  for (let i = 0; i < 5; i++) await skip(page);
+  await expect(page.locator('#dc-text')).toContainText('Quant Trainer daily #');
+  await expect(page.locator('#dc-text')).toContainText('🟥🟥🟥🟥🟥 0/5');
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Share result' })).toBeVisible(); // no second attempt
+});
+
+test('online tests: sequences, digit span and running total', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('./#/oa');
+  await page.locator('[data-test="seq"]').click();
+  for (let i = 0; i < 15; i++) await page.getByRole('button', { name: 'Skip' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Number sequences: done');
+  await page.goto('./#/oa');
+  await page.locator('[data-test="span"]').click();
+  for (let miss = 0; miss < 2; miss++) {
+    await page.clock.runFor(15_000); // digits flash, then the answer box appears
+    await page.getByRole('textbox', { name: 'The digits in order' }).fill('0');
+    await page.getByRole('textbox', { name: 'The digits in order' }).press('Enter');
+  }
+  await page.clock.runFor(2_000);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Digit span: done');
+  // Leaving mid-test must stop its timers drawing over the next screen.
+  await page.goto('./#/oa');
+  await page.locator('[data-test="total"]').click();
+  await page.goto('./#/progress');
+  await page.clock.runFor(20_000);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Progress');
+});
+
+test('think aloud: talk, review, score yourself', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('qt-talk-prefs', JSON.stringify({ rec: false, live: false })));
+  await page.goto('./#/iq/sig-three-dice');
+  await page.getByRole('link', { name: 'Practise it out loud' }).first().click();
+  await expect(page).toHaveURL(/#\/talk\/sig-three-dice$/);
+  await page.getByRole('button', { name: /I'm done/ }).click();
+  await expect(page.getByText('Worked answer')).toBeVisible();
+  await page.getByLabel('Said a plan out loud before calculating').check();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('1/6.')).toBeVisible();
+});
+
+test('progress page charts the demo profile', async ({ page }) => {
+  await page.goto('./?demo#/progress');
+  await expect(page.locator('.heatmap')).toBeVisible();
+  expect(await page.locator('.chart svg').count()).toBeGreaterThanOrEqual(8);
+});
+
 test('monkey test: random use never errors or shows junk', async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto('./#/');
@@ -177,7 +280,7 @@ test('monkey test: random use never errors or shows junk', async ({ page }) => {
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const inputs = ['0.5', '1/4', '25%', '-3', '', 'abc', '0,5', '1 1/2', '−2', '5/0', '½', '1,250', '<b>x</b>'];
-    const routes = ['', 'coach', 'coach/diagnostic', 'practice', 'topic/bayes', 'review', 'mistakes/all', 'bank/sig', 'iq/js-reroll', 'mock', 'case/ltcm', 'mental', 'market', 'estimate', 'tricks', 'tricks/near-100', 'lab', 'roadmap', 'more'];
+    const routes = ['', 'coach', 'coach/diagnostic', 'practice', 'topic/bayes', 'review', 'mistakes/all', 'bank/sig', 'iq/js-reroll', 'mock', 'case/ltcm', 'mental', 'market', 'estimate', 'tricks', 'tricks/near-100', 'lab', 'roadmap', 'more', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk'];
     const found = [];
     for (let step = 0; step < 600; step++) {
       if (step % 50 === 0) { location.hash = '#/' + routes[Math.floor(rnd() * routes.length)]; await wait(20); }
@@ -200,7 +303,7 @@ test('monkey test: random use never errors or shows junk', async ({ page }) => {
 });
 
 test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
-  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100']) {
+  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice']) {
     test(`no serious violations on #/${r}`, async ({ page }) => {
       await page.goto(`./?demo#/${r}`); // demo data so the populated screens are checked too
       await expect(page.locator('main h1').first()).toBeVisible();
