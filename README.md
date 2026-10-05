@@ -41,7 +41,8 @@
 | **Practice** | 14 topics and 79 randomised question generators with worked solutions and a "check by simulation" button. Adaptive mixed practice. |
 | **Interview questions** | 24 questions candidates report from Jane Street, SIG, Optiver, IMC, Citadel, Five Rings, Two Sigma and Flow Traders, each sourced, with follow-ups and a timed mock-interview mode. |
 | **Mistakes to review** | Every wrong answer comes back after 1, 3, 7 and 21 days until mastered. |
-| **Mental maths** | The "80 in 8" format (multiple choice, net scoring) and a 2-minute sprint. |
+| **Mental maths** | The "80 in 8" format with net scoring, answered as multiple choice or typed, plus a 2-minute sprint. |
+| **Speed tricks** | 20 short guides to faster arithmetic (near-100 multiplication, squaring, fractions, last-digit checks, guessing strategy under negative marking…), each with a drill that walks through the trick. |
 | **Market making** | Quote on hidden dice against informed and noise traders. |
 | **Estimation & calibration** | Range quoting on 43 fact-checked quantities; checks whether your 90% ranges really contain the answer 90% of the time. |
 | **Case studies** | 14 real market events (LTCM, Black Monday, Volmageddon, negative oil, …) as statistics lessons, with sources. |

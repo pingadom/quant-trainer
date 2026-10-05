@@ -20,7 +20,11 @@
     };
   }
 
-  function bank(el, firm) {
+  // An unknown firm in a link (typo, or a firm since removed) shows every question instead of nothing.
+  const knownFirm = (firm) => (firm && Object.prototype.hasOwnProperty.call(QT.firms, firm) ? firm : undefined);
+
+  function bank(el, firmArg) {
+    const firm = knownFirm(firmArg);
     const list = QT.bank.filter((b) => !firm || b.firm === firm);
     const F = firm && QT.firms[firm];
     el.innerHTML = `
@@ -93,9 +97,14 @@
     }));
   }
 
-  function mock(el, firm) {
+  function mock(el, firmArg) {
+    const firm = knownFirm(firmArg);
     const pool = QT.bank.filter((b) => b.parts && (!firm || b.firm === firm));
-    const pick = [...pool].sort(() => Math.random() - 0.5).slice(0, 5);
+    const pick = QT.rand.shuffle(pool).slice(0, 5);
+    if (!pick.length) {
+      el.innerHTML = `<a class="back" href="#/bank">← Interview questions</a><h1>Mock interview</h1><div class="card"><p style="margin-top:0">There are no numeric questions for this firm yet.</p><a class="btn" href="#/mock">Mock interview with all firms</a></div>`;
+      return;
+    }
     const start = Date.now();
     el.innerHTML = `
       <a class="back" href="#/bank${firm ? '/' + firm : ''}">← Interview questions</a>

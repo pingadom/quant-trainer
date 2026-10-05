@@ -80,7 +80,7 @@
   }
 
   function play(el) {
-    const qs = [...FACTS].sort(() => Math.random() - 0.5).slice(0, ROUND);
+    const qs = QT.rand.shuffle(FACTS).slice(0, ROUND);
     let i = 0, score = 0, hits = 0;
     const log = [];
 

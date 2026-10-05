@@ -11,7 +11,7 @@ module.exports = defineConfig({
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: { baseURL: `http://localhost:${PORT}/`, trace: 'retain-on-failure' },
   webServer: {
-    command: `${python} -m http.server ${PORT} --bind 127.0.0.1 --directory www`,
+    command: `${python} tools/serve.py ${PORT} www`,
     url: `http://localhost:${PORT}/`,
     reuseExistingServer: !process.env.CI,
   },

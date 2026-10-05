@@ -160,9 +160,55 @@
     }
 
     // Answer parsing.
-    const parse = [['5/36', 5 / 36], ['13.9%', 0.139], ['1,250', 1250], ['-0.7', -0.7], ['.5', 0.5]];
-    for (const [s, v] of parse) if (Math.abs(QT.parseAnswer(s) - v) > 1e-12) fail(`parse ${s}`);
-    if (!Number.isNaN(QT.parseAnswer('abc'))) fail('parse abc should be NaN');
+    const parse = [['5/36', 5 / 36], ['13.9%', 0.139], ['1,250', 1250], ['-0.7', -0.7], ['.5', 0.5],
+      ['0,5', 0.5], ['12,5', 12.5], ['1.250,5', 1250.5], ['1,250,000', 1250000], ['1,250.5', 1250.5],
+      ['1 1/2', 1.5], ['-1 1/2', -1.5], ['1½', 1.5], ['½', 0.5], ['−2', -2], ['–0.3', -0.3], ['25 %', 0.25], ['  7 ', 7], ['2e-2', 0.02]];
+    for (const [s, v] of parse) if (Math.abs(QT.parseAnswer(s) - v) > 1e-12) fail(`parse ${JSON.stringify(s)} = ${QT.parseAnswer(s)}, expected ${v}`);
+    for (const s of ['abc', '', '5/0', '1/2/3', '--1', '0x10', '%', '.']) if (!Number.isNaN(QT.parseAnswer(s))) fail(`parse ${JSON.stringify(s)} should be unreadable, got ${QT.parseAnswer(s)}`);
+
+    // Speed-trick drills: valid output, and the answer agrees with plainly evaluating the question.
+    const evalPlain = (q) => {
+      if (!/^[\d.,\s×÷+−²^]+$/.test(q)) return null; // only pure arithmetic questions
+      const js = q.replace(/,/g, '').replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/²/g, '**2').replace(/\^/g, '**');
+      return Function(`"use strict"; return (${js});`)();
+    };
+    for (const t of QT.tricks || []) {
+      for (let k = 0; k < 300; k++) {
+        const p = t.gen();
+        if (!selfCheck(p, `trick ${t.id}`)) break;
+        const plain = evalPlain(p.q);
+        if (plain !== null && Math.abs(plain - p.a) > 1e-9 * Math.max(1, Math.abs(plain))) { fail(`trick ${t.id}: "${p.q}" = ${plain}, drill says ${p.a}`); break; }
+      }
+      if (!t.body || !t.title || !t.group) fail(`trick ${t.id}: missing lesson text`);
+    }
+
+    // 80-in-8 options: one right answer, distinct labels, and the right answer equally likely in
+    // each position (a biased shuffle would fail this; tolerance ≈ 5.5 standard deviations).
+    if (QT.mental) {
+      const pos = [0, 0, 0, 0];
+      for (let k = 0; k < 4000; k++) {
+        const g = QT.mental.gens[k % QT.mental.gens.length](), o = QT.mental.options(g.a);
+        const right = o.map((x, i) => (Math.abs(x.v - g.a) < 1e-9 || (g.tol && Math.abs(x.v - g.a) <= g.tol) ? i : -1)).filter((i) => i >= 0);
+        if (right.length !== 1 || new Set(o.map((x) => x.label)).size !== o.length || o.length < 3) { fail(`80-in-8 options for "${g.q}": ${o.map((x) => x.label)}`); break; }
+        pos[right[0]] += o.length === 4 ? 1 : 0;
+      }
+      const n = pos.reduce((a, b) => a + b, 0);
+      if (pos.some((x) => Math.abs(x - n / 4) > 5.5 * Math.sqrt(n * 0.25 * 0.75))) fail(`80-in-8: right answer positions not uniform ${pos}`);
+    }
+
+    // A review that started before the state was reloaded (e.g. another tab saved) must not
+    // remove the wrong card.
+    if (QT.mistakes) {
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      ['a', 'b', 'c'].forEach((x) => QT.mistakes.add('T', { q: `card ${x}`, a: 1, sol: 's' }));
+      const stale = QT.mistakes.all()[0];
+      QT.store.importJson(QT.store.exportJson()); // state replaced with fresh objects
+      for (let i = 0; i < 4; i++) QT.mistakes.review(stale, true);
+      const keys = QT.mistakes.all().map((m) => m.key).join(',');
+      if (keys !== 'card b,card c') fail(`mistakes: stale review removed the wrong card (left: ${keys})`);
+      QT.store.importJson(saved);
+    }
 
     // Build consistency: every script the page loads must be precached for offline use,
     // and the version must match everywhere.
@@ -177,7 +223,7 @@
     if (files.pkg && JSON.parse(files.pkg).version !== QT.VERSION) fail(`version mismatch: package.json vs core.js ${QT.VERSION}`);
 
     const fails = out.length;
-    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated) · ${(QT.estimateFacts || []).length} estimation facts`);
+    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated) · ${(QT.estimateFacts || []).length} estimation facts · ${(QT.tricks || []).length} speed tricks`);
     out.push(fails ? `${fails} FAILURE(S)` : 'ALL CHECKS PASSED');
     return { lines: out, fails };
   }

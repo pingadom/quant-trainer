@@ -41,7 +41,7 @@
       items: [
         { id: 'green', text: 'Finish "A Practical Guide to Quantitative Finance Interviews" (Zhou, the "Green Book")' },
         { id: 'heard', text: 'Finish "Heard on the Street" (Crack)' },
-        { id: 'full55', text: 'Score 55+ net on the 80-in-8 test (commonly reported pass line; aim for 70+)', auto: () => { const b = store.get().mental.full?.best ?? 0; return { done: b >= 55, note: `best ${b}` }; } },
+        { id: 'full55', text: 'Score 55+ net on the 80-in-8 test (commonly reported pass line; aim for 70+)', auto: () => { const b = QT.mental.best80() ?? 0; return { done: b >= 55, note: `best ${b}` }; } },
         { id: 'bank', text: 'Complete every question in the interview bank', auto: () => ({ done: U.bankDone() === QT.bank.length, note: `${U.bankDone()}/${QT.bank.length}` }) },
         { id: 'jsvideo', text: "Watch Jane Street's official mock trading interview video (janestreet.com/trading-interviews)" },
         { id: 'mock', text: 'Do 5 mock interviews out loud with a friend: explain your reasoning, not just the answer' },

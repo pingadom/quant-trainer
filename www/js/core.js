@@ -1,13 +1,23 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.8.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.9.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
     pick: (arr) => arr[Math.floor(Math.random() * arr.length)],
     float: (a, b, dp = 2) => +(a + Math.random() * (b - a)).toFixed(dp),
     die: (d = 6) => 1 + Math.floor(Math.random() * d),
+    // Uniform shuffle (Fisher–Yates). Never use sort(() => Math.random() - 0.5): it's biased,
+    // e.g. multiple-choice answers would not land in each position equally often.
+    shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    },
     normal() {
       let u = 0;
       while (!u) u = Math.random();
@@ -64,22 +74,39 @@
 
   QT.fmtNum = (x) => (Number.isFinite(x) ? String(+x.toPrecision(5)) : String(x));
 
-  // Accepts "0.139", "5/36", "13.9%", "1,250", "1e-3".
+  // Reads what people actually type: "0.139", ".5", "5/36", "13.9%", "1e-3", "−2" (Unicode
+  // minus from phone keyboards), "1 1/2" and "1½" (mixed numbers), "1,250" (thousands),
+  // "0,5" and "1.250,5" (decimal comma). Returns NaN for anything unreadable or infinite
+  // ("5/0"), so it is never silently graded as a number.
+  const VULGAR = { '½': '1/2', '⅓': '1/3', '⅔': '2/3', '¼': '1/4', '¾': '3/4', '⅕': '1/5', '⅙': '1/6', '⅚': '5/6', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8' };
+  const NUM = '[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:e[-+]?\\d+)?';
   QT.parseAnswer = function (raw) {
-    let s = String(raw).trim().replace(/,/g, '').replace(/\s+/g, '');
+    let s = String(raw ?? '')
+      .replace(/[−‒–—]/g, '-')
+      .replace(/[  ]/g, ' ')
+      .trim();
     if (!s) return NaN;
+    s = s.replace(/(\d)\s*([½⅓⅔¼¾⅕⅙⅚⅛⅜⅝⅞])/g, '$1 $2').replace(/[½⅓⅔¼¾⅕⅙⅚⅛⅜⅝⅞]/g, (m) => VULGAR[m]);
     let scale = 1;
-    if (s.endsWith('%')) {
+    if (/%$/.test(s)) {
       scale = 0.01;
-      s = s.slice(0, -1);
+      s = s.slice(0, -1).trim();
     }
-    const num = '[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:e[-+]?\\d+)?';
-    if (new RegExp(`^${num}/${num}$`, 'i').test(s)) {
+    const mixed = s.match(/^([+-]?)(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+    if (mixed) {
+      const [, sign, whole, n, d] = mixed;
+      return +d === 0 ? NaN : (sign === '-' ? -1 : 1) * (+whole + n / d) * scale;
+    }
+    s = s.replace(/\s+/g, '');
+    if (/^[+-]?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, ''); // 1,250 / 1,250.5
+    else if (/^[+-]?\d{1,3}(\.\d{3})+,\d+$/.test(s)) s = s.replace(/\./g, '').replace(',', '.'); // 1.250,5
+    else if (/^[+-]?\d*,\d+$/.test(s)) s = s.replace(',', '.'); // 0,5 or 12,5
+    let v = NaN;
+    if (new RegExp(`^${NUM}/${NUM}$`, 'i').test(s)) {
       const [a, b] = s.split('/');
-      return (Number(a) / Number(b)) * scale;
-    }
-    if (new RegExp(`^${num}$`, 'i').test(s)) return Number(s) * scale;
-    return NaN;
+      v = Number(a) / Number(b);
+    } else if (new RegExp(`^${NUM}$`, 'i').test(s)) v = Number(s);
+    return Number.isFinite(v) ? v * scale : NaN;
   };
 
   QT.isCorrect = (user, ans, tol = {}) => {
@@ -91,16 +118,30 @@
   // ---- Progress storage (localStorage, per browser) ----
   const KEY = 'quant-trainer:v1';
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
-  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
+  const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0 } });
   let state;
 
+  // Saved data goes through the same schema as imports, so a corrupted or hand-edited value
+  // (or data from an older version) can't break a screen.
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      state = raw ? Object.assign(blank(), JSON.parse(raw)) : blank();
+      state = raw ? sanitizeState(JSON.parse(raw)) : blank();
     } catch {
       state = blank();
     }
+  }
+
+  // Two tabs open: each would otherwise overwrite the other's progress with its own stale copy.
+  // When another tab saves, adopt its state; the app re-renders if it's safe to (QT.onExternalChange).
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('storage', (e) => {
+      if (e.key !== KEY || e.newValue == null) return;
+      try {
+        state = sanitizeState(JSON.parse(e.newValue));
+        if (QT.onExternalChange) QT.onExternalChange();
+      } catch { /* ignore a malformed write */ }
+    });
   }
   function save() {
     const json = JSON.stringify(state);
@@ -150,7 +191,7 @@
     const r = obj(raw), s = blank();
     s.topics = mapKeys(r.topics, (t) => ({ attempts: num(obj(t).attempts), correct: num(obj(t).correct), recent: bits(obj(t).recent, 20) }));
     s.days = arr(r.days, 3650).filter((d) => /^\d{4}-\d\d-\d\d$/.test(d));
-    s.mental = mapKeys(r.mental, (m) => ({ best: obj(m).best == null ? null : num(obj(m).best), runs: arr(obj(m).runs, 50).map((x) => ({ date: text(obj(x).date, 40), correct: num(obj(x).correct), wrong: num(obj(x).wrong) })) }), (k) => ['sprint', 'full'].includes(k));
+    s.mental = mapKeys(r.mental, (m) => ({ best: obj(m).best == null ? null : num(obj(m).best), runs: arr(obj(m).runs, 50).map((x) => ({ date: text(obj(x).date, 40), correct: num(obj(x).correct), wrong: num(obj(x).wrong) })) }), (k) => ['sprint', 'full', 'fullTyped'].includes(k));
     const mk = obj(r.market);
     s.market = { games: num(mk.games), total: num(mk.total), best: mk.best == null ? null : num(mk.best), history: arr(mk.history, 100).map((x) => ({ date: text(obj(x).date, 40), pnl: num(obj(x).pnl), midErr: num(obj(x).midErr) })) };
     s.roadmap = mapKeys(r.roadmap, (v) => !!v);
@@ -170,6 +211,7 @@
     const es = obj(r.estimate);
     s.estimate = { rounds: num(es.rounds), best: es.best == null ? null : num(es.best), hits: num(es.hits), n: num(es.n) };
     s.demo = !!r.demo;
+    s.tricks = mapKeys(r.tricks, (t) => ({ best: Math.min(10, Math.max(0, num(obj(t).best))), runs: num(obj(t).runs) }), (k) => /^[a-z0-9-]+$/.test(k));
     if (r.elo) {
       const e = obj(r.elo), skillKey = (k) => /^[a-z]+\.\d+$/.test(k);
       s.elo = { theta: num(e.theta), b: mapKeys(e.b, (v) => num(v), skillKey), n: mapKeys(e.n, (v) => num(v), skillKey) };

@@ -1,6 +1,6 @@
 {
   "name": "quant-trainer",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Quant trading interview practice. One codebase in www/, deployed as a website (PWA) and wrapped as a native app with Capacitor.",
   "license": "MIT",
@@ -8,7 +8,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "serve": "python -m http.server 8765 --bind 127.0.0.1",
+    "serve": "python tools/serve.py 8765",
     "test": "node tests/run-node.js",
     "test:e2e": "playwright test",
     "lint": "eslint .",

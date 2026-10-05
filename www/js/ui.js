@@ -142,16 +142,18 @@
       if (ok) right++;
       const fate = item.record(ok);
       if (item.skill) QT.coach.observe(item.skill, ok, Date.now() - shownAt);
-      if (!ok && !item.isReview) QT.mistakes.add(item.tag, p); // comes back for spaced review
+      // practiceOnly items (arithmetic drills) don't feed the mistakes deck or the coach's habits,
+      // which are about probability and statistics; they still get the diagnosis tip below.
+      if (!ok && !item.isReview && !item.practiceOnly) QT.mistakes.add(item.tag, p); // comes back for spaced review
       // Diagnose what kind of mistake this was, so the advice is about the actual slip.
       const errType = ok ? null : QT.coach.classify(userVal, p.a);
-      if (errType) QT.coach.logError(errType, item.skill, item.tag);
+      if (errType && !item.practiceOnly) QT.coach.logError(errType, item.skill, item.tag);
       updateBadges();
       $in.disabled = true;
       $actions.hidden = true;
       if (kp) kp.pad.hidden = true; // nothing to type now; keeps the result on screen
       $('#s-count').textContent = `${right}/${solved} correct`;
-      const note = item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok ? ' · saved to review later' : '';
+      const note = item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok && !item.practiceOnly ? ' · saved to review later' : '';
       const head = ok
         ? `<div class="fb ok">✓ Correct: ${f(p.a)}<span class="fb-note">${note}</span></div>`
         : `<div class="fb bad">✗ ${userVal === undefined ? 'Answer' : `You said ${f(userVal)}. Answer`}: ${f(p.a)}<span class="fb-note">${note}</span></div>`;

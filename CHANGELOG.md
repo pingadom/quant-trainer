@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.0
+
+- **Speed tricks:** 20 short guides to faster mental arithmetic (× 5/25/125, × 9/11/99, squares ending in 5, squares near 50 and 100, difference of squares, near-100 multiplication, halve-and-double, complements, fractions as decimals, missing-number questions, percentage shortcuts, last-digit and casting-out-nines checks, estimation, when to guess under negative marking, numbers worth memorising), each with a 10-question drill whose solution walks through the trick.
+- **80-in-8 in multiple choice or typed** (with Pass −1); separate personal bests.
+- **Answer parsing:** decimal commas (`0,5`, `1.250,5`), mixed numbers (`1 1/2`, `1½`), Unicode minus signs and `½`-style fractions are understood; `5/0` and other infinities are rejected instead of graded.
+- **Robustness:**
+  - Malformed or unknown links no longer crash the router or leave a blank list.
+  - Any screen error shows a recovery message.
+  - Two open tabs now share progress instead of overwriting each other.
+  - Saved data is schema-validated on load.
+  - A mid-review state reload can't delete the wrong mistake card.
+  - Ctrl+1 no longer answers an 80-in-8 question.
+  - Typed answers are escaped on the results screen.
+- **Fair shuffles:** the old `sort(() => Math.random() - 0.5)` put the right 80-in-8 answer in the last position only ~18% of the time. All shuffles now use Fisher–Yates, with a statistical test.
+- **Tests:** parser edge cases, trick drills checked against plain evaluation, option-position uniformity, broken links, cross-tab sync, and a seeded monkey test through the whole app. `npm run serve` uses a no-cache dev server so edits always load.
+
 ## 0.8.0
 
 - **Coach picks questions with an Elo ability model**, chosen by an out-of-sample study of seven learner models ([research/REPORT.md](research/REPORT.md)). Existing progress is migrated from answer history.
