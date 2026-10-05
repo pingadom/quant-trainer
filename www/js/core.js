@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.13.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.14.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -120,7 +120,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {} });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {} });
   let state;
 
   // Saved data goes through the same schema as imports, so a corrupted or hand-edited value
@@ -228,6 +228,8 @@
     s.talk = { sessions: num(tk.sessions), history: arr(tk.history, 100).map((x) => ({ ...when(x), id: text(obj(x).id, 80), secs: num(obj(x).secs), score: num(obj(x).score), of: num(obj(x).of, 6) })) };
     // Mental-maths timings by question type (mental-tips.js KINDS): the last 30 answers of each.
     s.speed = mapKeys(r.speed, (x) => ({ times: arr(obj(x).times, 30).map((v) => Math.max(0, num(v))), oks: bits(obj(x).oks, 30) }), (k) => /^[a-zA-Z0-9]{1,20}$/.test(k));
+    // Speed reps: question types scheduled for spaced timed practice (box 0–3, due timestamp).
+    s.speedReview = mapKeys(r.speedReview, (x) => ({ box: Math.min(3, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-zA-Z0-9]{1,20}$/.test(k));
     s.demo = !!r.demo;
     s.tricks = mapKeys(r.tricks, (t) => ({ best: Math.min(10, Math.max(0, num(obj(t).best))), runs: num(obj(t).runs) }), (k) => /^[a-z0-9-]+$/.test(k));
     if (r.elo) {

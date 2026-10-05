@@ -5,7 +5,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -170,6 +170,28 @@ test('slow and missed 80-in-8 questions come back with the fast method', async (
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Speed drill');
   await page.getByRole('link', { name: '← Mental maths' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Your speed by question type' })).toBeVisible(); // remembered across runs
+});
+
+test('a due speed rep runs, and a failed one comes back tomorrow', async ({ page }) => {
+  await page.goto('./#/');
+  await page.evaluate(() => { QT.store.get().speedReview = { frac: { box: 1, due: Date.now() - 1 } }; QT.store.save(); });
+  await page.goto('./#/mental');
+  await expect(page.getByRole('heading', { level: 2, name: 'Speed reps' })).toBeVisible();
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Speed rep: Fractions to decimals');
+  for (let i = 0; i < 8; i++) await page.getByRole('button', { name: 'Pass', exact: true }).click();
+  await expect(page.getByText("It's back tomorrow")).toBeVisible();
+  expect(await page.evaluate(() => QT.store.get().speedReview.frac.box)).toBe(0);
+});
+
+test('the tour walks through every section', async ({ page }) => {
+  await page.goto('./#/');
+  await page.getByRole('link', { name: 'Take the 1-minute tour' }).click();
+  for (let i = 1; i < 7; i++) {
+    await expect(page.locator('.eyebrow')).toContainText(`${i} of 7`);
+    await page.getByRole('link', { name: 'Next' }).click();
+  }
+  await expect(page.getByRole('link', { name: 'Start the diagnostic' })).toBeVisible();
 });
 
 test('speed-trick lesson and drill', async ({ page }) => {
@@ -345,7 +367,7 @@ test.describe('accessibility in every theme', () => {
   for (const theme of ['notebook', 'night', 'chalk', 'terminal']) {
     test(`no serious violations in ${theme}`, async ({ page }) => {
       await page.addInitScript((t) => localStorage.setItem('qt-theme', t), theme);
-      for (const r of ['', 'topic/bayes', 'mental', 'figgie', 'progress', 'appearance']) {
+      for (const r of ['', 'topic/bayes', 'mental', 'figgie', 'progress', 'appearance', 'tour']) {
         await page.goto(`./?demo#/${r}`);
         await expect(page.locator('main h1').first()).toBeVisible();
         await expect(page.locator('html')).toHaveAttribute('data-theme', theme);

@@ -36,6 +36,8 @@
     }
     const due = QT.mistakes.due().length;
     if (due) items.push({ k: 'REVIEW', v: `${due} due` });
+    const reps = QT.mental.dueReps().length;
+    if (reps) items.push({ k: 'REPS', v: `${reps} due` });
     const strong = QT.coach.allIds().filter((id) => QT.coach.stat(id).status === 'strong').length;
     if (strong) items.push({ k: 'SKILLS', v: `${strong}/${QT.coach.allIds().length}` });
     return items;

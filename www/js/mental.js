@@ -48,13 +48,15 @@
   const slowSecs = () => { try { const v = +localStorage.getItem(SLOW_KEY); return SLOW_CHOICES.includes(v) ? v : 6; } catch { return 6; } };
   const savedStyle = () => { try { return localStorage.getItem(STYLE_KEY) === 'typed' ? 'typed' : 'mc'; } catch { return 'mc'; } };
 
-  function render(el) {
+  function render(el, sub, arg) {
+    if (sub === 'rep' && QT.mentalTips.KINDS[arg]) return rep(el, arg);
     const st = store.get().mental, style = savedStyle();
     const best = (k) => st[k]?.best ?? '–';
     el.innerHTML = `
       <h1>Mental maths</h1>
       <p class="lede">Market-making firms screen with fast arithmetic tests. Speed comes from practice plus a handful of tricks you can learn in an afternoon.</p>
       <a class="card shortcut primary" href="#/tricks" style="margin-bottom:16px"><b>Learn the speed tricks →</b><span>20 short guides (squaring, near-100 multiplication, fractions, last-digit checks, guessing strategy…) each with a practice drill</span></a>
+      ${repsCard()}
       <div class="grid">
         <div class="card wide">
           <h3>${MODES.full.label}</h3>
@@ -203,13 +205,8 @@
       rec.best = prevBest === null ? score : Math.max(prevBest, score);
       rec.runs.push({ date: new Date().toISOString(), correct, wrong });
       if (rec.runs.length > 50) rec.runs.shift();
-      // Remember speed by question type across sessions (the coach uses it).
-      for (const x of answered) {
-        const sp = (s.speed[x.kind] ||= { times: [], oks: [] });
-        sp.times.push(Math.min(x.ms, 60000));
-        sp.oks.push(x.ok ? 1 : 0);
-        if (sp.times.length > 30) { sp.times.shift(); sp.oks.shift(); }
-      }
+      recordSpeed(answered); // speed by question type, across sessions (the coach uses it)
+      const added = scheduleReps(answered, slowSecs());
       store.touchDay();
       store.save();
       const acc = correct + wrong ? Math.round((100 * correct) / (correct + wrong)) : 0;
@@ -222,13 +219,158 @@
           <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best${modeId === 'full' ? ` (${mc ? 'multiple choice' : 'typed'})` : ''}</div></div>
         </div>
         ${review(answered, slowSecs())}
+        ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}. They come back tomorrow as short timed sets.</p>` : ''}
         <div class="row" style="margin-top:18px"><button id="again">Go again</button><a class="btn ghost" href="#/mental">Back</a></div>`;
       el.querySelector('#again').addEventListener('click', () => run(el, modeId, style));
-      const drillBtn = el.querySelector('#drill-slow');
-      if (drillBtn) drillBtn.addEventListener('click', () => drill(el, drillBtn.dataset.kinds.split(',')));
+      wireReview(el);
     }
 
     tick();
+    next();
+  }
+
+  // ---- speed reps: spaced, timed practice of one question type ----
+  // A type with 2+ slow or missed answers in a run is scheduled for tomorrow. Each rep is 8 timed
+  // questions of that type; pass (≤1 miss, median under your threshold) and it comes back after
+  // 3, then 7, then 21 days, then graduates; fail and it's back tomorrow.
+  const DAY = 864e5, REP_GAPS = [1, 3, 7, 21], REP_N = 8;
+
+  function recordSpeed(answered) {
+    const s = store.get();
+    for (const x of answered) {
+      const sp = (s.speed[x.kind] ||= { times: [], oks: [] });
+      sp.times.push(Math.min(x.ms, 60000));
+      sp.oks.push(x.ok ? 1 : 0);
+      if (sp.times.length > 30) { sp.times.shift(); sp.oks.shift(); }
+    }
+  }
+
+  function scheduleReps(answered, secs) {
+    const rv = store.get().speedReview, bad = {}, added = [];
+    for (const x of answered) if (!x.ok || x.ms > secs * 1000) bad[x.kind] = (bad[x.kind] || 0) + 1;
+    for (const [k, n] of Object.entries(bad)) {
+      if (n >= 2 && !rv[k] && QT.mentalTips.KINDS[k]) {
+        rv[k] = { box: 0, due: Date.now() + DAY };
+        added.push(k);
+      }
+    }
+    return added;
+  }
+
+  const dueReps = () => Object.entries(store.get().speedReview).filter(([k, r]) => r.due <= Date.now() && QT.mentalTips.KINDS[k]).map(([k]) => k);
+  const whenDue = (t) => { const d = Math.ceil((t - Date.now()) / DAY); return d <= 0 ? 'due now' : d === 1 ? 'due tomorrow' : `due in ${d} days`; };
+
+  function repsCard() {
+    const items = Object.entries(store.get().speedReview).filter(([k]) => QT.mentalTips.KINDS[k]).sort((a, b) => a[1].due - b[1].due);
+    if (!items.length) return '';
+    return `<h2>Speed reps</h2>
+      <div class="card">
+        <p class="small" style="margin-top:0">Question types that slowed you down come back as ${REP_N}-question timed sets until they're quick: after 1, 3, 7 and 21 days.</p>
+        ${items.map(([k, r]) => {
+          const due = r.due <= Date.now();
+          return `<div class="switch-row"><span><b>${QT.mentalTips.KINDS[k].label}</b><br><span class="small">${whenDue(r.due)} · stage ${r.box + 1} of 4</span></span>
+            <a class="btn${due ? '' : ' ghost'}" href="#/mental/rep/${k}">${due ? 'Start' : 'Practise early'}</a></div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // The drill button inside a review needs its handler whenever a review is drawn.
+  function wireReview(el) {
+    const b = el.querySelector('#drill-slow');
+    if (b) b.addEventListener('click', () => drill(el, b.dataset.kinds.split(',')));
+  }
+
+  function rep(el, kind) {
+    const T = QT.mentalTips, K = T.KINDS[kind], secs = slowSecs(), answered = [];
+    let cur = null, n = 0, shownAt = 0;
+    el.innerHTML = `
+      <a class="back" href="#/mental">← Mental maths</a>
+      <h1>Speed rep: ${K.label}</h1>
+      <p class="lede">${REP_N} questions, each timed on its own. Pass with at most one miss and a median under ${secs} s.</p>
+      <div class="card" id="mm-card">
+        <div class="mm-top"><span id="rp-n"></span><span id="rp-t" class="mono"></span></div>
+        <div class="mm-q" id="rp-q" aria-live="polite"></div>
+        <form class="answer-row" id="rp-form">
+          <input type="text" id="rp-in" inputmode="decimal" autocomplete="off" placeholder="Answer, then Enter" aria-label="Your answer">
+          <button>Enter</button>
+        </form>
+        <div class="q-actions"><span class="small" id="rp-hint">Use the fast method: <a href="#/tricks/${K.guide}">${(QT.tricks || []).find((t) => t.id === K.guide)?.title || 'guide'}</a></span><button type="button" class="link" id="rp-pass">Pass</button></div>
+      </div>`;
+    const $ = (s) => el.querySelector(s), $in = $('#rp-in'), form = $('#rp-form'), hint = $('#rp-hint'), baseHint = hint.innerHTML;
+    const timer = setInterval(() => { $('#rp-t').textContent = `${((Date.now() - shownAt) / 1000).toFixed(1)} s`; }, 100);
+    QT.cleanup = () => clearInterval(timer);
+    const make = () => {
+      for (let t = 0; t < 300; t++) {
+        const g = R.pick(gens)();
+        if (g.kind === kind) return g;
+      }
+      return R.pick(gens)();
+    };
+    function next() {
+      if (n >= REP_N) return finish();
+      cur = make();
+      n++;
+      $('#rp-n').textContent = `${n} / ${REP_N}`;
+      $('#rp-q').textContent = cur.q;
+      $in.value = '';
+      hint.innerHTML = baseHint;
+      shownAt = Date.now();
+      if (!QT.keypad.enabled()) $in.focus();
+    }
+    const answer = (ok, shown) => {
+      answered.push({ ...cur, ok, you: shown, ms: Date.now() - shownAt });
+      next();
+    };
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!$in.value.trim()) return;
+      const v = QT.parseAnswer($in.value);
+      if (Number.isNaN(v)) return (hint.textContent = "Couldn't read that. Try 0.25, 1/4 or 25%.");
+      answer(Math.abs(v - cur.a) <= (cur.tol ?? 0.005), $in.value.trim());
+    });
+    $('#rp-pass').addEventListener('click', () => answer(false, 'passed'));
+    QT.keypad.attach(form, [$in], () => form.requestSubmit());
+
+    function finish() {
+      clearInterval(timer);
+      QT.cleanup = null;
+      const times = answered.map((x) => x.ms).sort((a, b) => a - b), median = times[Math.floor(times.length / 2)] / 1000;
+      const misses = answered.filter((x) => !x.ok).length, passed = misses <= 1 && median <= secs;
+      const rv = store.get().speedReview, r = rv[kind] || { box: 0, due: 0 };
+      let fate, mark = '';
+      if (passed && r.box >= 3) {
+        delete rv[kind];
+        fate = 'Fourth pass in a row: this type is off your list.';
+        mark = QT.flair.milestone('Mastered');
+      } else if (passed) {
+        r.box++;
+        r.due = Date.now() + REP_GAPS[r.box] * DAY;
+        rv[kind] = r;
+        fate = `Passed. Next rep in ${REP_GAPS[r.box]} days.`;
+        mark = QT.flair.stamp('Passed');
+      } else {
+        r.box = 0;
+        r.due = Date.now() + DAY;
+        rv[kind] = r;
+        fate = `Not yet: ${misses > 1 ? `${misses} misses` : `median ${median.toFixed(1)} s`}. It's back tomorrow; read the fast methods below first.`;
+      }
+      recordSpeed(answered);
+      store.touchDay();
+      store.save();
+      QT.flair.ticker(); // the due count changed
+      el.innerHTML = `
+        <a class="back" href="#/mental">← Mental maths</a>
+        <div class="title-row"><h1>Speed rep: ${K.label}</h1>${mark}</div>
+        <div class="tiles">
+          <div class="tile"><div class="v">${median.toFixed(1)}</div><div class="k">median seconds (target ${secs})</div></div>
+          <div class="tile"><div class="v">${REP_N - misses}/${REP_N}</div><div class="k">correct</div></div>
+        </div>
+        <div class="card"><p style="margin:0">${fate}</p></div>
+        ${review(answered, secs)}
+        <div class="row" style="margin-top:18px"><button id="again">Go again</button><a class="btn ghost" href="#/mental">Back</a></div>`;
+      el.querySelector('#again').addEventListener('click', () => rep(el, kind));
+      wireReview(el);
+    }
     next();
   }
 
@@ -315,5 +457,5 @@
     return vals.length ? Math.max(...vals) : null;
   };
 
-  QT.mental = { render, gens, options, best80, review };
+  QT.mental = { render, gens, options, best80, review, scheduleReps, dueReps };
 })();

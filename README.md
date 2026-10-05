@@ -47,7 +47,7 @@
 | **Mistakes to review** | Every wrong answer comes back after 1, 3, 7 and 21 days until mastered. |
 | **Daily challenge** | The same 5 questions for everyone each day (seeded from the date, no server), one attempt, with a shareable result and streak. |
 | **Think aloud** | Talk a reported question through out loud against the clock, record yourself (kept on the device), see pace and filler words, then score yourself against what interviewers listen for. |
-| **Mental maths** | The "80 in 8" format with net scoring, answered as multiple choice or typed, plus a 2-minute sprint. Slow and missed questions come back afterwards with the fast method worked on their own numbers. |
+| **Mental maths** | The "80 in 8" format with net scoring, answered as multiple choice or typed, plus a 2-minute sprint. Slow and missed questions come back afterwards with the fast method worked on their own numbers, and slow question types return as spaced, timed speed reps. |
 | **Speed tricks** | 20 short guides to faster arithmetic (near-100 multiplication, squaring, fractions, last-digit checks, guessing strategy under negative marking…), each with a drill that walks through the trick. |
 | **Online tests** | Timed number sequences, digit span and running-total tasks, the kinds of screen many firms use before interviews. |
 | **Figgie** | Jane Street's card trading game against three bots (Bayesian, flow-following and noise), with the Bayesian maths from your hand on request. |
