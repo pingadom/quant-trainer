@@ -89,6 +89,43 @@
       ],
       sources: [['Glassdoor: Maven Securities trader', GD('Maven-Securities-Trader-Interview-Questions-EI_IE716525.0,16_KO17,23.htm')]],
     },
+    wincent: {
+      name: 'Wincent',
+      process: [
+        'Official (Quant Research/Trading internship, Bratislava): four stages. An online maths test taken at home (probability, logic and maths, low-to-medium difficulty), a 45-minute quant interview (medium problems), a 90-minute quant interview (your background plus medium-hard problems), then an on-site round in Bratislava built around betting games.',
+        'Candidates describe the online test as 12 numeric-answer problems in two timed sections (6 easier, then 6 medium), proctored, with pen, paper and a basic calculator. Some also report a separate coding test (HackerRank) for intern roles.',
+        'Reported interview themes: probability, Bayes, expected value and variance, combinatorics, Markov chains, and mental maths under time pressure. Several candidates say the questions feel like variants of the "Green Book" (Zhou, A Practical Guide to Quantitative Finance Interviews).',
+        'Wincent is a high-frequency crypto market maker. Interns describe morning betting games and an on-site game where "the stakes kept building up", so practise bet sizing and staying calm as stakes grow.',
+      ],
+      sources: [
+        ['Wincent: Quantitative Research Internship (official)', 'https://www.wincent.com/careers/quantitative-research-internship-quant-research-trading-starting-summer-2027/'],
+        ['Wincent: Internship experience (official)', 'https://www.wincent.com/featured-insights/internship-experience/'],
+        ['Glassdoor: Wincent interviews', GD('Wincent-Capital-Management-Interview-Questions-E8216941.htm')],
+        ['QuantVault: Wincent online assessment', 'https://quantvault.org/wincent-capital-management-online-assessment.html'],
+      ],
+    },
+    akuna: {
+      name: 'Akuna Capital',
+      process: [
+        'Candidates report a timed mental maths and number-sequence assessment, then technical interviews with a trader covering probability, statistics and market making.',
+        'Probability questions are often described as "Green Book" style: dice, cards and coins, and how you would bet on them.',
+      ],
+      sources: [['Glassdoor: Akuna quant trader interviews', GD('AKUNA-CAPITAL-Quant-Trader-Interview-Questions-EI_IE608116.0,13_KO14,26.htm')]],
+    },
+    davinci: {
+      name: 'Da Vinci Derivatives',
+      process: [
+        'Candidates report a fast online assessment (one describes 20 probability questions in 12 minutes, all mental maths), then interviews mixing mental maths, probability, expected value, brainteasers and behavioural questions.',
+      ],
+      sources: [['Glassdoor: Da Vinci graduate trader interviews', GD('Da-Vinci-Derivatives-Graduate-Trader-Interview-Questions-EI_IE2997120.0,20_KO21,36.htm')]],
+    },
+    drw: {
+      name: 'DRW',
+      process: [
+        'Candidates report an online assessment of statistics and probability, a phone screen, then a superday with behavioural and technical rounds including market-making games.',
+      ],
+      sources: [['Glassdoor: DRW trading intern interviews', GD('DRW-Trading-Intern-Interview-Questions-EI_IE235115.0,3_KO4,18.htm')]],
+    },
     common: {
       name: 'Common formats',
       process: ['Widely used question formats from prep guides. They are not verified as asked at any one firm, but you will meet their structure everywhere.'],
@@ -345,6 +382,196 @@
           sim: () => { const a = R.int(0, 46); let b; do { b = R.int(0, 46); } while (b === a); return a < 9 || b < 9 ? 1 : 0; } },
       ],
       followups: ['With 9 outs and one card to come? (≈ 9/46 ≈ 0.196; rule of 2 gives 18%.)'],
+    },
+
+    // ---------------------------------------------------------------- Wincent
+    {
+      id: 'wc-deuce', firm: 'wincent', role: 'Quant researcher', stage: 'Interview', cat: 'Probability', kind: 'reported',
+      src: ['Glassdoor: Wincent interviews', GD('Wincent-Capital-Management-Interview-Questions-E8216941.htm')],
+      q: `Table tennis: the score is 10–10, so you need to win by two points. You win each point with probability 40%, independently.`,
+      parts: [
+        { q: `(a) What is the probability that you win the game?`, a: 4 / 13,
+          sol: `Look at points in pairs. Win both (0.4² = 0.16): you win. Lose both (0.6² = 0.36): you lose. Split them (0.48): you're back at deuce. Only the deciding pairs matter, so P(win) = 0.16 / (0.16 + 0.36) = 16/52 = <b>4/13 ≈ 0.308</b>.`,
+          sim: () => { let lead = 0; while (Math.abs(lead) < 2) lead += Math.random() < 0.4 ? 1 : -1; return lead > 0 ? 1 : 0; } },
+        { q: `(b) Follow-up (ours): how many more points are played, on average?`, a: 2 / 0.52, ext: true,
+          sol: `Each pair of points ends the game with probability 0.52, so the number of pairs is geometric with mean 1/0.52. Points = 2/0.52 = <b>≈ 3.85</b>.`,
+          sim: () => { let lead = 0, n = 0; while (Math.abs(lead) < 2) { lead += Math.random() < 0.4 ? 1 : -1; n++; } return n; } },
+      ],
+      followups: ['What if you win each point on your own serve with probability 0.5 and on theirs with 0.3, alternating serves every point?', 'At what point-win probability is your chance of winning from deuce exactly 1/3?'],
+    },
+    {
+      id: 'wc-threes', firm: 'wincent', role: 'Quant trading intern', stage: 'Interview', cat: 'Expected value', kind: 'reported',
+      src: ['Glassdoor: Wincent interviews', GD('Wincent-Capital-Management-Interview-Questions-E8216941.htm')],
+      note: `A candidate reports being asked "a very tricky variant" of the game of Threes from Matthew Conroy's <i>A Collection of Dice Problems</i> (problem 56). The variant itself isn't public, so practise the original until the backward-induction method is automatic.`,
+      q: `Threes: roll five dice. Threes count as zero; other faces count at face value; you want the lowest total. After each roll you must keep at least one die (kept dice add to your score) and re-roll the rest. Play optimally.`,
+      parts: [
+        { q: `(a) With one die left to roll, what is your expected score from it?`, a: 3,
+          sol: `(1 + 2 + 0 + 4 + 5 + 6)/6 = 18/6 = <b>3</b>.` },
+        { q: `(b) With two dice left, what is your expected score under optimal play?`, a: 79 / 18,
+          sol: `You must keep the lower die. Keep the other one too if it beats re-rolling, whose expected value is 3: keep it if it shows 0 (a three), 1 or 2. Averaging min + min(other, 3) over all 36 rolls gives 158/36 = <b>79/18 ≈ 4.389</b>.` },
+        { q: `(c) Follow-up (from Conroy's solution): the expected score of the full five-dice game under optimal play?`, a: 504205555 / 80621568, tol: { abs: 0.005, rel: 0 }, ext: true,
+          sol: `Work backwards: E₁ = 3, E₂ = 79/18 ≈ 4.389, E₃ ≈ 5.234, E₄ ≈ 5.834. With n dice, keep the lowest and then choose how many more of the next-lowest to keep by comparing their sum with the value of re-rolling the rest. This gives E₅ ≈ <b>6.254</b>. Note the surprise in the three-dice strategy: a 2 is worth keeping next to another 2, but not next to a 4.` },
+      ],
+      followups: ['Why must the optimal strategy keep the lowest dice first?', 'How does the answer change if you may keep zero dice on a roll (but still at most five rolls)?'],
+    },
+    {
+      id: 'wc-cube-walk', firm: 'wincent', role: 'Quant (online test topic)', stage: 'Online test', cat: 'Markov chains', kind: 'guide',
+      src: ['QuantVault: Wincent online assessment (lists "Random Walk on a Cube")', 'https://quantvault.org/wincent-capital-management-online-assessment.html'],
+      note: `Practice on a topic a prep site lists for Wincent's online test. The wording is ours, not a reported question.`,
+      q: `A bug walks on the corners of a cube. Each second it moves along one of the three edges from its corner, chosen at random.`,
+      parts: [
+        { q: `(a) Expected number of moves to reach the opposite corner?`, a: 10,
+          sol: `Group corners by distance from the target (3, 2, 1, 0). From 3 you always go to 2; from 2 you go to 1 with probability 2/3 or back to 3 with 1/3; from 1 you finish with probability 1/3, else back to 2. Solve h₃ = 1 + h₂, h₂ = 1 + ⅔h₁ + ⅓h₃, h₁ = 1 + ⅔h₂: h₁ = 7, h₂ = 9, h₃ = <b>10</b>.`,
+          sim: () => { let x = 0, n = 0; while (x !== 7) { x ^= 1 << Math.floor(Math.random() * 3); n++; } return n; } },
+        { q: `(b) Expected number of moves to return to the starting corner?`, a: 8,
+          sol: `The walk is symmetric, so in the long run it spends 1/8 of its time at each corner; the expected return time is 1/(1/8) = <b>8</b>.` },
+      ],
+      followups: ['What about a random walk on the 16 corners of a 4-dimensional cube to the opposite corner?'],
+    },
+    {
+      id: 'wc-branching', firm: 'wincent', role: 'Quant (online test topic)', stage: 'Online test', cat: 'Probability', kind: 'guide',
+      src: ['QuantVault: Wincent online assessment (lists branching-process extinction)', 'https://quantvault.org/wincent-capital-management-online-assessment.html'],
+      note: `Practice on a topic a prep site lists for Wincent's online test. The wording is ours.`,
+      q: `A cell, each minute, dies with probability 1/4, stays a single cell with probability 1/4, or splits into two with probability 1/2. Every cell behaves independently. You start with one cell.`,
+      parts: [
+        { q: `What is the probability that the population eventually dies out?`, a: 0.5,
+          sol: `Let q be the extinction probability. Condition on the first minute: q = ¼ + ¼q + ½q² (two cells must both die out: q²). So 2q² − 3q + 1 = 0, giving q = 1 or q = ½. The mean number of offspring is 1.25 > 1, so extinction is not certain and q = <b>½</b>.`,
+          sim: () => { let n = 1; for (let t = 0; t < 200 && n > 0 && n < 60; t++) { let m = 0; for (let i = 0; i < n; i++) { const u = Math.random(); m += u < 0.25 ? 0 : u < 0.5 ? 1 : 2; } n = m; } return n === 0 ? 1 : 0; }, trials: 20000 },
+      ],
+      followups: ['What is the expected population after 3 minutes? (1.25³)'],
+    },
+    {
+      id: 'wc-ants', firm: 'wincent', role: 'Quant (online test topic)', stage: 'Online test', cat: 'Probability', kind: 'guide',
+      src: ['QuantVault: Wincent online assessment (lists "100 Ants on a String")', 'https://quantvault.org/wincent-capital-management-online-assessment.html'],
+      note: `Our version of a classic, on a topic a prep site lists for Wincent's online test.`,
+      q: `100 ants are dropped at uniformly random points on a 1-metre string, each facing left or right at random, walking at 1 cm/s. When two ants meet, both turn around. Ants fall off at the ends.`,
+      parts: [
+        { q: `What is the expected time, in seconds, until the last ant falls off?`, a: 10000 / 101,
+          sol: `Two ants bouncing off each other look exactly like two ants passing through each other (only the labels swap). So each "ghost" ant walks straight off: its time is the distance to the end it faces, uniform on 0–100 s. The last one falls at the maximum of 100 independent U(0, 100): E = 100 × 100/101 = <b>≈ 99.0 s</b>.`,
+          sim: () => { let m = 0; for (let i = 0; i < 100; i++) m = Math.max(m, Math.random() * 100); return m; }, trials: 20000 },
+      ],
+      followups: ['What is the expected number of collisions?', 'Which ant falls off last, and does it depend on the directions?'],
+    },
+    {
+      id: 'wc-bayes-trader', firm: 'wincent', role: 'Quant (interview topic)', stage: 'Interview', cat: 'Bayes', kind: 'guide',
+      src: ['Glassdoor: Wincent interviews (Bayesian statistics reported as a theme)', GD('Wincent-Capital-Management-Interview-Questions-E8216941.htm')],
+      note: `Our question on a theme candidates report from Wincent interviews (Bayesian updating).`,
+      q: `20% of traders are skilled. A skilled trader makes money on a given day with probability 70%, an unskilled one with probability 50%. A trader made money on each of their first 3 days.`,
+      parts: [
+        { q: `What is the probability that they are skilled?`, a: 343 / 843,
+          sol: `Prior odds 0.2 : 0.8 = 1 : 4. Likelihood ratio (0.7/0.5)³ = 2.744. Posterior odds 2.744 : 4, so P = 2.744/6.744 = 343/843 ≈ <b>0.407</b>. Three good days only double the prior.`,
+          sim: () => { const skilled = Math.random() < 0.2, p = skilled ? 0.7 : 0.5; if (!(Math.random() < p && Math.random() < p && Math.random() < p)) return null; return skilled ? 1 : 0; } },
+      ],
+      followups: ['How many winning days in a row before you are 90% sure they are skilled?'],
+    },
+    {
+      id: 'wc-kelly-coin', firm: 'wincent', role: 'Quant trading (on-site betting games)', stage: 'On-site', cat: 'Bet sizing', kind: 'guide',
+      src: ['Wincent: Internship experience (betting games where stakes build up)', 'https://www.wincent.com/featured-insights/internship-experience/'],
+      note: `Wincent's on-site round is built around betting games. This is our warm-up for that format, not a reported game.`,
+      q: `You may bet any fraction of your bankroll, again and again, at even money on a coin that lands heads 60% of the time.`,
+      parts: [
+        { q: `(a) What fraction of your bankroll should you bet each time to maximise long-run growth?`, a: 0.2,
+          sol: `Kelly: f* = p − q/b = 0.6 − 0.4/1 = <b>20%</b>.` },
+        { q: `(b) What is the expected log-growth per bet at that fraction?`, a: 0.6 * Math.log(1.2) + 0.4 * Math.log(0.8), tol: { abs: 0.0005, rel: 0 },
+          sol: `0.6·ln 1.2 + 0.4·ln 0.8 = 0.6 × 0.1823 − 0.4 × 0.2231 ≈ <b>0.0201</b>, about 2% a bet. Bet 40% (twice Kelly) and growth falls to about −0.0024 (0.6·ln 1.4 + 0.4·ln 0.6): favourable bets, shrinking bankroll.` },
+      ],
+      followups: ['The stakes double every round but the coin is the same. Does your fraction change?', 'You are only 80% sure the coin is 60/40 (otherwise it is fair). What fraction now?'],
+    },
+
+    // ---------------------------------------------------------------- More reported questions (October 2026)
+    {
+      id: 'opt-all-faces', firm: 'optiver', role: 'Trading intern', stage: 'Interview', cat: 'Probability', kind: 'reported',
+      src: ['Glassdoor: Optiver intern interviews', GD('Optiver-Intern-Interview-Questions-EI_IE243355.0,7_KO8,14.htm')],
+      q: `You roll a fair die six times.`,
+      parts: [
+        { q: `(a) What is the probability that every number 1–6 appears exactly once?`, a: 5 / 324,
+          sol: `Favourable sequences: 6! = 720. All sequences: 6⁶ = 46,656. P = 720/46,656 = <b>5/324 ≈ 0.0154</b>.`,
+          sim: () => new Set([R.die(), R.die(), R.die(), R.die(), R.die(), R.die()]).size === 6 ? 1 : 0 },
+        { q: `(b) Follow-up (ours): on average, how many rolls until you have seen every face?`, a: 14.7, ext: true,
+          sol: `Coupon collector: after k faces seen, the wait for a new one is geometric with mean 6/(6 − k). Sum: 6(1 + ½ + ⅓ + ¼ + ⅕ + ⅙) = <b>14.7</b>.`,
+          sim: () => { const s = new Set(); let n = 0; while (s.size < 6) { s.add(R.die()); n++; } return n; } },
+      ],
+      followups: ['How likely is it that you need more than 20 rolls?'],
+    },
+    {
+      id: 'opt-three-cards', firm: 'optiver', role: 'Trader', stage: 'Interview', cat: 'Optimal stopping', kind: 'reported',
+      src: ['Glassdoor: Optiver interview question', GD('You-have-3-cards-each-labeled-n-n-1-n-2-and-you-don-t-know-n-The-rules-of-the-game-All-cards-start-face-down-You-flip-QTN_1848772.htm')],
+      q: `Three face-down cards show n, n + 1 and n + 2, in random order, and you don't know n. Turn one over: keep it, or turn another. Keep that, or take the last card. You win the value of the card you keep.`,
+      parts: [
+        { q: `Under the best strategy, how much more than n do you win on average?`, a: 4 / 3,
+          sol: `The first card tells you nothing (n is unknown), so always look at a second. Then compare: if the second is higher, keep it (it is the top card or the middle card, equally likely, worth n + 1.5 on average, while the last card would be worth n + 1). If it is lower, take the last card. Over the 6 orders this wins 1, 2, 2, 2, 1, 0 above n: average <b>4/3</b>, against 1 for keeping the first card.` },
+      ],
+      followups: ['With four cards n … n + 3?', 'Now you are told n is 0, 10 or 20, equally likely. Does the strategy change?'],
+    },
+    {
+      id: 'imc-b-wins', firm: 'imc', role: 'Graduate quant researcher', stage: 'Interview', cat: 'Conditional probability', kind: 'reported',
+      src: ['Glassdoor: IMC interviews', GD('IMC-Trading-Interview-Questions-E278100.htm')],
+      q: `A and B take turns flipping a fair coin, A first. Whoever flips the first head wins.`,
+      parts: [
+        { q: `(a) What is the probability that B wins?`, a: 1 / 3,
+          sol: `If A flips tails (½), B is in A's position. So P(B) = ½ · P(A) and P(A) + P(B) = 1, giving P(B) = <b>1/3</b>.`,
+          sim: () => { for (let t = 0; ; t++) if (Math.random() < 0.5) return t % 2; } },
+        { q: `(b) Given that B won, what is the probability B won on their first flip?`, a: 3 / 4,
+          sol: `P(B wins on the first flip) = P(T, H) = 1/4. Divide by P(B wins) = 1/3: <b>3/4</b>.`,
+          sim: () => { for (let t = 0; ; t++) if (Math.random() < 0.5) return t % 2 ? (t === 1 ? 1 : 0) : null; } },
+      ],
+      followups: ['What if the coin lands heads with probability p?'],
+    },
+    {
+      id: 'imc-walk', firm: 'imc', role: 'Quantitative analyst', stage: 'Interview', cat: 'Random walks', kind: 'reported',
+      src: ['Glassdoor: IMC interviews', GD('IMC-Trading-Interview-Questions-E278100.htm')],
+      q: `You start at 0. Each fair coin flip moves you up 1 (heads) or down 1 (tails).`,
+      parts: [
+        { q: `(a) What is the probability you reach −100 before +50?`, a: 1 / 3,
+          sol: `Your position is a martingale, so its expected value when you stop is 0: −100·P + 50·(1 − P) = 0, giving P = 50/150 = <b>1/3</b>. The closer barrier is twice as likely.` },
+        { q: `(b) Follow-up (ours): how many flips does it take on average?`, a: 5000, ext: true,
+          sol: `For a fair walk between barriers at distances a and b, the expected time is a·b = 100 × 50 = <b>5,000</b> (X² − n is also a martingale).` },
+      ],
+      followups: ['What if the coin is 51% heads?'],
+    },
+    {
+      id: 'akuna-fair-coin', firm: 'akuna', role: 'Quant trader', stage: 'Interview', cat: 'Probability', kind: 'reported',
+      src: ['Glassdoor: Akuna quant trader interviews', GD('AKUNA-CAPITAL-Quant-Trader-Interview-Questions-EI_IE608116.0,13_KO14,26.htm')],
+      q: `You have a coin that lands heads 70% of the time. How can you use it to make a fair 50/50 decision?`,
+      parts: [
+        { q: `Using the standard method (flip twice; HT means A, TH means B, otherwise flip twice again), how many flips do you need on average?`, a: 1 / 0.21,
+          sol: `HT and TH each have probability 0.7 × 0.3 = 0.21, so the method is fair. A pair decides with probability 0.42, so the number of pairs is geometric with mean 1/0.42, and flips = 2/0.42 = <b>≈ 4.76</b>.`,
+          sim: () => { let n = 0; for (;;) { const a = Math.random() < 0.7, b = Math.random() < 0.7; n += 2; if (a !== b) return n; } } },
+      ],
+      followups: ['Can you do better on average by reusing the HH and TT outcomes?'],
+    },
+    {
+      id: 'dv-outliers', firm: 'davinci', role: 'Graduate trader', stage: 'Online test', cat: 'Expected value', kind: 'reported',
+      src: ['Glassdoor: Da Vinci graduate trader interviews', GD('Da-Vinci-Derivatives-Graduate-Trader-Interview-Questions-EI_IE2997120.0,20_KO21,36.htm')],
+      q: `A dataset has 102 samples, 7 of which are outliers. You pick samples at random without replacement.`,
+      parts: [
+        { q: `On average, how many samples do you pick until you find the third outlier?`, a: 309 / 8,
+          sol: `The 7 outliers split the 95 normal samples into 8 gaps, each holding 95/8 on average by symmetry. The third outlier comes after 3 gaps and 3 outliers: 3 × 95/8 + 3 = 3 × 103/8 = <b>38.625</b>. In general the k-th of K special items among N sits at k(N + 1)/(K + 1).`,
+          sim: () => { const a = R.shuffle([...Array(102).keys()]); let seen = 0; for (let i = 0; i < 102; i++) if (a[i] < 7 && ++seen === 3) return i + 1; return null; } },
+      ],
+      followups: ['And until the last outlier?'],
+    },
+    {
+      id: 'drw-ht-product', firm: 'drw', role: 'Trading intern', stage: 'Interview', cat: 'Expected value', kind: 'reported',
+      src: ['Glassdoor: DRW trading intern interviews', GD('DRW-Trading-Intern-Interview-Questions-EI_IE235115.0,3_KO4,18.htm')],
+      q: `You flip a fair coin 100 times.`,
+      parts: [
+        { q: `What is the expected value of (number of heads) × (number of tails)?`, a: 2475,
+          sol: `With H heads, E[H(100 − H)] = 100·E[H] − E[H²]. E[H] = 50 and E[H²] = Var + mean² = 25 + 2,500. So 5,000 − 2,525 = <b>2,475</b>, a little below 50 × 50 because of the spread.`,
+          sim: () => { let h = 0; for (let i = 0; i < 100; i++) h += Math.random() < 0.5; return h * (100 - h); } },
+      ],
+      followups: ['What is P(H × T = 2,500)?'],
+    },
+    {
+      id: 'js-four-coins', firm: 'js', role: 'Trader', stage: 'Interview', cat: 'Expected value', kind: 'reported',
+      src: ['Glassdoor: Jane Street interview question', GD('There-are-four-coins-For-each-heads-you-get-you-get-1-You-can-also-re-flip-one-coin-after-the-initial-four-flips-Wh-QTN_973092.htm')],
+      q: `Flip four fair coins and get $1 for each head. After seeing them, you may re-flip one coin.`,
+      parts: [
+        { q: `What is the most you would pay to play?`, a: 79 / 32,
+          sol: `Without the re-flip: $2. Re-flip a tail whenever you have one (probability 15/16), gaining $0.50 on average. Total 2 + 15/32 = <b>$2.469</b>.`,
+          sim: () => { let h = 0; for (let i = 0; i < 4; i++) h += Math.random() < 0.5; return h + (h < 4 && Math.random() < 0.5 ? 1 : 0); } },
+      ],
+      followups: ['What if you can re-flip every tail once?', 'What if the re-flip costs $0.40?'],
     },
 
     // ---------------------------------------------------------------- Common formats

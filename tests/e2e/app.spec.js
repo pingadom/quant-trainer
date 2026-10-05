@@ -122,7 +122,7 @@ test('broken or unknown links never leave a broken screen', async ({ page }) => 
     await expect(page.locator('main h1').first(), hash).toContainText(heading);
   }
   await page.goto('./#/bank/nope');
-  await expect(page.locator('.qitem')).toHaveCount(24); // unknown firm → every question, not none
+  await expect(page.locator('.qitem')).toHaveCount(await page.evaluate(() => QT.bank.length)); // unknown firm → every question, not none
 });
 
 test('80-in-8 offers multiple choice or typed answers', async ({ page, isMobile }) => {
