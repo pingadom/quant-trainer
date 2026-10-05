@@ -9,6 +9,7 @@
 - **Online tests:** timed number sequences, digit span and running total.
 - **Think aloud:** answer a reported question out loud against the clock, optionally recording yourself (kept on the device) with a live transcript showing pace and filler words, then compare with the worked answer and follow-ups and score yourself.
 - **Progress:** charts of accuracy and speed over time, 80-in-8, calibration and every game; an activity heatmap; speed against target by topic. The demo profile now includes histories.
+- **Fix:** "Back" on a game's results screen (estimation, 80 in 8 and the new games) did nothing, because it linked to the URL you were already on. Links to the current screen now re-open it.
 - **Tests:** Kelly optimality, Figgie posterior calibration and card/chip conservation over full bot games, daily-challenge determinism, fill informativeness, schema validation of the new data, and end-to-end and accessibility checks for every new screen.
 
 ## 0.9.0

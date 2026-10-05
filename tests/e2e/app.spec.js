@@ -183,7 +183,7 @@ test('Figgie: trade with the bots, then settle when time runs out', async ({ pag
   expect(trades).toBeGreaterThan(0);
   await page.clock.runFor(110_000);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Figgie:');
-  await expect(page.getByText('goal suit')).toBeVisible();
+  await expect(page.locator('.tile').filter({ hasText: 'goal suit' })).toBeVisible();
   const games = await page.evaluate(() => QT.store.get().figgie.games);
   expect(games).toBe(1);
 });
@@ -236,7 +236,7 @@ test('online tests: sequences, digit span and running total', async ({ page }) =
   await page.locator('[data-test="seq"]').click();
   for (let i = 0; i < 15; i++) await page.getByRole('button', { name: 'Skip' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Number sequences: done');
-  await page.goto('./#/oa');
+  await page.getByRole('link', { name: 'Back' }).click(); // same URL as the test: must still go back
   await page.locator('[data-test="span"]').click();
   for (let miss = 0; miss < 2; miss++) {
     await page.clock.runFor(15_000); // digits flash, then the answer box appears
@@ -246,7 +246,7 @@ test('online tests: sequences, digit span and running total', async ({ page }) =
   await page.clock.runFor(2_000);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Digit span: done');
   // Leaving mid-test must stop its timers drawing over the next screen.
-  await page.goto('./#/oa');
+  await page.getByRole('link', { name: 'Back' }).click();
   await page.locator('[data-test="total"]').click();
   await page.goto('./#/progress');
   await page.clock.runFor(20_000);

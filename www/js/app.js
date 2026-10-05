@@ -78,6 +78,16 @@
   }
 
   window.addEventListener('hashchange', route);
+  // A link to the screen you're already on (e.g. "Back" on a game's results, which shares the
+  // game's URL) changes nothing, so no hashchange fires: re-render it instead.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    if (a.getAttribute('href') === location.hash || (a.getAttribute('href') === '#/' && !location.hash.replace(/^#\/?/, ''))) {
+      e.preventDefault();
+      route();
+    }
+  });
   route();
 
   // Native: if the WebView's storage was cleared but the durable copy survives, restore it.

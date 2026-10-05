@@ -105,6 +105,7 @@
         recorder.start();
         $('#tk-status').textContent = '● Recording. Talk it through out loud, starting by restating the question.';
       } catch {
+        if (stopped) return; // left the page while the browser was deciding
         $('#tk-status').textContent = 'Microphone not available, so no recording this time. Talk it through anyway.';
       }
     }
