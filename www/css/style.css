@@ -508,7 +508,7 @@ canvas { width: 100%; height: 280px; display: block; background: var(--panel-2);
 .dashed { stroke-dasharray: 5 4; }
 .chart .ch-target { stroke: var(--bad); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart .ch-zero { stroke: var(--line); stroke-width: 1; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
 .ch-key { display: inline-block; width: 16px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
 .ch-key.ch-s0 { border-color: var(--accent); }
 .ch-key.ch-s1 { border-color: var(--ok); }
@@ -526,7 +526,7 @@ canvas { width: 100%; height: 280px; display: block; background: var(--panel-2);
 
 /* ---- daily challenge ---- */
 .daily-card { margin: 18px 0 0; }
-.daily-squares { font-size: 1.8rem; letter-spacing: 4px; margin: 0 0 10px; }
+.daily-squares { margin: 0 0 10px; }
 .share-text { font-family: var(--mono); font-size: 0.85rem; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; word-break: break-all; user-select: all; }
 
 /* ---- make me a market / bet sizing ---- */
@@ -542,7 +542,6 @@ input[type='range'] { accent-color: var(--accent); }
 
 /* ---- Figgie ---- */
 .suit { font-size: 1.25rem; line-height: 1; color: var(--ink); }
-.suit.red { color: var(--bad); }
 .fg-row { display: grid; grid-template-columns: 150px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .fg-row:last-of-type { border-bottom: 0; }
 .fg-suit { display: flex; align-items: center; gap: 16px; padding: 4px 0 6px; }
@@ -649,8 +648,8 @@ label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
   position: absolute; right: -9px; bottom: -9px; min-width: 22px; height: 22px; border-radius: 11px; padding: 0 4px; box-sizing: border-box;
   background: var(--accent); color: var(--on-accent); font-family: var(--mono); font-weight: 600; font-size: 0.78rem; display: flex; align-items: center; justify-content: center;
 }
-.chips { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; margin-right: 6px; vertical-align: middle; }
-.chips i { width: 6px; border-radius: 2px; background: var(--accent); opacity: 0.85; }
+.chip-stack { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; margin-right: 6px; vertical-align: middle; }
+.chip-stack i { width: 6px; border-radius: 2px; background: var(--accent); opacity: 0.85; }
 
 /* ---- appearance ---- */
 .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 18px; }

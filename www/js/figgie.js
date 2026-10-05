@@ -173,7 +173,7 @@
   const suitTag = (s) => `<span class="suit${SUITS[s].red ? ' red' : ''}" aria-label="${SUITS[s].name}">${SUITS[s].sym}</span>`;
   const pct = (x) => `${Math.round(x * 100)}%`;
   // A little stack of chips, one bar per 50 chips, so the table reads at a glance.
-  const chipStack = (n) => `<span class="chips" aria-hidden="true">${Array.from({ length: Math.max(1, Math.min(10, Math.round(n / 50))) }, (_, i) => `<i style="height:${6 + ((i * 5) % 11)}px"></i>`).join('')}</span>`;
+  const chipStack = (n) => `<span class="chip-stack" aria-hidden="true">${Array.from({ length: Math.max(1, Math.min(10, Math.round(n / 50))) }, (_, i) => `<i style="height:${6 + ((i * 5) % 11)}px"></i>`).join('')}</span>`;
 
   function render(el) {
     const st = store.get().figgie;
