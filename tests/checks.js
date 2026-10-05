@@ -196,6 +196,28 @@
       if (pos.some((x) => Math.abs(x - n / 4) > 5.5 * Math.sqrt(n * 0.25 * 0.75))) fail(`80-in-8: right answer positions not uniform ${pos}`);
     }
 
+    // Speed by question type, the coach's use of it, and the weekly summary.
+    if (QT.mentalTips && QT.coach) {
+      const t = QT.mentalTips.speedTable({ frac: { times: [9000, 11000, 8000, 10000], oks: [1, 0, 1, 1] }, pct: { times: [3000, 4000], oks: [1, 1] }, bogus: { times: [1], oks: [1] } });
+      if (t.length !== 2 || t[0].kind !== 'frac' || t[0].median !== 10 || t[0].missRate !== 0.25) fail(`speed table: ${JSON.stringify(t)}`);
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      const s = QT.store.get();
+      s.speed = { frac: { times: Array(10).fill(9000), oks: Array(10).fill(1) } };
+      s.figgie = { games: 4, total: -80, best: 5, wins: 0, history: [] };
+      const recs = QT.coach.recommend();
+      if (!recs.some((r) => r.kind === 'speedType' && r.href === '#/tricks/fraction-decimals')) fail('coach: slow fractions should point to the fractions guide');
+      if (!recs.some((r) => r.kind === 'figgie')) fail('coach: losing at Figgie should be flagged');
+      if (recs.some((r) => !r.title || !r.href || /undefined|NaN/.test(r.title + r.why + (r.voice || '')))) fail('coach: a recommendation is malformed');
+      QT.store.importJson(saved);
+    }
+    if (QT.progress) {
+      const now = Date.parse('2026-10-05T12:00:00'), DAY = 864e5;
+      const log = [...Array(10)].map((_, i) => ({ t: now - 2 * DAY + i, ok: i < 8 ? 1 : 0 })).concat([...Array(4)].map((_, i) => ({ t: now - 9 * DAY + i, ok: i < 2 ? 1 : 0 })));
+      const w = QT.progress.weekSummary({ log, days: ['2026-10-03', '2026-10-05', '2026-09-20'], daily: { '2026-10-04': { done: true }, '2026-09-01': { done: true } }, mental: { full: { runs: [{ date: '2026-10-04T10:00:00Z', correct: 60, wrong: 8 }, { date: '2026-08-01T10:00:00Z', correct: 70, wrong: 0 }] } }, figgie: { history: [{ date: '2026-10-03T10:00:00Z', pnl: 25 }] } }, now);
+      if (w.answers !== 10 || w.answersPrev !== 4 || w.acc !== 80 || w.accPrev !== 50 || w.days !== 2 || w.dailies !== 1 || w.best80 !== 52 || w.figgiePnl !== 25) fail(`week summary: ${JSON.stringify(w)}`);
+    }
+
     // Mental-maths review: every question type has a fast method whose own arithmetic reaches
     // the question's answer, and points to a guide that exists.
     if (QT.mentalTips && QT.mental) {

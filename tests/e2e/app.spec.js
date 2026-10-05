@@ -168,6 +168,8 @@ test('slow and missed 80-in-8 questions come back with the fast method', async (
   await expect(page.locator('.review-item').first()).toContainText('Faster:');
   await page.getByRole('button', { name: /Practise these types/ }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Speed drill');
+  await page.getByRole('link', { name: '← Mental maths' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Your speed by question type' })).toBeVisible(); // remembered across runs
 });
 
 test('speed-trick lesson and drill', async ({ page }) => {

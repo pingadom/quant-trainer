@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0
+
+- **The coach uses everything:** mental-maths speed is now remembered by question type across sessions, and your slowest or most-missed type gets a recommendation pointing to the speed trick that fixes it. The coach also reacts to the trading games (losing at Figgie, not moving your market after a trade, sizing bets well below Kelly), suggests games and online tests you haven't tried, and nudges you to answer out loud once you've typed a few interview answers.
+- **Mental maths:** a "speed by question type" table (median time and miss rate over your last 30 of each, with the guide for each type).
+- **Progress:** a "This week" summary against the week before: questions answered, accuracy, days practised, daily challenges, best 80-in-8 run and Figgie result.
+- **Figgie on phones:** the card and prices sit side by side, so all four suits fit on one screen.
+- The coach's voice keeps skill names as written ("AR(1)", "Sharpe").
+
 ## 0.11.0
 
 - **Themes:** four looks, chosen under More → Appearance, each a full set of colours and type: **Notebook** (paper and ink on faint graph lines, serif headings, monospaced numbers; the default by day), **Night desk** (the same after hours; the default in dark mode), **Chalkboard** and **Terminal**. "Match system" switches between Notebook and Night desk with the device. The theme is applied before the first paint, follows into the Android status bar, and every theme passes WCAG AA contrast checks in CI.

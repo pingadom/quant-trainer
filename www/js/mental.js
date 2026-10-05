@@ -78,7 +78,8 @@
         <label for="slow">Review questions slower than</label>
         <select id="slow" style="margin-left:8px">${SLOW_CHOICES.map((v) => `<option value="${v}" ${v === slowSecs() ? 'selected' : ''}>${v} seconds</option>`).join('')}</select>
         <p class="small" style="margin:6px 0 0">After each run, slow and missed questions come back with the fastest way to do each one and the guide that teaches it. 80 in 8 needs about 6 seconds a question.</p>
-      </div>`;
+      </div>
+      ${speedCard(slowSecs())}`;
     el.querySelector('#slow').addEventListener('change', (e) => {
       try { localStorage.setItem(SLOW_KEY, e.target.value); } catch { /* storage blocked */ }
     });
@@ -202,6 +203,13 @@
       rec.best = prevBest === null ? score : Math.max(prevBest, score);
       rec.runs.push({ date: new Date().toISOString(), correct, wrong });
       if (rec.runs.length > 50) rec.runs.shift();
+      // Remember speed by question type across sessions (the coach uses it).
+      for (const x of answered) {
+        const sp = (s.speed[x.kind] ||= { times: [], oks: [] });
+        sp.times.push(Math.min(x.ms, 60000));
+        sp.oks.push(x.ok ? 1 : 0);
+        if (sp.times.length > 30) { sp.times.shift(); sp.oks.shift(); }
+      }
       store.touchDay();
       store.save();
       const acc = correct + wrong ? Math.round((100 * correct) / (correct + wrong)) : 0;
@@ -222,6 +230,18 @@
 
     tick();
     next();
+  }
+
+  // Your speed by question type over recent runs, slowest first, each with its guide.
+  function speedCard(secs) {
+    const rows = QT.mentalTips.speedTable(store.get().speed);
+    if (!rows.length) return '';
+    const guide = (id) => (QT.tricks || []).find((t) => t.id === id);
+    return `<h2>Your speed by question type</h2>
+      <div class="card table-wrap"><table>
+        <tr><th>Type</th><th class="num">Median</th><th class="num">Missed</th><th>Guide</th></tr>
+        ${rows.map((r) => `<tr><td>${r.label}</td><td class="num ${r.median > secs ? 'neg' : ''}">${r.median.toFixed(1)} s</td><td class="num">${Math.round(r.missRate * 100)}%</td><td>${guide(r.guide) ? `<a href="#/tricks/${r.guide}">${guide(r.guide).title}</a>` : ''}</td></tr>`).join('')}
+      </table><p class="small">Over up to your last 30 answers of each type, from both 80 in 8 and the sprint. Red: slower than your ${secs} s review threshold.</p></div>`;
   }
 
   // End-of-session review: per-type timings, then each slow or missed question with the fastest
