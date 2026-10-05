@@ -89,7 +89,7 @@ If you've had a quant interview, the most useful thing you can add is a question
 
 ## Acknowledgements
 
-Built with AI pair-programming ([Claude Code](https://claude.com/claude-code)). Interview questions are paraphrased from public candidate reports and linked to their sources; firms' names are used only to attribute those reports.
+Interview questions are paraphrased from public candidate reports and linked to their sources; firms' names are used only to attribute those reports.
 
 ## License
 
