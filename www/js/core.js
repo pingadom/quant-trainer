@@ -82,8 +82,8 @@
   const NUM = '[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:e[-+]?\\d+)?';
   QT.parseAnswer = function (raw) {
     let s = String(raw ?? '')
-      .replace(/[−‒–—]/g, '-')
-      .replace(/[  ]/g, ' ')
+      .replace(/[\u2212\u2012\u2013\u2014]/g, '-') // Unicode minus and dashes
+      .replace(/[\u00a0\u202f]/g, ' ') // non-breaking spaces
       .trim();
     if (!s) return NaN;
     s = s.replace(/(\d)\s*([½⅓⅔¼¾⅕⅙⅚⅛⅜⅝⅞])/g, '$1 $2').replace(/[½⅓⅔¼¾⅕⅙⅚⅛⅜⅝⅞]/g, (m) => VULGAR[m]);
