@@ -248,6 +248,8 @@
       </div>`;
     };
     const nMissed = flagged.filter((x) => !x.ok).length;
+    // Up to 10 of each, so a run with many misses still shows the slow ones.
+    const shown = [...flagged.filter((x) => !x.ok).slice(0, 10), ...flagged.filter((x) => x.ok).slice(0, 10)];
     return `
       <h2>Review</h2>
       <p class="small">${flagged.length ? `${flagged.length} question${flagged.length > 1 ? 's' : ''} to look at: ${nMissed} missed, ${flagged.length - nMissed} right but slower than ${secs} s.` : `Every answer was right and under ${secs} s. Try a lower threshold.`}</p>
@@ -255,8 +257,8 @@
         <tr><th>Question type</th><th class="num">Asked</th><th class="num">Average time</th><th class="num">Slow or missed</th></tr>
         ${kinds.map((x) => `<tr><td>${T.KINDS[x.k]?.label || x.k}</td><td class="num">${x.n}</td><td class="num ${x.avg > secs ? 'neg' : ''}">${x.avg.toFixed(1)} s</td><td class="num">${x.bad || '–'}</td></tr>`).join('')}
       </table></div>
-      ${flagged.slice(0, 15).map(item).join('')}
-      ${flagged.length > 15 ? `<p class="small">…and ${flagged.length - 15} more of the same types.</p>` : ''}
+      ${shown.map(item).join('')}
+      ${flagged.length > shown.length ? `<p class="small">…and ${flagged.length - shown.length} more of the same types.</p>` : ''}
       ${weak.length ? `<div class="row" style="margin-top:12px"><button class="ghost" id="drill-slow" data-kinds="${weak.slice(0, 4).join(',')}">Practise these types (10 questions, untimed)</button></div>` : ''}`;
   }
 
