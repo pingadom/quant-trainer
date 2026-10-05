@@ -257,6 +257,15 @@
     if (b80 === null) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', voice: 'No number on your mental maths yet. Put one on the board.', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
     else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', voice: `${b80} net. The desk wants 55. Close the gap.`, title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
 
+    // Speed reps that are due: short timed sets of one question type.
+    if (QT.mentalTips && st.speedReview) {
+      const due = Object.entries(st.speedReview).filter(([k, r]) => r.due <= Date.now() && QT.mentalTips.KINDS[k]);
+      if (due.length) {
+        const [k] = due[0], L = QT.mentalTips.KINDS[k].label;
+        recs.push({ pri: 66, kind: 'speedRep', voice: due.length > 1 ? `${due.length} speed reps on your book. Two minutes each.` : `${L} is back on your list. Eight questions, at pace.`, title: `Speed rep due: ${L.toLowerCase()}`, why: `8 timed questions of one type. Pass with at most one miss at your target pace and it moves out to the next interval.${due.length > 1 ? ` ${due.length - 1} more due after this.` : ''}`, href: `#/mental/rep/${k}`, label: 'Start the rep' });
+      }
+    }
+
     // Mental maths by question type: the slowest type (or the most missed) gets its speed-trick guide.
     if (QT.mentalTips && st.speed) {
       const types = QT.mentalTips.speedTable(st.speed).filter((x) => x.n >= 8);

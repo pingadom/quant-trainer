@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0
+
+- **Speed reps:** a mental-maths question type with two or more slow or missed answers in a run is scheduled for a short timed set of 8 questions of just that type. Pass (at most one miss, median under your threshold) and it comes back after 3, then 7, then 21 days before graduating; miss and it's back tomorrow. Due reps appear on the mental maths page, in the ticker and as a coach recommendation.
+- **Tour:** a seven-step walkthrough of the app, offered on the welcome screen and from More.
+
 ## 0.13.0
 
 - **Wincent:** a firm profile from Wincent's own careers pages (online maths test, 45- and 90-minute quant interviews, on-site betting games in Bratislava) and candidate reports, with the two questions candidates report (table tennis from 10–10 at 40% a point; Conroy's game of Threes, of which a "tricky variant" was asked) and five practice questions, labelled as such, on the topics listed for its online test: a random walk on a cube, branching-process extinction, ants on a string, Bayesian updating and Kelly betting.

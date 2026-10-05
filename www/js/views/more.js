@@ -9,6 +9,7 @@
       <h1>More</h1>
       <div class="menu">
         <a class="card" href="#/daily"><b>Daily challenge</b><span class="small">The same 5 questions for everyone today, with a shareable result</span></a>
+        <a class="card" href="#/tour"><b>Take the tour</b><span class="small">Everything the app does, in seven short steps</span></a>
         <a class="card" href="#/progress"><b>Progress</b><span class="small">Charts of your accuracy, speed and scores over time</span></a>
       </div>
       <h2 class="menu-head">Interview prep</h2>

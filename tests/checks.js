@@ -196,6 +196,20 @@
       if (pos.some((x) => Math.abs(x - n / 4) > 5.5 * Math.sqrt(n * 0.25 * 0.75))) fail(`80-in-8: right answer positions not uniform ${pos}`);
     }
 
+    // Speed reps: two slow or missed answers of a type schedule it once, due tomorrow.
+    if (QT.mental && QT.mental.scheduleReps) {
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      const mk = (kind, ok, ms) => ({ kind, ok, ms });
+      const added = QT.mental.scheduleReps([mk('frac', false, 2000), mk('frac', true, 9000), mk('pct', true, 9000), mk('sq', true, 1000)], 6);
+      const again = QT.mental.scheduleReps([mk('frac', false, 1000), mk('frac', false, 1000)], 6);
+      const rv = QT.store.get().speedReview;
+      if (added.join() !== 'frac' || again.length || rv.frac.box !== 0 || rv.frac.due <= Date.now() || QT.mental.dueReps().length) fail(`speed reps: scheduling ${JSON.stringify({ added, again, rv })}`);
+      rv.frac.due = Date.now() - 1;
+      if (QT.mental.dueReps().join() !== 'frac' || !QT.coach.recommend().some((r) => r.kind === 'speedRep' && r.href === '#/mental/rep/frac')) fail('speed reps: a due rep should be listed and recommended');
+      QT.store.importJson(saved);
+    }
+
     // Speed by question type, the coach's use of it, and the weekly summary.
     if (QT.mentalTips && QT.coach) {
       const t = QT.mentalTips.speedTable({ frac: { times: [9000, 11000, 8000, 10000], oks: [1, 0, 1, 1] }, pct: { times: [3000, 4000], oks: [1, 1] }, bogus: { times: [1], oks: [1] } });
