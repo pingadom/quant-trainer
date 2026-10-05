@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.11.0
 
+- **Themes:** four looks, chosen under More → Appearance, each a full set of colours and type: **Notebook** (paper and ink on faint graph lines, serif headings, monospaced numbers; the default by day), **Night desk** (the same after hours; the default in dark mode), **Chalkboard** and **Terminal**. "Match system" switches between Notebook and Night desk with the device. The theme is applied before the first paint, follows into the Android status bar, and every theme passes WCAG AA contrast checks in CI.
+- **Typefaces:** Newsreader, IBM Plex Sans and Mono, and Kalam, self-hosted (SIL Open Font Licence) so they work offline and under the Content Security Policy.
+- **Signature details:** a ticker tape of your own numbers across the top (streak, accuracy, 80-in-8, calibration, Figgie, daily…, with ▲▼ moves); numbers that roll into place; ink stamps for milestones (3 in a row, mastered, new best, perfect daily, Figgie win); the coach's voice ("You're short Bayes: 0 of your last 4. Cover it."); a candlestick chart of your accuracy over the last week; split-flap digits; real die faces, card faces and chip stacks in the games; and an optional closing bell. Animations follow the system's reduced-motion setting and can be switched off; sounds are off by default.
 - **Mental maths review:** every answer is timed. After each run, questions slower than your threshold (6 s by default, adjustable) and missed ones come back with the fastest way to do that exact question, worked on its own numbers, and a link to the guide that teaches it. A table shows your average time by question type, and one tap starts an untimed drill on the types that slowed you down. Each worked method is checked in tests to reach the right answer.
 
 ## 0.10.0

@@ -2,6 +2,32 @@
 (function () {
   const store = QT.store, f = QT.fmtNum, U = QT.ui;
 
+  // Accuracy over the last 7 days as candlesticks: each day opens at the previous practised day's
+  // accuracy and closes at its own (filled = up). Days without practice show a dot.
+  function candles(log) {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const xs = log.filter((x) => x.t >= d.getTime() && x.t < d.getTime() + 864e5);
+      days.push({ d, acc: xs.length ? (100 * xs.filter((x) => x.ok).length) / xs.length : null });
+    }
+    const before = log.filter((x) => x.t < days[0].d.getTime()).slice(-20);
+    let prev = before.length ? (100 * before.filter((x) => x.ok).length) / before.length : null;
+    const px = (v) => (v * 40) / 100;
+    const label = [];
+    const bars = days.map(({ d, acc }) => {
+      const day = d.toLocaleDateString('en-GB', { weekday: 'short' });
+      if (acc === null) { label.push(`${day}: no practice`); return '<span class="candle none"><span class="body"></span></span>'; }
+      const open = prev ?? acc, lo = Math.min(open, acc), hi = Math.max(open, acc), up = acc >= open;
+      prev = acc;
+      label.push(`${day}: ${Math.round(acc)}%`);
+      return `<span class="candle ${up ? 'up' : 'down'}"><span class="wick" style="bottom:${px(Math.max(0, lo - 6))}px;height:${px(Math.min(100, hi + 6) - Math.max(0, lo - 6))}px"></span><span class="body" style="bottom:${px(lo)}px;height:${Math.max(3, px(hi - lo))}px"></span></span>`;
+    });
+    return `<span class="candles" role="img" aria-label="Accuracy over the last 7 days. ${label.join(', ')}">${bars.join('')}</span>`;
+  }
+
   function home(el) {
     const s = store.get();
     const attempts = Object.values(s.topics).reduce((a, t) => a + t.attempts, 0);
@@ -39,12 +65,16 @@
     const [top, ...more] = QT.coach.recommend();
     const today = s.daily[QT.dayKey(new Date())], dstreak = QT.daily.streak();
     el.innerHTML = `
-      <h1>${hello}</h1>
+      <div class="greet">
+        <div><div class="eyebrow">${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>${hello}</h1></div>
+        ${s.log.length ? `<div class="week">${candles(s.log)}<span class="small mono">accuracy, last 7 days</span></div>` : ''}
+      </div>
       <p class="lede">${streak > 1 ? `${streak}-day streak. Keep it going.` : streak === 1 ? 'You practised today. Nice.' : 'Pick up where you left off.'}</p>
 
       ${top ? `<div class="card upnext">
         <div class="eyebrow">Up next</div>
         <h2>${top.title}</h2>
+        ${top.voice ? `<p class="voice">“${top.voice}”</p>` : ''}
         <p>${top.why}</p>
         <a class="btn btn-lg" href="${top.href}">${top.label}</a>
       </div>` : ''}
@@ -65,7 +95,7 @@
       <h2>Keep sharp</h2>
       <div class="shortcuts">
         <a class="card shortcut" href="#/bank"><b>Interview questions</b><span>${U.bankDone()}/${QT.bank.length} done · mock interviews</span></a>
-        <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${QT.mental.best80() !== null ? `80-in-8 best: ${QT.mental.best80()} net` : 'Not tried yet'}</span></a>
+        <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${QT.mental.best80() !== null ? `80-in-8 best ${QT.flair.flap(QT.mental.best80())} net` : 'Not tried yet'}</span></a>
         <a class="card shortcut" href="#/figgie"><b>Figgie</b><span>${s.figgie.games ? `${s.figgie.games} games · avg P&amp;L ${f(s.figgie.total / s.figgie.games)}` : "Jane Street's trading card game"}</span></a>
         <a class="card shortcut" href="#/quote"><b>Make me a market</b><span>${s.quote.n ? `${Math.round((100 * s.quote.hits) / s.quote.n)}% of final markets right` : 'The live interview format'}</span></a>
         <a class="card shortcut" href="#/kelly"><b>Bet sizing</b><span>${s.kelly.best !== null ? `best sizing score ${Math.round(s.kelly.best * 100)}%` : 'How much would you stake?'}</span></a>

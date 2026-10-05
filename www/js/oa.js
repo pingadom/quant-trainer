@@ -65,7 +65,7 @@
   const finishCard = (el, key, score, extra) => {
     const isBest = record(key, score), t = TESTS[key];
     el.innerHTML = `
-      <h1>${t.name}: done</h1>
+      <h1>${t.name}: done${isBest ? QT.flair.milestone('New best') : ''}</h1>
       <div class="tiles">
         <div class="tile"><div class="v">${score}</div><div class="k">${t.unit}${isBest ? ' · new best!' : ''}</div></div>
         <div class="tile"><div class="v">${store.get().oa[key].best}</div><div class="k">personal best</div></div>

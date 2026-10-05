@@ -10,6 +10,7 @@
 
 | Layer | Files | Responsibility |
 |---|---|---|
+| Appearance | `theme.js` (loaded before paint), `flair.js`, `css/style.css` | Theme tokens as CSS custom properties per `[data-theme]`; ticker tape, rolling numbers, stamps, bell |
 | Foundation | `config.js`, `core.js` | RNG, maths, answer parsing, the store (localStorage), schema validation of imported data, version |
 | Platform | `platform.js` | Everything that differs between website, installed PWA and native app: storage mirroring, file export, back button, status bar, service worker, install prompt, analytics |
 | Content | `gens-*.js`, `topics.js`, `cases.js`, `bank.js`, `estimate.js` | Question generators (79 skills in 14 topics), case studies, the interview bank, estimation facts |
@@ -41,6 +42,8 @@ question source (coach.source / drill / case / bank)
 - **Figgie engine.** Pure functions over a game object (`newGame`, `post`, `buy`, `sell`, `botAct`, `payouts`) with injectable randomness, so tests play whole games and check that cards and chips are conserved. Bots value cards with the exact Bayesian posterior over the 12 possible deck layouts, P(layout | hand) ∝ Π C(suit size, cards held); the posterior is tested for calibration (E[P(true goal)] = E[Σ P²]).
 - **Luck-free scoring.** Bet sizing scores your stakes by expected log-growth relative to Kelly on the same bets, not by the final bankroll, so a lucky run can't hide over-betting.
 - **Charts.** `chart.js` draws an SVG stretched to its container with non-scaling strokes; axis labels are HTML so they stay legible on phones, and colours come from the theme's CSS variables.
+
+- **Themes.** Each theme is a block of CSS custom properties on `[data-theme='…']` (not just `:root`), so any element can preview another theme: the Appearance screen's swatches are drawn in their own themes' colours. With no attribute set, `prefers-color-scheme` picks Notebook or Night desk. CI runs axe colour-contrast checks on six screens in every theme.
 
 ## Testing
 

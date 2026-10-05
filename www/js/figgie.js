@@ -172,6 +172,8 @@
   // ---------------- screen ----------------
   const suitTag = (s) => `<span class="suit${SUITS[s].red ? ' red' : ''}" aria-label="${SUITS[s].name}">${SUITS[s].sym}</span>`;
   const pct = (x) => `${Math.round(x * 100)}%`;
+  // A little stack of chips, one bar per 50 chips, so the table reads at a glance.
+  const chipStack = (n) => `<span class="chips" aria-hidden="true">${Array.from({ length: Math.max(1, Math.min(10, Math.round(n / 50))) }, (_, i) => `<i style="height:${6 + ((i * 5) % 11)}px"></i>`).join('')}</span>`;
 
   function render(el) {
     const st = store.get().figgie;
@@ -215,7 +217,7 @@
       <div class="card fg-board">
         ${[0, 1, 2, 3].map((s) => `
         <div class="fg-row" data-s="${s}">
-          <div class="fg-suit">${suitTag(s)}<span class="small">you hold</span> <b data-hold="${s}"></b></div>
+          <div class="fg-suit"><span class="card-face${SUITS[s].red ? ' red' : ''}" role="img" aria-label="${SUITS[s].name}"><span class="corner" aria-hidden="true">${SUITS[s].sym}</span><span aria-hidden="true">${SUITS[s].sym}</span><span class="count" data-hold="${s}"></span></span><span class="small">you hold <b data-hold-text="${s}"></b></span></div>
           <div class="fg-book">
             <button type="button" class="ghost" data-sell="${s}" aria-label="Sell ${SUITS[s].name} at the best bid"></button>
             <button type="button" class="ghost" data-buy="${s}" aria-label="Buy ${SUITS[s].name} at the best offer"></button>
@@ -250,6 +252,7 @@
       for (let s = 0; s < 4; s++) {
         const { bid, ask } = g.book[s];
         $(`[data-hold="${s}"]`).textContent = you.hand[s];
+        $(`[data-hold-text="${s}"]`).textContent = you.hand[s];
         const sb = $(`[data-sell="${s}"]`), bb = $(`[data-buy="${s}"]`);
         sb.innerHTML = !bid ? '<span class="small">no bid</span>' : bid.who === 0 ? `Your bid <b>${bid.px}</b>` : `Sell <b>@${bid.px}</b> <span class="small">${who(bid.who)}</span>`;
         sb.dataset.at = bid ? bid.px : '';
@@ -259,7 +262,7 @@
         bb.disabled = over || !ask || ask.who === 0 || you.chips < ask.px;
       }
       $('#fg-players').innerHTML = `<tr><th>Player</th><th class="num">Chips</th><th class="num">Cards</th></tr>` +
-        g.players.map((p) => `<tr><td>${p.name}</td><td class="num">${p.chips}</td><td class="num">${p.hand.reduce((a, b) => a + b, 0)}</td></tr>`).join('');
+        g.players.map((p) => `<tr><td>${p.name}</td><td class="num">${chipStack(p.chips)}${p.chips}</td><td class="num">${p.hand.reduce((a, b) => a + b, 0)}</td></tr>`).join('');
       $('#fg-tape').innerHTML = g.tape.slice(-8).reverse().map((t) => `<li>${suitTag(t.s)} <b>${t.px}</b>: ${who(t.seller)} → ${who(t.buyer)}</li>`).join('') || '<li class="small">No trades yet.</li>';
     }
 
@@ -315,7 +318,7 @@
       const cls = (x) => (x > 0 ? 'pos' : x < 0 ? 'neg' : '');
       const yourGoalP = P0.goal[goal];
       el.innerHTML = `
-        <h1>Figgie: ${won ? 'you won!' : 'game over'}</h1>
+        <h1>Figgie: ${won ? `you won!${QT.flair.milestone('Winner')}` : 'game over'}</h1>
         <div class="tiles">
           <div class="tile"><div class="v">${suitTag(goal)}</div><div class="k">goal suit (${g.cfg.sizes[goal]} cards)</div></div>
           <div class="tile"><div class="v">${suitTag(g.cfg.twelve)}</div><div class="k">12-card suit</div></div>

@@ -5,7 +5,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -293,6 +293,20 @@ test('progress page charts the demo profile', async ({ page }) => {
   expect(await page.locator('.chart svg').count()).toBeGreaterThanOrEqual(8);
 });
 
+test('themes: pick one, it sticks, and the ticker can be turned off', async ({ page }) => {
+  await page.goto('./?demo#/appearance');
+  await expect(page.locator('#ticker')).toBeVisible(); // the demo profile has numbers to show
+  await page.getByRole('radio', { name: /Terminal/ }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'terminal');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'terminal'); // applied before paint, from storage
+  await expect(page.getByRole('radio', { name: /Terminal/ })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('switch', { name: 'Ticker tape' }).click();
+  await expect(page.locator('#ticker')).toBeHidden();
+  await page.getByRole('radio', { name: /Match system/ }).click();
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.+/);
+});
+
 test('monkey test: random use never errors or shows junk', async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto('./#/');
@@ -302,7 +316,7 @@ test('monkey test: random use never errors or shows junk', async ({ page }) => {
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const inputs = ['0.5', '1/4', '25%', '-3', '', 'abc', '0,5', '1 1/2', '−2', '5/0', '½', '1,250', '<b>x</b>'];
-    const routes = ['', 'coach', 'coach/diagnostic', 'practice', 'topic/bayes', 'review', 'mistakes/all', 'bank/sig', 'iq/js-reroll', 'mock', 'case/ltcm', 'mental', 'market', 'estimate', 'tricks', 'tricks/near-100', 'lab', 'roadmap', 'more', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk'];
+    const routes = ['', 'coach', 'coach/diagnostic', 'practice', 'topic/bayes', 'review', 'mistakes/all', 'bank/sig', 'iq/js-reroll', 'mock', 'case/ltcm', 'mental', 'market', 'estimate', 'tricks', 'tricks/near-100', 'lab', 'roadmap', 'more', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'appearance'];
     const found = [];
     for (let step = 0; step < 600; step++) {
       if (step % 50 === 0) { location.hash = '#/' + routes[Math.floor(rnd() * routes.length)]; await wait(20); }
@@ -322,6 +336,23 @@ test('monkey test: random use never errors or shows junk', async ({ page }) => {
     return [...new Set(found)];
   });
   expect(junk).toEqual([]);
+});
+
+// Every theme must meet WCAG AA contrast, not just the default one.
+test.describe('accessibility in every theme', () => {
+  for (const theme of ['notebook', 'night', 'chalk', 'terminal']) {
+    test(`no serious violations in ${theme}`, async ({ page }) => {
+      await page.addInitScript((t) => localStorage.setItem('qt-theme', t), theme);
+      for (const r of ['', 'topic/bayes', 'mental', 'figgie', 'progress', 'appearance']) {
+        await page.goto(`./?demo#/${r}`);
+        await expect(page.locator('main h1').first()).toBeVisible();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+        const serious = violations.filter((v) => ['serious', 'critical'].includes(v.impact));
+        expect(serious.map((v) => `#/${r}: ${v.id}: ${v.help} (${v.nodes.length}× e.g. ${v.nodes[0].target})`)).toEqual([]);
+      }
+    });
+  }
 });
 
 test.describe('accessibility (axe, WCAG 2 A/AA)', () => {

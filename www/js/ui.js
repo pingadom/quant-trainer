@@ -82,7 +82,7 @@
   // so the way forward is never below a long explanation. On phones the keypad hides after
   // answering and the page scrolls to keep the result in view.
   function questionCard(box, source, onDone) {
-    let solved = 0, right = 0, item, done = false, simToken = 0, shownAt = 0;
+    let solved = 0, right = 0, item, done = false, simToken = 0, shownAt = 0, run = 0;
     const HINT = 'Decimal, fraction (5/36) or percent (13.9%)';
 
     box.innerHTML = `
@@ -140,6 +140,7 @@
       done = true;
       solved++;
       if (ok) right++;
+      run = ok ? run + 1 : 0;
       const fate = item.record(ok);
       if (item.skill) QT.coach.observe(item.skill, ok, Date.now() - shownAt);
       // practiceOnly items (arithmetic drills) don't feed the mistakes deck or the coach's habits,
@@ -154,8 +155,10 @@
       if (kp) kp.pad.hidden = true; // nothing to type now; keeps the result on screen
       $('#s-count').textContent = `${right}/${solved} correct`;
       const note = item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok && !item.practiceOnly ? ' · saved to review later' : '';
+      // Ink stamps for milestones: a run of correct answers, or a mistake card mastered.
+      const mark = fate === 'mastered' ? QT.flair.milestone('Mastered') : ok && (run === 3 || (run >= 5 && run % 5 === 0)) ? QT.flair.stamp(`${run} in a row`) : '';
       const head = ok
-        ? `<div class="fb ok">✓ Correct: ${f(p.a)}<span class="fb-note">${note}</span></div>`
+        ? `<div class="fb ok">✓ Correct: ${f(p.a)}<span class="fb-note">${note}</span>${mark}</div>`
         : `<div class="fb bad">✗ ${userVal === undefined ? 'Answer' : `You said ${f(userVal)}. Answer`}: ${f(p.a)}<span class="fb-note">${note}</span></div>`;
       const E = errType && QT.coach.ERRORS[errType], sk = item.skill && QT.coach.parse(item.skill);
       const tip = E ? `<div class="coach-tip"><b>Coach · ${E.label}.</b> ${E.advice}${sk ? ` <a href="#/drill/${sk.topic.id}/${sk.gi}">Drill “${sk.name}” →</a>` : ''}</div>` : '';

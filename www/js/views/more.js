@@ -36,6 +36,9 @@
       <div id="install"></div>
 
       <h2>Settings</h2>
+      <div class="menu" style="margin-bottom:12px">
+        <a class="card" href="#/appearance"><b>Appearance</b><span class="small">Theme (${QT.theme.choice() === 'auto' ? 'matching your system' : QT.theme.THEMES[QT.theme.choice()].name}), ticker, animations, sounds</span></a>
+      </div>
       <div class="card">
         <label for="kp">On-screen number pad</label>
         <select id="kp" style="margin-left:8px">

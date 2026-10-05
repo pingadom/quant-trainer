@@ -15,8 +15,13 @@
   <meta property="og:url" content="https://pingadom.github.io/quant-trainer/">
   <meta property="og:image" content="https://pingadom.github.io/quant-trainer/icons/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#f6f6f3" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#111317" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5efe3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141519" media="(prefers-color-scheme: dark)">
+  <!-- Not deferred: applies the saved theme before the first paint. -->
+  <script src="js/theme.js"></script>
+  <link rel="preload" href="fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/newsreader.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/plex-mono-600.woff2" as="font" type="font/woff2" crossorigin>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -27,6 +32,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div class="ticker" id="ticker" role="marquee" aria-label="Your numbers" hidden><div class="ticker-track"></div></div>
   <div class="shell">
     <nav class="nav" aria-label="Sections">
       <div class="brand">Quant<span>Trainer</span></div>
@@ -103,6 +109,7 @@
   <script defer src="js/talk.js"></script>
   <script defer src="js/demo.js"></script>
   <script defer src="js/ui.js"></script>
+  <script defer src="js/flair.js"></script>
   <script defer src="js/views/home.js"></script>
   <script defer src="js/views/practice.js"></script>
   <script defer src="js/views/coach.js"></script>
@@ -111,6 +118,7 @@
   <script defer src="js/views/more.js"></script>
   <script defer src="js/views/roadmap.js"></script>
   <script defer src="js/views/progress.js"></script>
+  <script defer src="js/views/appearance.js"></script>
   <script defer src="js/tricks.js"></script>
   <script defer src="js/app.js"></script>
 </body>

@@ -206,7 +206,7 @@
       store.save();
       const acc = correct + wrong ? Math.round((100 * correct) / (correct + wrong)) : 0;
       el.innerHTML = `
-        <h1>${mode.label}: done</h1>
+        <h1>${mode.label}: done${prevBest === null || score > prevBest ? QT.flair.milestone('New best') : ''}</h1>
         <div class="tiles">
           <div class="tile"><div class="v">${score}</div><div class="k">${net ? 'net score' : 'correct'}${prevBest === null || score > prevBest ? ' · new best!' : ''}</div></div>
           <div class="tile"><div class="v">${correct} / ${wrong}</div><div class="k">right / wrong</div></div>

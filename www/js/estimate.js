@@ -134,7 +134,7 @@
       store.touchDay();
       store.save();
       el.innerHTML = `
-        <h1>Round complete</h1>
+        <h1>Round complete${prevBest === null || score > prevBest ? QT.flair.milestone('New best') : ''}</h1>
         <div class="tiles">
           <div class="tile"><div class="v">${f(score)}</div><div class="k">score / ${ROUND}${prevBest === null || score > prevBest ? ' · new best!' : ''}</div></div>
           <div class="tile"><div class="v">${hits}/${ROUND}</div><div class="k">ranges contained the truth</div></div>
