@@ -1,12 +1,14 @@
 // Timed mental arithmetic. "80 in 8" mimics the widely reported trading-firm screen: 80 questions
 // in 8 minutes, +1 right / −1 wrong, no going back. It can be taken as multiple choice (as
 // reported) or with typed answers (harder: no options to eliminate). Personal bests are kept
-// separately per answer style.
+// separately per answer style. Every answer is timed; slow and missed questions come back in an
+// end-of-session review showing the fast method for each one.
 (function () {
   const R = QT.rand, store = QT.store, esc = QT.escapeHtml;
   const round = (x, dp) => Math.round(x * 10 ** dp) / 10 ** dp;
   const dpOf = (x) => { const s = String(round(x, 4)); return s.includes('.') ? s.split('.')[1].length : 0; };
-  const STYLE_KEY = 'qt-80in8-style';
+  const STYLE_KEY = 'qt-80in8-style', SLOW_KEY = 'qt-slow-secs';
+  const SLOW_CHOICES = [3, 4, 5, 6, 8, 10];
 
   const MODES = {
     sprint: { label: '2-minute sprint', secs: 120, scoring: 'correct', desc: 'Type your answers. A daily warm-up; aim for 20+.' },
@@ -15,18 +17,20 @@
   // Where each mode/style's personal best is stored.
   const recKey = (modeId, style) => (modeId === 'full' && style === 'typed' ? 'fullTyped' : modeId);
 
+  // Each question carries its type (`kind`) and operands (`v`) so the review can show the fast
+  // method for that exact question (mental-tips.js).
   const gens = [
-    () => { const a = R.int(12, 99), b = R.int(12, 99); return { q: `${a} × ${b}`, a: a * b }; },
-    () => { const a = R.int(101, 999), b = R.int(3, 9); return { q: `${a} × ${b}`, a: a * b }; },
-    () => { const a = R.float(1, 99, 2), b = R.float(1, 99, 2); return Math.random() < 0.5 ? { q: `${a} + ${b}`, a: round(a + b, 2) } : { q: `${a} − ${b}`, a: round(a - b, 2) }; },
-    () => { const d = R.int(3, 19), k = R.int(11, 99); return { q: `${d * k} ÷ ${d}`, a: k }; },
-    () => { const d = R.pick([3, 6, 7, 8, 9, 11, 12, 16]); let n = R.int(1, d - 1); while (QT.m.gcd(n, d) !== 1) n = R.int(1, d - 1); return { q: `${n}/${d} (3 dp)`, a: round(n / d, 3), tol: 0.0006 }; },
-    () => { const p = R.pick([5, 12.5, 15, 20, 25, 35, 40, 60, 75, 120]), y = R.int(2, 80) * 10; return { q: `${p}% of ${y}`, a: round((p * y) / 100, 2) }; },
-    () => { const n = R.int(11, 35); return { q: `${n}²`, a: n * n }; },
-    () => { const a = R.float(0.1, 9.9, 1), b = R.int(2, 9); return { q: `${a} × ${b}`, a: round(a * b, 2) }; },
-    () => { const a = R.int(100, 999), b = R.int(100, 999); return { q: `${a} − ${b}`, a: a - b }; },
-    () => { const a = R.int(12, 99), x = R.float(1.1, 9.9, 1); return { q: `${a} × ? = ${round(a * x, 2)}`, a: x }; },
-    () => { const x = R.int(100, 999), b = R.int(100, 999); return { q: `? + ${b} = ${x + b}`, a: x }; },
+    () => { const a = R.int(12, 99), b = R.int(12, 99); return { q: `${a} × ${b}`, a: a * b, kind: 'mul2', v: [a, b] }; },
+    () => { const a = R.int(101, 999), b = R.int(3, 9); return { q: `${a} × ${b}`, a: a * b, kind: 'mul31', v: [a, b] }; },
+    () => { const a = R.float(1, 99, 2), b = R.float(1, 99, 2); return Math.random() < 0.5 ? { q: `${a} + ${b}`, a: round(a + b, 2), kind: 'addDec', v: [a, b] } : { q: `${a} − ${b}`, a: round(a - b, 2), kind: 'subDec', v: [a, b] }; },
+    () => { const d = R.int(3, 19), k = R.int(11, 99); return { q: `${d * k} ÷ ${d}`, a: k, kind: 'div', v: [d * k, d] }; },
+    () => { const d = R.pick([3, 6, 7, 8, 9, 11, 12, 16]); let n = R.int(1, d - 1); while (QT.m.gcd(n, d) !== 1) n = R.int(1, d - 1); return { q: `${n}/${d} (3 dp)`, a: round(n / d, 3), tol: 0.0006, kind: 'frac', v: [n, d] }; },
+    () => { const p = R.pick([5, 12.5, 15, 20, 25, 35, 40, 60, 75, 120]), y = R.int(2, 80) * 10; return { q: `${p}% of ${y}`, a: round((p * y) / 100, 2), kind: 'pct', v: [p, y] }; },
+    () => { const n = R.int(11, 35); return { q: `${n}²`, a: n * n, kind: 'sq', v: [n] }; },
+    () => { const a = R.float(0.1, 9.9, 1), b = R.int(2, 9); return { q: `${a} × ${b}`, a: round(a * b, 2), kind: 'decMul', v: [a, b] }; },
+    () => { const a = R.int(100, 999), b = R.int(100, 999); return { q: `${a} − ${b}`, a: a - b, kind: 'sub3', v: [a, b] }; },
+    () => { const a = R.int(12, 99), x = R.float(1.1, 9.9, 1); return { q: `${a} × ? = ${round(a * x, 2)}`, a: x, kind: 'missMul', v: [a, round(a * x, 2)] }; },
+    () => { const x = R.int(100, 999), b = R.int(100, 999); return { q: `? + ${b} = ${x + b}`, a: x, kind: 'missAdd', v: [b, x + b] }; },
   ];
 
   // Four options: the answer plus plausible slips (off by one or ten units, misplaced decimal
@@ -40,6 +44,8 @@
     return R.shuffle([right, ...wrong]).map((x) => ({ v: x, label: x.toFixed(Math.min(dpOf(x), 3)) }));
   }
 
+  // Questions slower than this go into the end-of-session review. 6 s is the 80-in-8 pace.
+  const slowSecs = () => { try { const v = +localStorage.getItem(SLOW_KEY); return SLOW_CHOICES.includes(v) ? v : 6; } catch { return 6; } };
   const savedStyle = () => { try { return localStorage.getItem(STYLE_KEY) === 'typed' ? 'typed' : 'mc'; } catch { return 'mc'; } };
 
   function render(el) {
@@ -67,7 +73,15 @@
           <p class="small">Best: <b>${best('sprint')}</b> correct${st.sprint?.runs?.length ? ` · ${st.sprint.runs.length} runs` : ''}</p>
           <button data-mode="sprint">Start</button>
         </div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <label for="slow">Review questions slower than</label>
+        <select id="slow" style="margin-left:8px">${SLOW_CHOICES.map((v) => `<option value="${v}" ${v === slowSecs() ? 'selected' : ''}>${v} seconds</option>`).join('')}</select>
+        <p class="small" style="margin:6px 0 0">After each run, slow and missed questions come back with the fastest way to do each one and the guide that teaches it. 80 in 8 needs about 6 seconds a question.</p>
       </div>`;
+    el.querySelector('#slow').addEventListener('change', (e) => {
+      try { localStorage.setItem(SLOW_KEY, e.target.value); } catch { /* storage blocked */ }
+    });
     el.querySelectorAll('[data-style]').forEach((a) => a.addEventListener('click', (e) => {
       e.preventDefault();
       try { localStorage.setItem(STYLE_KEY, a.dataset.style); } catch { /* storage blocked: choice lasts this visit */ }
@@ -79,8 +93,8 @@
 
   function run(el, modeId, style) {
     const mode = MODES[modeId], mc = style === 'mc', net = mode.scoring === 'net';
-    let cur, correct = 0, wrong = 0, n = 0, done = false, timer = null, onKey = null;
-    const missed = [];
+    let cur, correct = 0, wrong = 0, n = 0, done = false, timer = null, onKey = null, shownAt = 0;
+    const answered = []; // every answered question with its time, for the review
     const end = Date.now() + mode.secs * 1000;
 
     el.innerHTML = `
@@ -115,10 +129,8 @@
       if (done) return;
       flash(ok);
       if (ok) correct++;
-      else {
-        wrong++;
-        missed.push({ q: cur.q, a: cur.a, you: shown });
-      }
+      else wrong++;
+      answered.push({ ...cur, ok, you: shown, ms: Date.now() - shownAt });
       if (mode.max && n >= mode.max) finish();
       else next();
     };
@@ -160,6 +172,7 @@
     function next() {
       cur = R.pick(gens)();
       n++;
+      shownAt = Date.now();
       $q.textContent = cur.q;
       if (mc) {
         $mc.innerHTML = options(cur.a).map((o, i) => `<button type="button" data-label="${o.label}" data-ok="${Math.abs(o.v - cur.a) < 1e-9 || (cur.tol && Math.abs(o.v - cur.a) <= cur.tol) ? 1 : 0}"><span class="small">${i + 1}</span> ${o.label}</button>`).join('');
@@ -200,15 +213,78 @@
           <div class="tile"><div class="v">${acc}%</div><div class="k">accuracy</div></div>
           <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best${modeId === 'full' ? ` (${mc ? 'multiple choice' : 'typed'})` : ''}</div></div>
         </div>
-        ${missed.length ? `<h2>Missed</h2><div class="card table-wrap"><table><tr><th>Question</th><th class="num">You</th><th class="num">Answer</th></tr>
-          ${missed.map((m) => `<tr><td class="mono">${esc(m.q)}</td><td class="num neg">${esc(m.you)}</td><td class="num">${QT.fmtNum(m.a)}</td></tr>`).join('')}</table></div>
-          <p class="small">Slow on a type of question? <a href="#/tricks">The speed-trick guides</a> cover each one.</p>` : ''}
+        ${review(answered, slowSecs())}
         <div class="row" style="margin-top:18px"><button id="again">Go again</button><a class="btn ghost" href="#/mental">Back</a></div>`;
       el.querySelector('#again').addEventListener('click', () => run(el, modeId, style));
+      const drillBtn = el.querySelector('#drill-slow');
+      if (drillBtn) drillBtn.addEventListener('click', () => drill(el, drillBtn.dataset.kinds.split(',')));
     }
 
     tick();
     next();
+  }
+
+  // End-of-session review: per-type timings, then each slow or missed question with the fastest
+  // way to do it on its own numbers and a link to the guide that teaches the method.
+  function review(answered, secs) {
+    if (!answered.length) return '';
+    const T = QT.mentalTips, guide = (id) => (QT.tricks || []).find((t) => t.id === id);
+    const isFlagged = (x) => !x.ok || x.ms > secs * 1000;
+    // Missed first, then the slowest.
+    const flagged = answered.filter(isFlagged).sort((x, y) => (x.ok === y.ok ? y.ms - x.ms : x.ok ? 1 : -1));
+    const byKind = {};
+    for (const x of answered) (byKind[x.kind] ||= []).push(x);
+    const kinds = Object.entries(byKind)
+      .map(([k, xs]) => ({ k, n: xs.length, avg: xs.reduce((s, x) => s + x.ms, 0) / xs.length / 1000, bad: xs.filter(isFlagged).length }))
+      .sort((x, y) => y.avg - x.avg);
+    const weak = kinds.filter((x) => x.bad).map((x) => x.k);
+    const sec = (ms) => `${(ms / 1000).toFixed(1)} s`;
+    const item = (x) => {
+      const fw = T.fastWay(x), g = fw && guide(fw.guide);
+      const tag = x.ok ? '<span class="flag slow">slow</span>' : `<span class="flag bad">${x.you === 'passed' ? 'passed' : `✗ you said ${esc(x.you)}`}</span>`;
+      return `<div class="card review-item">
+        <div class="review-head"><span class="mono">${esc(x.q)} = <b>${QT.fmtNum(x.a)}</b></span><span class="review-meta">${tag}<span class="mono small">${sec(x.ms)}</span></span></div>
+        ${fw ? `<p class="small review-how"><b>Faster: ${fw.name}.</b> ${fw.steps}${g ? ` <a href="#/tricks/${g.id}">Guide: ${g.title} →</a>` : ''}</p>` : ''}
+      </div>`;
+    };
+    const nMissed = flagged.filter((x) => !x.ok).length;
+    return `
+      <h2>Review</h2>
+      <p class="small">${flagged.length ? `${flagged.length} question${flagged.length > 1 ? 's' : ''} to look at: ${nMissed} missed, ${flagged.length - nMissed} right but slower than ${secs} s.` : `Every answer was right and under ${secs} s. Try a lower threshold.`}</p>
+      <div class="card table-wrap"><table>
+        <tr><th>Question type</th><th class="num">Asked</th><th class="num">Average time</th><th class="num">Slow or missed</th></tr>
+        ${kinds.map((x) => `<tr><td>${T.KINDS[x.k]?.label || x.k}</td><td class="num">${x.n}</td><td class="num ${x.avg > secs ? 'neg' : ''}">${x.avg.toFixed(1)} s</td><td class="num">${x.bad || '–'}</td></tr>`).join('')}
+      </table></div>
+      ${flagged.slice(0, 15).map(item).join('')}
+      ${flagged.length > 15 ? `<p class="small">…and ${flagged.length - 15} more of the same types.</p>` : ''}
+      ${weak.length ? `<div class="row" style="margin-top:12px"><button class="ghost" id="drill-slow" data-kinds="${weak.slice(0, 4).join(',')}">Practise these types (10 questions, untimed)</button></div>` : ''}`;
+  }
+
+  // Untimed drill on the question types you were slow at or missed; each solution is the fast method.
+  function drill(el, kinds) {
+    const T = QT.mentalTips, labels = kinds.map((k) => T.KINDS[k]?.label).filter(Boolean);
+    el.innerHTML = `<a class="back" href="#/mental">← Mental maths</a><h1>Speed drill</h1><p class="lede">${labels.join(', ')}. Untimed: use the fast method each time, then compare with the worked solution.</p><div id="sd-box"></div>`;
+    const make = (kind) => {
+      for (let t = 0; t < 200; t++) {
+        const g = R.pick(gens)();
+        if (g.kind === kind) return g;
+      }
+      return R.pick(gens)();
+    };
+    let k = 0;
+    const source = () => {
+      if (k >= 10) return null;
+      const g = make(kinds[k % kinds.length]), fw = T.fastWay(g);
+      k++;
+      return {
+        tag: `Speed drill ${k}/10 · ${T.KINDS[g.kind].label}`, practiceOnly: true, record: () => {},
+        p: { q: g.q, a: g.a, tol: { abs: g.tol ?? 0.005, rel: 0 }, sol: fw ? `<b>${fw.name}.</b> ${fw.steps}` : '' },
+      };
+    };
+    QT.ui.questionCard(el.querySelector('#sd-box'), source, (box, r) => {
+      box.innerHTML = `<div class="card"><h3>${r.right}/${r.solved} correct</h3><div class="row"><button id="sd-again">Another 10</button><a class="btn ghost" href="#/mental">Back to mental maths</a></div></div>`;
+      box.querySelector('#sd-again').addEventListener('click', () => drill(el, kinds));
+    });
   }
 
   // Best 80-in-8 net score in either answer style (for the coach, home screen and roadmap).
@@ -217,5 +293,5 @@
     return vals.length ? Math.max(...vals) : null;
   };
 
-  QT.mental = { render, gens, options, best80 };
+  QT.mental = { render, gens, options, best80, review };
 })();

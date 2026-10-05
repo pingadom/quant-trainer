@@ -19,6 +19,7 @@ const ASSETS = [
   'js/review.js',
   'js/coach.js',
   'js/estimate.js',
+  'js/mental-tips.js',
   'js/mental.js',
   'js/market.js',
   'js/lab.js',
