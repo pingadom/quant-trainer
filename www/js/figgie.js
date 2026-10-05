@@ -318,7 +318,7 @@
       const cls = (x) => (x > 0 ? 'pos' : x < 0 ? 'neg' : '');
       const yourGoalP = P0.goal[goal];
       el.innerHTML = `
-        <h1>Figgie: ${won ? `you won!${QT.flair.milestone('Winner')}` : 'game over'}</h1>
+        <div class="title-row"><h1>Figgie: ${won ? 'you won!' : 'game over'}</h1>${won ? QT.flair.milestone('Winner') : ''}</div>
         <div class="tiles">
           <div class="tile"><div class="v">${suitTag(goal)}</div><div class="k">goal suit (${g.cfg.sizes[goal]} cards)</div></div>
           <div class="tile"><div class="v">${suitTag(g.cfg.twelve)}</div><div class="k">12-card suit</div></div>

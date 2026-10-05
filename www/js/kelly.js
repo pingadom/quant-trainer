@@ -144,7 +144,7 @@
       const over = bets.filter((x) => kellyF(x.p, x.b) > 0 && x.f > 2 * kellyF(x.p, x.b)).length;
       const negTaken = bets.filter((x) => kellyF(x.p, x.b) <= 0 && x.f > 0).length;
       el.innerHTML = `
-        <h1>Results${stored !== null && (prevBest === null || stored > prevBest) ? QT.flair.milestone('New best') : ''}</h1>
+        <div class="title-row"><h1>Results</h1>${stored !== null && (prevBest === null || stored > prevBest) ? QT.flair.milestone('New best') : ''}</div>
         <div class="tiles">
           <div class="tile"><div class="v">${f(round2(bankrolls.you))}</div><div class="k">your bankroll (from ${START})</div></div>
           <div class="tile"><div class="v">${f(round2(bankrolls.kelly))}</div><div class="k">Kelly</div></div>

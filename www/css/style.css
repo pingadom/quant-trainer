@@ -685,3 +685,5 @@ label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
 .dq { display: inline-flex; align-items: center; justify-content: center; color: var(--bg); font-weight: 700; font-size: 0.9rem; }
 .dq.ok::after { content: '✓'; }
 .dq.bad::after { content: '✗'; }
+.title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 6px; }
+.title-row h1 { margin: 0; }
