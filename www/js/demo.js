@@ -58,6 +58,9 @@
     s.figgie = { games: 5, total: fg.reduce((a, b) => a + b, 0), best: Math.max(...fg), wins: 2, history: fg.map((x, i) => ({ date: ago(i, 5), pnl: x })) };
     s.oa = { seq: { best: 13, runs: [9, 11, 10, 13].map((x, i) => ({ date: ago(i, 4), score: x })) }, span: { best: 7, runs: [6, 6, 7].map((x, i) => ({ date: ago(i, 3), score: x })) } };
     s.talk = { sessions: 3, history: [3, 4, 5].map((x, i) => ({ date: ago(i, 3), id: QT.bank[i].id, secs: 240, score: x, of: 6 })) };
+    // Mental-maths speed by type: fractions are the sample learner's slow spot.
+    const sp = (median, miss, n = 20) => ({ times: Array.from({ length: n }, () => Math.round(median * 1000 * (0.7 + rnd() * 0.6))), oks: Array.from({ length: n }, () => (rnd() < miss ? 0 : 1)) });
+    s.speed = { frac: sp(9.5, 0.3), mul2: sp(7.8, 0.15), pct: sp(5.2, 0.1), sq: sp(4.5, 0.05), div: sp(5.8, 0.1), sub3: sp(4.1, 0.05) };
     for (const [i, d] of s.days.slice(1).entries()) s.daily[d] = { r: [1, 1, 0, 1, i % 3 ? 1 : 0], ms: 300000, start: now - (i + 1) * DAY, done: true };
     s.cases = { ltcm: { results: [true, true] }, 'black-monday': { results: [true, false] } };
     s.bank = { 'js-reroll': { results: [true, true, false] }, 'sig-three-dice': { results: [true] }, 'opt-tennis': { results: [true, true] } };

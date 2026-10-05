@@ -50,6 +50,43 @@
     return out;
   }
 
+  // The last 7 days against the 7 before: answers, accuracy, days practised, daily challenges,
+  // and anything notable (best 80-in-8 run, Figgie result) from this week.
+  function weekSummary(s, now = Date.now()) {
+    const DAY = 864e5, cut1 = now - 7 * DAY, cut0 = now - 14 * DAY;
+    const inWeek = (t, a, b) => t >= a && t < b;
+    const span = (a, b) => {
+      const xs = s.log.filter((x) => inWeek(x.t, a, b));
+      return { n: xs.length, acc: xs.length ? (100 * xs.filter((x) => x.ok).length) / xs.length : null };
+    };
+    const cur = span(cut1, now + 1), prev = span(cut0, cut1);
+    // Calendar days: today and the 6 before it.
+    const week = new Set(Array.from({ length: 7 }, (_, i) => QT.dayKey(new Date(now - i * DAY))));
+    const days = s.days.filter((d) => week.has(d)).length;
+    const dailies = Object.entries(s.daily).filter(([d, r]) => r.done && week.has(d)).length;
+    const dated = (xs) => xs.filter((x) => inWeek(Date.parse(x.date), cut1, now + 1));
+    const runs80 = dated([...(s.mental.full?.runs || []), ...(s.mental.fullTyped?.runs || [])]);
+    const figgie = dated(s.figgie.history);
+    return {
+      answers: cur.n, answersPrev: prev.n, acc: cur.acc, accPrev: prev.acc, days, dailies,
+      best80: runs80.length ? Math.max(...runs80.map((r) => r.correct - r.wrong)) : null,
+      figgiePnl: figgie.length ? figgie.reduce((a, x) => a + x.pnl, 0) : null, figgieGames: figgie.length,
+    };
+  }
+
+  function weekCard(w) {
+    const delta = (a, b, unit = '') => (a === null || b === null || a === b ? '' : ` <span class="${a > b ? 'pos' : 'neg'}">${a > b ? '▲' : '▼'}${f(Math.round(Math.abs(a - b)))}${unit}</span>`);
+    const extra = [w.best80 !== null && `best 80-in-8 run: <b>${w.best80}</b> net`, w.figgieGames && `Figgie: <b>${w.figgiePnl >= 0 ? '+' : ''}${f(Math.round(w.figgiePnl))}</b> chips over ${w.figgieGames} game${w.figgieGames > 1 ? 's' : ''}`].filter(Boolean);
+    return `<h2>This week</h2>
+      <div class="tiles">
+        <div class="tile"><div class="v">${w.answers}</div><div class="k">questions answered${delta(w.answers, w.answersPrev)}</div></div>
+        <div class="tile"><div class="v">${w.acc === null ? '–' : Math.round(w.acc) + '%'}</div><div class="k">accuracy${delta(w.acc, w.accPrev, ' pts')}</div></div>
+        <div class="tile"><div class="v">${w.days}/7</div><div class="k">days practised</div></div>
+        <div class="tile"><div class="v">${w.dailies}</div><div class="k">daily challenges</div></div>
+      </div>
+      ${extra.length ? `<p class="small">${extra.join(' · ')}</p>` : ''}<p class="small">Compared with the 7 days before.</p>`;
+  }
+
   function progress(el) {
     const s = store.get(), charts = [], todo = [];
     const add = (ok, html, missing) => (ok ? charts.push(html) : todo.push(missing));
@@ -117,6 +154,7 @@
     el.innerHTML = `
       <h1>Progress</h1>
       <p class="lede">How you're improving over time, across everything you practise.</p>
+      ${weekCard(weekSummary(s))}
       <div class="card">
         <h3>Activity</h3>
         ${hm.svg}
@@ -131,5 +169,5 @@
   }
 
   QT.views = Object.assign(QT.views || {}, { progress });
-  QT.progress = { blocks, longestStreak, heatmap };
+  QT.progress = { blocks, longestStreak, heatmap, weekSummary };
 })();

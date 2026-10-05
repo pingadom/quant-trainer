@@ -225,13 +225,13 @@
 
     for (const s of attempted.filter((x) => x.status === 'weak')) {
       const slip = topErrorFor(s.id);
-      recs.push({ pri: 80 + (0.55 - s.mean) * 40, kind: 'weak', voice: `You're short ${s.name.toLowerCase()}: ${s.recentC} of your last ${s.recentN}. Cover it before you do anything else.`, title: `Fix: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct in ${s.topic.name}.${slip ? ` Most common mistake: ${slip.toLowerCase()}.` : ''}`, ...drill(s) });
+      recs.push({ pri: 80 + (0.55 - s.mean) * 40, kind: 'weak', voice: `You're short ${s.name}: ${s.recentC} of your last ${s.recentN}. Cover it before you do anything else.`, title: `Fix: ${s.name}`, why: `${s.recentC}/${s.recentN} recently correct in ${s.topic.name}.${slip ? ` Most common mistake: ${slip.toLowerCase()}.` : ''}`, ...drill(s) });
     }
 
     // Too few tries to call it weak yet, but missed more often than not: act on it early.
     for (const s of attempted.filter((x) => x.status === 'learning' && x.recentC < x.recentN - x.recentC)) {
       const slip = topErrorFor(s.id, 1), misses = s.recentN - s.recentC;
-      recs.push({ pri: 62 + misses * 4, kind: 'missed', voice: `${misses} misses out of ${s.recentN} on ${s.name.toLowerCase()}. Don't average down: read the solution, then go again.`, title: `Work on: ${s.name}`, why: `Missed ${misses} of ${s.recentN} so far (${s.topic.name}).${slip ? ` Diagnosis: ${slip.toLowerCase()}.` : ' The method needs work: read the worked solution first.'}`, ...drill(s) });
+      recs.push({ pri: 62 + misses * 4, kind: 'missed', voice: `${misses} misses out of ${s.recentN} on ${s.name}. Don't average down: read the solution, then go again.`, title: `Work on: ${s.name}`, why: `Missed ${misses} of ${s.recentN} so far (${s.topic.name}).${slip ? ` Diagnosis: ${slip.toLowerCase()}.` : ' The method needs work: read the worked solution first.'}`, ...drill(s) });
     }
 
     // A specific slip twice is already a pattern (generic method errors are covered by the skill recs).
@@ -248,7 +248,7 @@
     }
 
     for (const s of attempted.filter((x) => x.status === 'strong' && x.time && x.time > x.topic.target * 1.5)) {
-      recs.push({ pri: 50, kind: 'speed', voice: `You get there on ${s.name.toLowerCase()}, just slowly. On a timed test, slow is wrong.`, title: `Speed up: ${s.name}`, why: `Accurate, but your median is ${f(s.time)}s against a ${s.topic.target}s target. Interviews are timed, so drill until it's automatic.`, ...drill(s) });
+      recs.push({ pri: 50, kind: 'speed', voice: `You get there on ${s.name}, just slowly. On a timed test, slow is wrong.`, title: `Speed up: ${s.name}`, why: `Accurate, but your median is ${f(s.time)}s against a ${s.topic.target}s target. Interviews are timed, so drill until it's automatic.`, ...drill(s) });
     }
 
     const mm = st.mental || {};
@@ -256,6 +256,46 @@
     const b80 = QT.mental ? QT.mental.best80() : (mm.full?.best ?? null);
     if (b80 === null) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', voice: 'No number on your mental maths yet. Put one on the board.', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
     else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', voice: `${b80} net. The desk wants 55. Close the gap.`, title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
+
+    // Mental maths by question type: the slowest type (or the most missed) gets its speed-trick guide.
+    if (QT.mentalTips && st.speed) {
+      const types = QT.mentalTips.speedTable(st.speed).filter((x) => x.n >= 8);
+      const slow = types.find((x) => x.median > 7 || x.missRate > 0.25);
+      const guide = slow && (QT.tricks || []).find((t) => t.id === slow.guide);
+      if (slow && guide) {
+        const missed = Math.round(slow.missRate * 100);
+        recs.push({
+          pri: 52 + Math.min(10, slow.median - 7) + missed / 10, kind: 'speedType',
+          voice: slow.median > 7 ? `${slow.label} at ${slow.median.toFixed(1)} seconds each. At 80-in-8 pace you get six.` : `You miss ${missed}% of ${slow.label.toLowerCase()}. Points you're giving away.`,
+          title: `Speed up: ${slow.label.toLowerCase()}`,
+          why: `Median ${slow.median.toFixed(1)} s and ${missed}% missed over your last ${slow.n} in mental maths. “${guide.title}” is the method for most of them.`,
+          href: `#/tricks/${guide.id}`, label: 'Learn the trick',
+        });
+      }
+    }
+
+    // Trading games: act on how you play, and introduce the ones you haven't tried.
+    const fg = st.figgie || { games: 0 };
+    if (fg.games >= 3 && fg.total / fg.games < 0) recs.push({ pri: 48, kind: 'figgie', voice: "You're the liquidity at that table. Read your hand before you trade.", title: `Figgie: average ${f(fg.total / fg.games)} chips a game`, why: 'Open “Show the maths” early: the suit you hold most of is probably the 12-card suit, so its partner colour is probably the goal. Sell the long suit, buy the likely goal suit under about 20.', href: '#/figgie', label: 'Play Figgie' });
+    const qu = st.quote || { n: 0 };
+    if (qu.requotes >= 10 && qu.withFlow / qu.requotes < 0.6) recs.push({ pri: 50, kind: 'quote', voice: "They keep lifting you and you don't move. They know something. Move.", title: `Make a market: you moved with the trade ${Math.round((100 * qu.withFlow) / qu.requotes)}% of the time`, why: 'When the interviewer buys, raise your market; when they sell, lower it. They trade the right way 7 times in 8 here.', href: '#/quote', label: 'Quote again' });
+    else if (qu.n >= 10 && qu.hits / qu.n < 0.4) recs.push({ pri: 46, kind: 'quote', voice: 'Your final markets miss more often than they hit. Start wider, then tighten.', title: `Make a market: ${Math.round((100 * qu.hits) / qu.n)}% of final markets contained the answer`, why: 'Centre the first quote on a reasoned estimate and size the width to your uncertainty; tighten only as the trades tell you something.', href: '#/quote', label: 'Quote again' });
+    const ke = st.kelly || { games: 0 };
+    if (ke.games >= 2 && ke.best !== null && ke.best < 0.6) recs.push({ pri: 47, kind: 'kelly', voice: "You're sizing on feel. Size on edge over odds.", title: `Bet sizing: best score ${Math.round(ke.best * 100)}% of Kelly`, why: 'Work out f* = p − q/b before every bet. Stake nothing when it is negative, and never more than twice f*.', href: '#/kelly', label: 'Size some bets' });
+    if (totalAttempts >= 20) {
+      const untried = [
+        [!fg.games, 'Figgie', '#/figgie', "Jane Street's own trading game. Reading other people's trades is half of it."],
+        [!qu.n, 'Make me a market', '#/quote', 'The most common live trading-interview format.'],
+        [!ke.games, 'Bet sizing', '#/kelly', 'Interviewers ask how much you would bet, not just whether.'],
+        [!Object.keys(st.oa || {}).length, 'Online tests', '#/oa', 'Sequences, memory and attention: the screens before the interview.'],
+      ].filter((x) => x[0]);
+      if (untried.length) {
+        const [, name, href, why] = untried[0];
+        recs.push({ pri: 33, kind: 'explore', voice: `Nothing on the books for ${name.toLowerCase()} yet.`, title: `Try ${name}`, why, href, label: 'Start' });
+      }
+    }
+    const talked = st.talk?.sessions || 0, bankDone = Object.keys(st.bank || {}).length;
+    if (!talked && bankDone >= 3) recs.push({ pri: 42, kind: 'talk', voice: 'Typing answers is not an interview. Say it out loud.', title: 'Answer a question out loud', why: `You've answered ${bankDone} interview questions by typing. Interviews are spoken: practise talking one through against the clock.`, href: '#/talk', label: 'Think aloud' });
 
     const e = st.estimate || { n: 0 };
     if (e.n >= 20 && e.hits / e.n < 0.75) recs.push({ pri: 65, kind: 'calibration', voice: `Your 90% ranges hold ${Math.round((100 * e.hits) / e.n)}% of the time. Overconfidence is how traders blow up.`, title: `Overconfident: your ranges catch the truth ${Math.round((100 * e.hits) / e.n)}% of the time`, why: 'A 90% range should miss only 1 time in 10. Widen your ranges, especially for unfamiliar quantities.', href: '#/estimate', label: 'Estimation round' });
@@ -278,7 +318,7 @@
     }
 
     for (const s of attempted.filter((x) => x.status === 'strong' && Date.now() - x.last > 14 * DAY).slice(0, 2)) {
-      recs.push({ pri: 20, kind: 'refresh', voice: `${Math.floor((Date.now() - s.last) / DAY)} days since you touched ${s.name.toLowerCase()}. Keep your book fresh.`, title: `Refresh: ${s.name}`, why: `Strong, but you haven't practised it for ${Math.floor((Date.now() - s.last) / DAY)} days.`, ...drill(s) });
+      recs.push({ pri: 20, kind: 'refresh', voice: `${Math.floor((Date.now() - s.last) / DAY)} days since you touched ${s.name}. Keep your book fresh.`, title: `Refresh: ${s.name}`, why: `Strong, but you haven't practised it for ${Math.floor((Date.now() - s.last) / DAY)} days.`, ...drill(s) });
     }
 
     return recs.sort((a, b) => b.pri - a.pri);

@@ -8,19 +8,20 @@
   const n = (x) => String(r2(x));
   const b = (x) => `<b>${n(x)}</b>`;
 
+  // `guide`: the speed-trick guide that covers most questions of the type.
   const KINDS = {
-    mul2: { label: '2-digit × 2-digit' },
-    mul31: { label: '3-digit × 1-digit' },
-    addDec: { label: 'Adding decimals' },
-    subDec: { label: 'Subtracting decimals' },
-    div: { label: 'Division' },
-    frac: { label: 'Fractions to decimals' },
-    pct: { label: 'Percentages' },
-    sq: { label: 'Squares' },
-    decMul: { label: 'Decimal × whole number' },
-    sub3: { label: '3-digit subtraction' },
-    missMul: { label: 'Missing factor' },
-    missAdd: { label: 'Missing number (addition)' },
+    mul2: { label: '2-digit × 2-digit', guide: 'split-left-to-right' },
+    mul31: { label: '3-digit × 1-digit', guide: 'split-left-to-right' },
+    addDec: { label: 'Adding decimals', guide: 'left-to-right-adding' },
+    subDec: { label: 'Subtracting decimals', guide: 'round-and-compensate' },
+    div: { label: 'Division', guide: 'missing-operand' },
+    frac: { label: 'Fractions to decimals', guide: 'fraction-decimals' },
+    pct: { label: 'Percentages', guide: 'percentages' },
+    sq: { label: 'Squares', guide: 'difference-of-squares' },
+    decMul: { label: 'Decimal × whole number', guide: 'split-left-to-right' },
+    sub3: { label: '3-digit subtraction', guide: 'round-and-compensate' },
+    missMul: { label: 'Missing factor', guide: 'missing-operand' },
+    missAdd: { label: 'Missing number (addition)', guide: 'round-and-compensate' },
   };
 
   // Each method returns { name, guide, steps (HTML), value }.
@@ -150,5 +151,17 @@
 
   const fastWay = (item) => (METHODS[item.kind] ? METHODS[item.kind](item.v) : null);
 
-  QT.mentalTips = { KINDS, fastWay };
+  // Cross-session speed by question type, from store.speed: median seconds and miss rate over
+  // the last 30 answers of each type, slowest first.
+  function speedTable(speed) {
+    return Object.entries(speed || {})
+      .filter(([k, x]) => KINDS[k] && x.times.length)
+      .map(([k, x]) => {
+        const t = [...x.times].sort((a, b) => a - b);
+        return { kind: k, label: KINDS[k].label, guide: KINDS[k].guide, n: t.length, median: t[Math.floor(t.length / 2)] / 1000, missRate: x.oks.filter((o) => !o).length / x.oks.length };
+      })
+      .sort((a, b) => b.median - a.median);
+  }
+
+  QT.mentalTips = { KINDS, fastWay, speedTable };
 })();

@@ -687,3 +687,10 @@ label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
 .dq.bad::after { content: '✗'; }
 .title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 6px; }
 .title-row h1 { margin: 0; }
+
+/* Figgie on phones: card and prices side by side, the post-a-price row underneath. */
+@media (max-width: 700px) {
+  .fg-row { grid-template-columns: auto 1fr; gap: 10px 14px; }
+  .fg-suit .small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } /* the card badge shows it */
+  .fg-post { grid-column: 1 / -1; }
+}
