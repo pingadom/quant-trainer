@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.0
+
+- **Interview prep plan:** choose the firm and the date; get a short checklist for each day until then, weighted to what that firm is reported to test (its topics, two of its questions a day, mental maths where it screens for it, its kind of trading game, and a mock interview plus a spoken answer every third day and the day before). Tasks the app can see you did tick themselves. A countdown sits on the home screen, the coach puts today's prep first, and afterwards it asks you to add the questions you were asked.
+- **New topic, Markov chains & order statistics:** hitting times on a polygon, waiting for k in a row, two-state stationary distributions, order statistics of uniforms and branching-process extinction (themes listed for several firms' online tests), each checked by simulation.
+- On phones, the 7-day accuracy chart sits under the greeting instead of beside it.
+
 ## 0.14.2
 
 - **iPhone:** the install note explains that the home-screen app keeps its own progress (export from Safari, import in the app); the app now asks the browser to keep saved progress persistent; the launch screen and app colours match the Notebook theme.

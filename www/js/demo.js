@@ -5,7 +5,7 @@
   const store = QT.store, DAY = 864e5;
 
   // Accuracy by topic for the sample learner: strong on sequences and dice, weak on time series.
-  const PROFILE = { dice: 0.88, cards: 0.8, bayes: 0.52, ev: 0.74, walks: 0.6, options: 0.42, puzzles: 0.7, sequences: 0.95, dist: 0.84, moments: 0.7, inference: 0.5, regression: 0.66, finance: 0.6, timeseries: 0.35 };
+  const PROFILE = { dice: 0.88, cards: 0.8, bayes: 0.52, ev: 0.74, walks: 0.6, markov: 0.48, options: 0.42, puzzles: 0.7, sequences: 0.95, dist: 0.84, moments: 0.7, inference: 0.5, regression: 0.66, finance: 0.6, timeseries: 0.35 };
   const ERR_MIX = [['method', 5], ['complement', 4], ['precision', 3], ['scale', 3], ['factor2', 2], ['square', 1]];
 
   function load() {

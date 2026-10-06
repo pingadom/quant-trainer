@@ -13,7 +13,7 @@
 | Appearance | `theme.js` (loaded before paint), `flair.js`, `css/style.css` | Theme tokens as CSS custom properties per `[data-theme]`; ticker tape, rolling numbers, stamps, bell |
 | Foundation | `config.js`, `core.js` | RNG, maths, answer parsing, the store (localStorage), schema validation of imported data, version |
 | Platform | `platform.js` | Everything that differs between website, installed PWA and native app: storage mirroring, file export, back button, status bar, service worker, install prompt, analytics |
-| Content | `gens-*.js`, `topics.js`, `cases.js`, `bank.js`, `estimate.js` | Question generators (79 skills in 14 topics), case studies, the interview bank, estimation facts |
+| Content | `gens-*.js`, `topics.js`, `cases.js`, `bank.js`, `estimate.js` | Question generators (84 skills in 15 topics), case studies, the interview bank, estimation facts |
 | Learning engine | `coach.js`, `review.js` | Skill statistics, Elo model, error diagnosis, recommendations, adaptive sessions; spaced-repetition deck |
 | UI | `ui.js`, `views/*.js`, `keypad.js`, `chart.js`, `demo.js` | Shared question card and cards, SVG line charts, one file per screen |
 | Mini-apps | `mental.js`, `tricks.js`, `market.js`, `quote.js`, `kelly.js`, `figgie.js`, `daily.js`, `oa.js`, `talk.js`, `lab.js` | Self-contained games and drills. Each keeps its logic in pure functions (exported on `QT.*` and unit-tested) separate from its screen code |

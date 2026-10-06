@@ -28,6 +28,15 @@
     return `<span class="candles" role="img" aria-label="Accuracy over the last 7 days. ${label.join(', ')}">${bars.join('')}</span>`;
   }
 
+  // Countdown to an interview with today's prep progress, or an invitation to make a plan.
+  function planCard() {
+    const st = QT.plan.todayStatus();
+    if (!st) return `<p class="small" style="margin:14px 0 0">Interview coming up? <a href="#/plan">Make a prep plan</a> for the firm and date.</p>`;
+    const name = QT.firms[st.p.firm]?.name || st.p.firm;
+    if (st.left < 0) return `<a class="card shortcut daily-card" href="#/plan"><b>How did ${name} go?</b><span>Add the questions you were asked</span></a>`;
+    return `<a class="card shortcut primary daily-card" href="#/plan"><b>${name} interview ${st.left === 0 ? 'today' : st.left === 1 ? 'tomorrow' : `in ${st.left} days`}</b><span>Today's prep: ${st.done}/${st.tasks.length} done</span></a>`;
+  }
+
   function home(el) {
     const s = store.get();
     const attempts = Object.values(s.topics).reduce((a, t) => a + t.attempts, 0);
@@ -83,6 +92,7 @@
       ${more.length ? `<h2>Also recommended</h2><div class="recs">${more.slice(0, 2).map(U.recCard).join('')}</div>
       <p><a href="#/coach">See your full coaching plan →</a></p>` : ''}
 
+      ${planCard()}
       <a class="card shortcut${today?.done ? '' : ' primary'} daily-card" href="#/daily"><b>Daily challenge${today?.done ? `: ${today.r.filter(Boolean).length}/5 today ✓` : ''}</b><span>${today?.done ? 'Done for today. Share your result or come back tomorrow.' : `5 questions, the same for everyone today${dstreak ? ` · ${dstreak}-day streak` : ''}`}</span></a>
 
       <h2>Your progress <a class="h-link" href="#/progress">Charts →</a></h2>

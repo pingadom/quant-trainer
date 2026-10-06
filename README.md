@@ -17,7 +17,7 @@
 
 ## Technical highlights
 
-- **A learner model chosen by out-of-sample evaluation.** The coach estimates your chance of answering each of 79 skills. I compared seven models (per-skill Beta, Elo, Bayesian Knowledge Tracing, Performance Factor Analysis and others) prequentially on simulated learners, with two structurally different ground truths and bootstrap CIs. The original per-skill estimate turned out to be biased by the app's own question selection. Elo beat it under both truths (log loss −0.046 and −0.024, 95% CIs clear of zero) and now drives the coach. → [research/REPORT.md](research/REPORT.md)
+- **A learner model chosen by out-of-sample evaluation.** The coach estimates your chance of answering each of its 84 skills. I compared seven models (per-skill Beta, Elo, Bayesian Knowledge Tracing, Performance Factor Analysis and others) prequentially on simulated learners, with two structurally different ground truths and bootstrap CIs. The original per-skill estimate turned out to be biased by the app's own question selection. Elo beat it under both truths (log loss −0.046 and −0.024, 95% CIs clear of zero) and now drives the coach. → [research/REPORT.md](research/REPORT.md)
 - **Every answer checked twice, by different methods.**
   - In the app, Monte Carlo simulations are tested against the exact answers within 5 standard errors.
   - In CI, a separate [Python derivation](research/verify_results.py) of every interview answer (exact fractions, the Bellman equation, Markov chains, a linear program for a poker game) must match what the app serves: **58/58 agree**.
@@ -41,8 +41,9 @@
 
 | | |
 |---|---|
-| **Coach** | Tracks 79 skills, diagnoses error types, ranks what to practise next with reasons, and offers a 14-question diagnostic and one-tap drills. |
-| **Practice** | 14 topics and 79 randomised question generators with worked solutions and a "check by simulation" button. Adaptive mixed practice. |
+| **Interview plan** | Pick the firm and date; get a daily checklist weighted to what that firm tests, with a countdown on the home screen. |
+| **Coach** | Tracks 84 skills, diagnoses error types, ranks what to practise next with reasons, and offers a 15-question diagnostic and one-tap drills. |
+| **Practice** | 15 topics and 84 randomised question generators with worked solutions and a "check by simulation" button. Adaptive mixed practice. |
 | **Interview questions** | 39 questions: ones candidates report from Jane Street, SIG, Optiver, IMC, Citadel, Five Rings, Two Sigma, Flow Traders, Wincent, Akuna, Da Vinci and DRW (plus clearly labelled practice questions on the topics firms list), each sourced, with follow-ups and a timed mock-interview mode. |
 | **Mistakes to review** | Every wrong answer comes back after 1, 3, 7 and 21 days until mastered. |
 | **Daily challenge** | The same 5 questions for everyone each day (seeded from the date, no server), one attempt, with a shareable result and streak. |

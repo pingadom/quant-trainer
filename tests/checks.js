@@ -196,6 +196,27 @@
       if (pos.some((x) => Math.abs(x - n / 4) > 5.5 * Math.sqrt(n * 0.25 * 0.75))) fail(`80-in-8: right answer positions not uniform ${pos}`);
     }
 
+    // Interview plan: valid tasks for every firm and day, today's status, and schema validation.
+    if (QT.plan) {
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      const today = QT.dayKey(new Date()), inDays = (n) => QT.dayKey(new Date(Date.now() + n * 864e5));
+      for (const firm of Object.keys(QT.firms).filter((k) => k !== 'common')) {
+        const p = { firm, date: inDays(6), start: today, done: {} };
+        for (let d = 0; d <= 6; d++) {
+          const tasks = QT.plan.tasksFor(p, inDays(d), 6 - d, d);
+          if (!tasks.length || tasks.some((t) => !t.id || !t.label || !/^#\//.test(t.href) || /undefined|NaN/.test(t.label + t.href)) || new Set(tasks.map((t) => t.id)).size !== tasks.length) { fail(`plan ${firm} day ${d}: bad tasks ${JSON.stringify(tasks.map((t) => t.label))}`); break; }
+        }
+      }
+      QT.store.importJson(JSON.stringify({ plan: { firm: 'wincent', date: inDays(3), start: today, done: { [today]: ['mock', '<b>x</b>'], nope: ['a'] } } }));
+      const st = QT.plan.todayStatus(), pl = QT.store.get().plan;
+      if (!st || st.left !== 3 || st.tasks.length < 3 || Object.keys(pl.done).join() !== today || /</.test(pl.done[today][1])) fail(`plan: status or validation wrong ${JSON.stringify({ st, pl })}`);
+      if (!QT.coach.recommend().some((r) => r.kind === 'plan' && r.href === '#/plan')) fail("plan: an active plan should be the coach's top recommendation");
+      QT.store.importJson(JSON.stringify({ plan: { firm: 'Wincent!', date: 'soon' } }));
+      if (QT.store.get().plan !== null) fail('plan: invalid plan should be dropped on import');
+      QT.store.importJson(saved);
+    }
+
     // Speed reps: two slow or missed answers of a type schedule it once, due tomorrow.
     if (QT.mental && QT.mental.scheduleReps) {
       const saved = QT.store.exportJson();

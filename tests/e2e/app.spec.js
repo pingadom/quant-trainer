@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -183,6 +183,21 @@ test('a due speed rep runs, and a failed one comes back tomorrow', async ({ page
   for (let i = 0; i < 8; i++) await page.getByRole('button', { name: 'Pass', exact: true }).click();
   await expect(page.getByText("It's back tomorrow")).toBeVisible();
   expect(await page.evaluate(() => QT.store.get().speedReview.frac.box)).toBe(0);
+});
+
+test('interview plan: pick a firm and date, tick a task, see the countdown', async ({ page }) => {
+  await page.goto('./#/plan');
+  await page.getByLabel('Firm').selectOption('wincent');
+  const inThree = await page.evaluate(() => QT.dayKey(new Date(Date.now() + 3 * 864e5)));
+  await page.getByLabel('Interview date').fill(inThree);
+  await page.getByRole('button', { name: 'Make my plan' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Wincent interview');
+  await expect(page.getByText('in 3 days')).toBeVisible();
+  const box = page.getByRole('checkbox', { name: /Mark done: Mock interview|Mark done: Light review|Mark done: Practise/ }).first();
+  await box.click();
+  await expect(page.getByRole('heading', { level: 2, name: /Today/ })).toContainText('1/');
+  await page.goto('./#/');
+  await expect(page.getByRole('link', { name: /Wincent interview in 3 days/ })).toBeVisible();
 });
 
 test('the tour walks through every section', async ({ page }) => {

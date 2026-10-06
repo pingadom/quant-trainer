@@ -9,7 +9,7 @@
     },
     {
       title: 'A coach that finds your weak spots',
-      body: 'It tracks 79 skills, notices the kind of mistakes you make (a complement slip, percent vs decimal, a factor of two…) and ranks what to practise next.',
+      body: `It tracks ${QT.coach.allIds().length} skills, notices the kind of mistakes you make (a complement slip, percent vs decimal, a factor of two…) and ranks what to practise next.`,
       points: ['Start with the 15-minute diagnostic for a first profile.', 'The home screen always shows the single best next step.'],
       href: '#/coach', cta: 'Open the coach',
     },
