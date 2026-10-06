@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.1
+
+- **Wincent, from the full Glassdoor reports:** four more questions candidates report: the hat of $1, $10 and $100 bills where you call "stop" and take the next bill (a martingale: no strategy beats $2.70), dice rolled until the total passes 100 (estimate the final total and the number of rolls), a stick broken at two points forming a triangle, and estimating the number of primes below a million. The cube-walk and ants questions are now marked as reported (the ants version uses 500 ants, as described). The firm profile adds what candidates say about each stage, including first interviews that end early after a weak first answer.
+- 63 answers are now derived independently in Python and checked against the app, including the hat game solved as an optimal-stopping problem.
+
 ## 0.15.0
 
 - **Interview prep plan:** choose the firm and the date; get a short checklist for each day until then, weighted to what that firm is reported to test (its topics, two of its questions a day, mental maths where it screens for it, its kind of trading game, and a mock interview plus a spoken answer every third day and the day before). Tasks the app can see you did tick themselves. A countdown sits on the home screen, the coach puts today's prep first, and afterwards it asks you to add the questions you were asked.

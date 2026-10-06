@@ -232,10 +232,57 @@ for _ in range(2000):
     qx = 0.25 + 0.25 * qx + 0.5 * qx * qx
 record("wc-branching.0", qx, "iterate q ← G(q) from 0")
 
-# Ants: E[max of 100 iid U(0, 100)] by adaptive quadrature of x·f_max(x), f_max(x) = n x^(n−1) / L^n.
+# Ants: E[max of 500 iid U(0, 100)] by adaptive quadrature of x·f_max(x), f_max(x) = n x^(n−1) / L^n.
 
-ants, _ = quad(lambda x: x * 100 * (x / 100) ** 99 / 100, 0, 100, epsabs=1e-13, epsrel=1e-13)
+ants, _ = quad(lambda x: x * 500 * (x / 100) ** 499 / 100, 0, 100, epsabs=1e-13, epsrel=1e-13, points=[99, 99.9])
 record("wc-ants.0", ants, "adaptive quadrature of x·f_max(x)")
+
+# Hat of bills: solve the optimal-stopping problem by backward induction over the bills left
+# (ones, tens, hundred), comparing "stop now" (mean of what's left) with "see one more draw".
+def hat_value():
+    from functools import lru_cache
+
+    @lru_cache(None)
+    def V(a, b, c):
+        n = a + b + c
+        stop = Fr(a * 1 + b * 10 + c * 100, n)
+        if n == 1:
+            return stop
+        cont = Fr(0)
+        for k, (cnt, nxt) in enumerate(((a, (a - 1, b, c)), (b, (a, b - 1, c)), (c, (a, b, c - 1)))):
+            if cnt:
+                cont += Fr(cnt, n) * V(*nxt)
+        return max(stop, cont)
+
+    import sys as _s
+    _s.setrecursionlimit(10000)
+    return V(100, 10, 1)
+
+
+record("wc-hat.0", hat_value(), "optimal stopping by backward induction over 2,222 states")
+
+
+# Dice until the total exceeds 100: exact expectations by backward recursion from 100 down.
+def over_100():
+    Et, Er = [Fr(0)] * 107, [Fr(0)] * 107
+    for t in range(100, -1, -1):
+        Et[t] = sum((Fr(t + d) if t + d > 100 else Et[t + d]) for d in DIE) / 6
+        Er[t] = sum((Fr(1) if t + d > 100 else 1 + Er[t + d]) for d in DIE) / 6
+    return Et[0], Er[0]
+
+
+tot, rolls = over_100()
+record("wc-over-100.0", tot, "exact backward recursion")
+record("wc-over-100.1", rolls, "exact backward recursion")
+# Broken stick: for break points u < v, the allowed u-interval has length 1 − v when v > ½.
+tri, _ = quad(lambda v: (1 - v) if v > 0.5 else 0.0, 0, 1, points=[0.5], epsabs=1e-14)
+record("wc-stick-triangle.0", 2 * tri, "integral over the unit square of break points")
+sieve = bytearray([1]) * (10 ** 6 + 1)
+sieve[0] = sieve[1] = 0
+for i in range(2, 1001):
+    if sieve[i]:
+        sieve[i * i::i] = bytearray(len(range(i * i, 10 ** 6 + 1, i)))
+record("wc-primes.0", sum(sieve), "sieve of Eratosthenes")
 
 post = Fr(2, 10) * Fr(7, 10) ** 3 / (Fr(2, 10) * Fr(7, 10) ** 3 + Fr(8, 10) * Fr(5, 10) ** 3)
 record("wc-bayes-trader.0", post, f"Bayes with exact fractions = {post}")
