@@ -369,7 +369,7 @@
       }
     });
     $('#zm-play').addEventListener('submit', (e) => e.preventDefault());
-    QT.keypad.attach($('#zm-play'), [$in], () => {});
+    QT.keypad.attach($('#zm-play'), [$in], () => {}, { keys: '', enter: false });
     function tick() {
       const left = Math.max(0, end - Date.now());
       $t.textContent = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`;

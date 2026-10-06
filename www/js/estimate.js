@@ -99,7 +99,7 @@
           <div id="est-fb" aria-live="polite"></div>
         </div>`;
       const form = el.querySelector('#est'), lo = el.querySelector('#lo'), hi = el.querySelector('#hi');
-      const kp = QT.keypad.attach(form, [lo, hi], (inp) => (inp === lo ? kp.focus(hi) : form.requestSubmit()));
+      const kp = QT.keypad.attach(form, [lo, hi], (inp) => (inp === lo ? kp.focus(hi) : form.requestSubmit()), { keys: '.' });
       if (!kp) lo.focus();
       form.addEventListener('submit', (e) => {
         e.preventDefault();

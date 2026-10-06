@@ -474,6 +474,17 @@
       if (sig('abc12345') !== sig('abc12345') || sig('abc12345') === sig('abc12346')) fail('zetamac challenge: question lists not reproducible');
     }
 
+    // Keypad: phone order (1 2 3 on top), every row fills the grid, and only the requested extras appear.
+    if (QT.keypad && QT.keypad.layout) {
+      for (const [keys, enter] of [['', false], ['.', true], ['.-', true], ['.-/', true], ['.-/%', true]]) {
+        const { cols, rows } = QT.keypad.layout(keys, enter), flat = rows.flat().map(([k]) => k).filter(Boolean);
+        if (rows[0].slice(0, 3).map(([k]) => k).join('') !== '123') fail(`keypad ${keys}: top row is not 1 2 3`);
+        if (rows.some((r) => r.reduce((n, [, span]) => n + span, 0) !== cols)) fail(`keypad ${keys}: a row does not fill ${cols} columns`);
+        const extras = flat.filter((k) => !/^\d$/.test(k) && k !== 'back' && k !== 'enter').sort().join('');
+        if (extras !== [...keys].sort().join('') || flat.includes('enter') !== enter || !flat.includes('back')) fail(`keypad ${keys}: wrong keys ${flat.join(' ')}`);
+      }
+    }
+
     // Firm guide pages: every firm with questions gets a page listing all its questions with
     // answers, the index and sitemap link to them, and nothing renders as undefined/NaN.
     if (typeof firmPages !== 'undefined') {
