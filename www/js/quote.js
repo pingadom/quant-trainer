@@ -86,7 +86,7 @@
           <p class="small" id="qerr" aria-live="polite">${msg || ''}</p>
         </div>`;
       const form = el.querySelector('#mq'), bid = el.querySelector('#bid'), ask = el.querySelector('#ask');
-      const kp = QT.keypad.attach(form, [bid, ask], (inp) => (inp === bid ? kp.focus(ask) : form.requestSubmit()));
+      const kp = QT.keypad.attach(form, [bid, ask], (inp) => (inp === bid ? kp.focus(ask) : form.requestSubmit()), { keys: '.-' });
       if (!kp) bid.focus();
       form.addEventListener('submit', (e) => {
         e.preventDefault();

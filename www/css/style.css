@@ -247,10 +247,14 @@ input[type='text'], select { font-size: 16px; } /* prevents iOS zoom-on-focus */
 button, .btn { min-height: 40px; }
 
 /* on-screen keypad */
-.keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; user-select: none; }
+.keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; user-select: none; }
+.keypad.kp-3 { grid-template-columns: repeat(3, 1fr); }
 .keypad button {
-  min-height: 46px; font: 600 1.2rem var(--mono); background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+  min-height: 54px; font: 600 1.4rem var(--mono); background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+  touch-action: manipulation;
 }
+.keypad .kp-op { color: var(--muted); font-size: 1.25rem; }
+.keypad .kp-enter { font: 600 1rem var(--body); }
 .keypad button:active { background: var(--accent-soft); }
 .keypad .kp-enter { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .keypad.kp-disabled { opacity: 0.5; }

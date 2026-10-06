@@ -117,7 +117,7 @@
       answer(v, $in.value.trim());
     });
     $('#sq-skip').addEventListener('click', () => answer(NaN, 'skipped'));
-    QT.keypad.attach(form, [$in], () => form.requestSubmit());
+    QT.keypad.attach(form, [$in], () => form.requestSubmit(), { keys: '.-/' });
     function finish() {
       if (done) return;
       done = true;

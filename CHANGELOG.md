@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.1
+
+- **Phone number pad fixed:** keys now run in phone order (1 2 3 on top, 0 at the bottom) instead of calculator order, and are bigger. Each screen shows only the keys its answers can need: Zetamac has just digits and delete (answers are accepted automatically, so no Enter); estimation and market making add a decimal point; practice questions keep minus, fraction and percent.
+
 ## 0.18.0
 
 - **New name: Theo** (formerly Quant Trainer), after the trader's word for theoretical value. New icon (a serif θ on the notebook's ink and paper) and share image.

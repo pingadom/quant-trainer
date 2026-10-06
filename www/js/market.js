@@ -57,7 +57,7 @@
         const form = el.querySelector('#quote'), bid = el.querySelector('#bid'), ask = el.querySelector('#ask');
         form.addEventListener('submit', onQuote);
         // On the keypad, ↵ on the bid moves to the ask; ↵ on the ask sends the quote.
-        const kp = QT.keypad.attach(form, [bid, ask], (inp) => (inp === bid ? kp.focus(ask) : form.requestSubmit()));
+        const kp = QT.keypad.attach(form, [bid, ask], (inp) => (inp === bid ? kp.focus(ask) : form.requestSubmit()), { keys: '.' });
         if (!kp) bid.focus();
       }
     }
