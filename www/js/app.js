@@ -18,7 +18,7 @@
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
   const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', mock: 'bank', drill: 'coach', tricks: 'mental', appearance: 'more' };
-  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', drill: 'coach', cases: 'more', case: 'more', iq: 'bank', mock: 'bank', mental: 'more', tricks: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more', quote: 'more', kelly: 'more', figgie: 'more', oa: 'more', talk: 'bank', daily: '', progress: 'more', appearance: 'more', tour: '' };
+  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', drill: 'coach', cases: 'more', case: 'more', iq: 'bank', mock: 'bank', mental: 'more', tricks: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more', quote: 'more', kelly: 'more', figgie: 'more', oa: 'more', talk: 'bank', daily: '', progress: 'more', appearance: 'more', tour: '', plan: '' };
 
   const decode = (s) => {
     try {
@@ -66,7 +66,7 @@
   // the latest numbers; leave anything mid-question alone and just refresh the badges.
   QT.onExternalChange = () => {
     const parts = location.hash.replace(/^#\/?/, '').split('/');
-    const overview = ['', 'coach', 'practice', 'bank', 'cases', 'more', 'roadmap', 'progress'].includes(parts[0]) && parts.length === 1;
+    const overview = ['', 'coach', 'practice', 'bank', 'cases', 'more', 'roadmap', 'progress', 'plan'].includes(parts[0]) && parts.length === 1;
     const mistakesList = parts[0] === 'mistakes' && parts.length === 1;
     if (overview || mistakesList) route();
     else QT.ui.updateBadges();

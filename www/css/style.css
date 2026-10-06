@@ -702,3 +702,20 @@ label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
 .tour-dots { display: flex; gap: 6px; margin: 18px 0; }
 .tour-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
 .tour-dots i.on { background: var(--accent); width: 22px; border-radius: 4px; }
+
+/* ---- interview plan ---- */
+.plan-list { padding: 6px 16px; }
+.plan-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.plan-item:last-child { border-bottom: 0; }
+.plan-item.done > a { color: var(--muted); text-decoration: line-through; }
+.plan-item .small { margin-left: auto; }
+.tick {
+  flex: none; width: 28px; height: 28px; min-height: 0; padding: 0; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 2px solid var(--muted); color: var(--on-accent); font-weight: 700;
+}
+.tick[aria-checked='true'] { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+.tick:disabled { opacity: 1; cursor: default; }
+@media (max-width: 520px) {
+  .greet { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .greet .week { flex-direction: row-reverse; align-items: center; gap: 10px; }
+}

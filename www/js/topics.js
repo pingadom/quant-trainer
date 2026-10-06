@@ -23,6 +23,10 @@
       notes: `<ul><li>Fair game ⇒ martingale ⇒ E[stopped value] = start value.</li><li>Fair ruin: P(hit N before 0 | start i) = i/N, with expected duration i(N−i).</li><li>Biased: P = (1 − r<sup>i</sup>)/(1 − r<sup>N</sup>) with r = q/p.</li></ul>`,
     },
     {
+      id: 'markov', track: 'interview', name: 'Markov chains & order statistics', blurb: 'Hitting times, stationary states, branching, order statistics.', gens: G.markov,
+      notes: `<ul><li>Hitting times: write E<sub>state</sub> = 1 + Σ P(next)·E<sub>next</sub> for each state and solve; group symmetric states first.</li><li>Stationary distribution: balance the flows (π<sub>A</sub>·P(A→B) = π<sub>B</sub>·P(B→A) for two states); return time = 1/π.</li><li>Branching: extinction q solves q = G(q), the offspring generating function; take the smallest root in [0, 1].</li><li>k-th smallest of n uniforms has mean k/(n + 1).</li></ul>`,
+    },
+    {
       id: 'options', track: 'interview', name: 'Options', blurb: 'Parity, quick pricing, deltas.', gens: G.options,
       notes: `<ul><li>Put–call parity (r = 0): C − P = S − K.</li><li>ATM call ≈ 0.4·σ·S·√T; ATM straddle ≈ 0.8·σ·S·√T.</li><li>One-step binomial: q = (S₀ − S<sub>d</sub>)/(S<sub>u</sub> − S<sub>d</sub>), price = E<sub>q</sub>[payoff].</li><li>Delta-hedge: hold −Δ shares per option (×100 per contract).</li></ul>`,
     },
@@ -68,6 +72,7 @@
     bayes: ['Base rates (medical test)', 'Odds-form Bayes', 'Conditioning on "at least one"', 'Conditioning on dice sums', 'Two-urn Bayes'],
     ev: ['Reroll games (backward induction)', 'Expected maximum (tail sum)', 'Coupon collector', 'Indicator variables', 'Runs of heads', 'Convex payoffs', 'Broken stick'],
     walks: ["Fair gambler's ruin", 'Expected ruin duration', "Biased gambler's ruin", 'Return to origin'],
+    markov: ['Hitting time on a cycle', 'Runs (waiting for k in a row)', 'Two-state stationary distribution', 'Order statistics of uniforms', 'Branching-process extinction'],
     options: ['Put–call parity', 'ATM rule of thumb', 'Implied vol from a straddle', 'One-step binomial pricing', 'Calls on dice', 'Delta hedging'],
     puzzles: ['Monty Hall (n doors)', 'Coin-pattern waiting times', 'First special card', 'Points in a semicircle', 'Uniform sums', 'Airplane seat', 'Broken-stick triangle'],
     sequences: ['Arithmetic', 'Geometric', 'Squares ± c', 'Fibonacci-style', 'Second differences', 'Interleaved sequences', 'Multiply-and-add', 'Cubes'],

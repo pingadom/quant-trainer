@@ -257,6 +257,13 @@
     if (b80 === null) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', voice: 'No number on your mental maths yet. Put one on the board.', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
     else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', voice: `${b80} net. The desk wants 55. Close the gap.`, title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
 
+    // An interview prep plan with tasks left today outranks everything else.
+    const ps = QT.plan && QT.plan.todayStatus();
+    if (ps && ps.left >= 0 && ps.done < ps.tasks.length) {
+      const name = QT.firms[ps.p.firm]?.name || ps.p.firm, n = ps.tasks.length - ps.done;
+      recs.push({ pri: 200, kind: 'plan', voice: ps.left === 0 ? `${name} today. Light review only, then go and get it.` : `${name} in ${ps.left} day${ps.left > 1 ? 's' : ''}. ${n} thing${n > 1 ? 's' : ''} left on today's list.`, title: `Today's ${name} prep: ${ps.done}/${ps.tasks.length} done`, why: `Next: ${ps.tasks.find((t) => !(t.auto && t.auto()) && !(ps.p.done[QT.dayKey(new Date())] || []).includes(t.id))?.label || 'see the plan'}.`, href: '#/plan', label: 'Open the plan' });
+    }
+
     // Speed reps that are due: short timed sets of one question type.
     if (QT.mentalTips && st.speedReview) {
       const due = Object.entries(st.speedReview).filter(([k, r]) => r.due <= Date.now() && QT.mentalTips.KINDS[k]);

@@ -193,4 +193,60 @@
       },
     }),
   ];
+  // Markov chains & order statistics: the themes listed for several firms' online tests
+  // (hitting times, stationary distributions, branching processes, order statistics).
+  QT.gens.markov = [
+    () => {
+      const N = R.int(5, 12), k = R.int(1, N - 1), a = k * (N - k);
+      return {
+        q: `A token sits on corner 0 of a regular ${N}-sided polygon. Each second it moves to one of the two neighbouring corners, chosen at random. What is the expected number of seconds until it first reaches corner ${k}?`,
+        a, tol: EXACT,
+        sol: `Unroll the polygon: reaching corner ${k} means the walk first hits +${k} or −${N - k} (the same corner, reached from either side). A fair walk started between barriers ${k} and ${N - k} away takes on average the product of the distances to exit: ${k} × ${N - k} = <b>${a}</b>.`,
+        sim: () => { let x = 0, t = 0; while (x !== k) { x = (x + (Math.random() < 0.5 ? 1 : N - 1)) % N; t++; } return t; },
+        trials: 20000,
+      };
+    },
+    () => {
+      const [d, k] = R.pick([[3, 2], [4, 2], [6, 2], [3, 3], [4, 3]]);
+      let a = 0;
+      for (let i = 1; i <= k; i++) a += d ** i;
+      return {
+        q: `You roll a fair ${d}-sided die (faces 1 to ${d}) until you roll a ${d} ${k === 2 ? 'twice' : 'three times'} in a row. What is the expected number of rolls?`,
+        a, tol: EXACT,
+        sol: `Track the current run of ${d}s as a Markov chain. Let E<sub>j</sub> be the expected rolls still needed with a run of j: E<sub>j</sub> = 1 + (1/${d})E<sub>j+1</sub> + (${d - 1}/${d})E<sub>0</sub>, with E<sub>${k}</sub> = 0. Solving gives E<sub>0</sub> = ${d}${k >= 2 ? ` + ${d}²` : ''}${k >= 3 ? ` + ${d}³` : ''} = <b>${a}</b>. (The fair-coin version, two heads in a row, is 2 + 4 = 6.)`,
+        sim: () => { let run = 0, n = 0; while (run < k) { n++; run = Math.floor(Math.random() * d) === 0 ? run + 1 : 0; } return n; },
+        trials: 20000,
+      };
+    },
+    () => {
+      const p = R.pick([0.1, 0.2, 0.25, 0.3, 0.4]), q = R.pick([0.2, 0.3, 0.5, 0.6]), a = p / (p + q);
+      return {
+        q: `If today is sunny, tomorrow is rainy with probability ${p}; if today is rainy, tomorrow is sunny with probability ${q}. In the long run, what fraction of days are rainy?`,
+        a,
+        sol: `In the stationary distribution, the flow from sunny to rainy equals the flow back: π<sub>S</sub>·${p} = π<sub>R</sub>·${q}. With π<sub>S</sub> + π<sub>R</sub> = 1, π<sub>R</sub> = ${p}/(${p} + ${q}) = <b>${f(a)}</b>.`,
+        sim: () => { let rainy = false; for (let t = 0; t < 60; t++) rainy = rainy ? Math.random() >= q : Math.random() < p; return rainy ? 1 : 0; },
+        trials: 40000,
+      };
+    },
+    () => {
+      const n = R.int(2, 9), k = R.int(1, n), a = k / (n + 1);
+      const which = k === n ? 'largest' : k === 1 ? 'smallest' : `${k}${k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} smallest`;
+      return {
+        q: `You draw ${n} independent numbers, each uniform on [0, 1]. What is the expected value of the ${which}?`,
+        a,
+        sol: `The ${n} points split [0, 1] into ${n + 1} gaps, and by symmetry every gap has the same expected length, 1/${n + 1}. The ${which} sits after ${k} gap${k > 1 ? 's' : ''}: ${k}/${n + 1} = <b>${f(a)}</b>.`,
+        sim: () => Array.from({ length: n }, () => Math.random()).sort((x, y) => x - y)[k - 1],
+      };
+    },
+    () => {
+      const d = R.pick([0.1, 0.2, 0.25, 0.3, 0.4]), a = d / (1 - d);
+      return {
+        q: `Each organism, independently, either dies (probability ${d}) or splits into two (probability ${1 - d}). Starting from one organism, what is the probability that its line eventually dies out?`,
+        a,
+        sol: `Let q be the extinction probability. Condition on the first step: q = ${d} + ${1 - d}·q² (both offspring lines must die out). The roots are q = 1 and q = ${d}/${1 - d}. The mean number of offspring is ${f(2 * (1 - d))} > 1, so extinction isn't certain and q is the smaller root: <b>${f(a)}</b>.`,
+        sim: () => { let n = 1; for (let t = 0; t < 200 && n > 0 && n < 60; t++) { let m = 0; for (let i = 0; i < n; i++) if (Math.random() >= d) m += 2; n = m; } return n === 0 ? 1 : 0; },
+        trials: 20000,
+      };
+    },
+  ];
 })();
