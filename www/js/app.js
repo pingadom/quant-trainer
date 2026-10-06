@@ -21,7 +21,7 @@
   // Phone tabs: Home · Coach (my prep) · Practice (learn and practise) · Interviews · More (games, settings).
   const TAB_PARENT = {
     plan: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
-    topic: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice',
+    topic: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice',
     iq: 'bank', mock: 'bank', talk: 'bank',
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '',
   };

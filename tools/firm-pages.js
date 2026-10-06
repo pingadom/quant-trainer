@@ -1,0 +1,126 @@
+// Free firm guide pages: one static HTML page per firm (how it interviews, every question with
+// its worked solution) plus an index, so people searching before an interview can find them.
+// The app itself is one page with hash routes, which search engines treat as a single page.
+//
+// Generated at deploy time from the interview bank (www/js/bank.js), so they never drift:
+//   node tools/firm-pages.js            → writes www/firms/*.html and www/sitemap.xml
+// renderAll(QT) is pure and also runs in the browser (tests/check.html checks its output).
+(function (root) {
+  const SITE = 'https://pingadom.github.io/quant-trainer/';
+  const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'";
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const plain = (html) => String(html).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
+  function page({ title, description, canonical, body }) {
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="${CSP}">
+  <title>${esc(title)}</title>
+  <meta name="description" content="${esc(description)}">
+  <link rel="canonical" href="${canonical}">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="${esc(title)}">
+  <meta property="og:description" content="${esc(description)}">
+  <meta property="og:url" content="${canonical}">
+  <meta property="og:image" content="${SITE}icons/og-image.png">
+  <script src="../js/theme.js"></script>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <main class="static">
+${body}
+    <footer class="static-foot small">Quant Trainer is free and open source. Questions are paraphrased from public candidate reports and linked to their sources; firm names are used only to attribute those reports. <a href="../privacy.html">Privacy</a></footer>
+  </main>
+</body>
+</html>
+`;
+  }
+
+  const firmsWithQuestions = (QT) => Object.entries(QT.firms).filter(([id]) => QT.bank.some((b) => b.firm === id));
+
+  function firmPage(QT, id) {
+    const F = QT.firms[id], qs = QT.bank.filter((b) => b.firm === id), f = QT.fmtNum;
+    const name = id === 'common' ? 'Common trading-interview formats' : F.name;
+    const reported = qs.filter((b) => b.kind === 'reported').length;
+    const title = id === 'common' ? 'Common trading interview question formats, with solutions | Quant Trainer' : `${F.name} interview questions and process | Quant Trainer`;
+    const description = id === 'common'
+      ? `${qs.length} question formats used across trading-firm interviews (market making, options, quoting), with worked solutions. Free.`
+      : `${reported} interview question${reported === 1 ? '' : 's'} candidates report from ${F.name}, with worked solutions and how the interview process runs. Free practice, no sign-up.`;
+    const parts = (b) => (b.parts || []).map((p) => `
+          <li>${p.q}${p.ext ? ' <span class="small">(our follow-up)</span>' : ''}
+            <details><summary>Answer and worked solution</summary><p><b>Answer: ${esc(f(p.a))}</b></p><div class="solution">${p.sol}</div></details>
+          </li>`).join('');
+    const items = qs.map((b) => `
+      <article class="card static-q" id="${esc(b.id)}">
+        <p class="small">${esc(b.role)} · ${esc(b.stage)} · ${esc(b.cat)} · ${b.kind === 'reported' ? 'reported by a candidate' : 'practice question on a reported topic'}</p>
+        <p class="question">${b.q}</p>
+        ${b.note ? `<p class="small">${b.note}</p>` : ''}
+        ${b.parts ? `<ol>${parts(b)}
+        </ol>` : b.open ? `<details><summary>Model answer</summary><div class="solution">${b.open.model}</div></details>` : ''}
+        ${b.followups && b.followups.length ? `<p class="small"><b>Interviewers may push further:</b> ${b.followups.join(' ')}</p>` : ''}
+        <p class="small">Source: <a href="${esc(b.src[1])}" rel="noopener">${esc(b.src[0])}</a> · <a href="../#/iq/${esc(b.id)}">Try it in the app →</a></p>
+      </article>`).join('');
+    const others = firmsWithQuestions(QT).filter(([k]) => k !== id).map(([k, v]) => `<a href="${k}.html">${esc(k === 'common' ? 'Common formats' : v.name)}</a>`).join(' · ');
+    const body = `
+    <nav class="crumbs small"><a href="../">Quant Trainer</a> › <a href="./">Firm guides</a> › ${esc(name)}</nav>
+    <h1>${esc(id === 'common' ? name : `${F.name} interview questions`)}</h1>
+    <p class="lede">${id === 'common' ? 'Formats that come up at many trading firms, with worked solutions.' : `How ${esc(F.name)}'s process runs, as candidates and the firm describe it, and the questions candidates report, each with a worked solution.`} Free, no sign-up.</p>
+    <p><a class="btn" href="../#/bank/${id}">Practise these in the app</a> <a class="btn ghost" href="../#/mock/${id}">Mock interview</a></p>
+    ${F.process && F.process.length ? `<h2>How ${esc(id === 'common' ? 'these formats work' : `${F.name} interviews`)}</h2>
+    <ul>${F.process.map((x) => `<li>${x}</li>`).join('')}</ul>
+    <p class="small">Sources: ${(F.sources || []).map(([l, u]) => `<a href="${esc(u)}" rel="noopener">${esc(l)}</a>`).join(' · ')}</p>` : ''}
+    <h2>Questions (${qs.length})</h2>
+    <p class="small">Try each one before opening the solution. Interviewers change the numbers, so learn the method.</p>
+    ${items}
+    <h2>Other firms</h2>
+    <p>${others}</p>`;
+    return page({ title, description, canonical: `${SITE}firms/${id}.html`, body });
+  }
+
+  function indexPage(QT) {
+    const rows = firmsWithQuestions(QT).map(([id, F]) => {
+      const qs = QT.bank.filter((b) => b.firm === id), rep = qs.filter((b) => b.kind === 'reported').length;
+      return `<a class="card topic-card" href="${id}.html"><h3>${esc(id === 'common' ? 'Common formats' : F.name)}</h3><div class="small">${qs.length} question${qs.length === 1 ? '' : 's'}${id === 'common' ? '' : ` · ${rep} reported by candidates`}</div></a>`;
+    }).join('');
+    const body = `
+    <nav class="crumbs small"><a href="../">Quant Trainer</a> › Firm guides</nav>
+    <h1>Trading firm interview guides</h1>
+    <p class="lede">Free guides to quant and trading interviews at ${firmsWithQuestions(QT).length - 1} firms: how each process runs, and the questions candidates report, with worked solutions.</p>
+    <p><a class="btn" href="../">Open the free practice app</a></p>
+    <div class="grid">${rows}</div>`;
+    return page({ title: 'Trading firm interview questions and guides | Quant Trainer', description: 'Free guides to quant trading interviews at Jane Street, Optiver, SIG, IMC, Wincent and more: the process and reported questions with worked solutions.', canonical: `${SITE}firms/`, body });
+  }
+
+  function sitemap(QT) {
+    const urls = [['', '1.0', 'weekly'], ['firms/', '0.9', 'weekly'], ...firmsWithQuestions(QT).map(([id]) => [`firms/${id}.html`, '0.8', 'weekly']), ['privacy.html', '0.3', 'yearly']];
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(([u, p, c]) => `  <url><loc>${SITE}${u}</loc><changefreq>${c}</changefreq><priority>${p}</priority></url>`).join('\n')}
+</urlset>
+`;
+  }
+
+  // { relative path under www/: file contents }
+  function renderAll(QT) {
+    const out = { 'firms/index.html': indexPage(QT), 'sitemap.xml': sitemap(QT) };
+    for (const [id] of firmsWithQuestions(QT)) out[`firms/${id}.html`] = firmPage(QT, id);
+    return out;
+  }
+
+  root.firmPages = { renderAll, plain };
+  if (typeof module !== 'undefined' && require.main === module) {
+    const fs = require('fs'), path = require('path');
+    const { loadQT } = require('../tests/load-qt');
+    const files = renderAll(loadQT().QT), www = path.join(__dirname, '..', 'www');
+    for (const [rel, text] of Object.entries(files)) {
+      fs.mkdirSync(path.dirname(path.join(www, rel)), { recursive: true });
+      fs.writeFileSync(path.join(www, rel), text);
+    }
+    console.log(`Wrote ${Object.keys(files).length} files: ${Object.keys(files).join(', ')}`);
+  }
+  if (typeof module !== 'undefined') module.exports = root.firmPages;
+})(typeof window !== 'undefined' ? window : globalThis);

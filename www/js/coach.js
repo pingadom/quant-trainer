@@ -264,6 +264,10 @@
       recs.push({ pri: 200, kind: 'plan', voice: ps.left === 0 ? `${name} today. Light review only, then go and get it.` : `${name} in ${ps.left} day${ps.left > 1 ? 's' : ''}. ${n} thing${n > 1 ? 's' : ''} left on today's list.`, title: `Today's ${name} prep: ${ps.done}/${ps.tasks.length} done`, why: `Next: ${ps.tasks.find((t) => !(t.auto && t.auto()) && !(ps.p.done[QT.dayKey(new Date())] || []).includes(t.id))?.label || 'see the plan'}.`, href: '#/plan', label: 'Open the plan' });
     }
 
+    // Formula cards that are due.
+    const cardsDue = QT.flashcards ? QT.flashcards.dueIds().length : 0;
+    if (cardsDue >= 5) recs.push({ pri: 44, kind: 'cards', voice: `${cardsDue} formulas you should know cold. Five minutes.`, title: `Formula cards: ${cardsDue} due`, why: 'Results like Var(aX + bY), the Kelly fraction and √252 come up constantly. Flip through the ones due today.', href: '#/flashcards', label: 'Review cards' });
+
     // Speed reps that are due: short timed sets of one question type.
     if (QT.mentalTips && st.speedReview) {
       const due = Object.entries(st.speedReview).filter(([k, r]) => r.due <= Date.now() && QT.mentalTips.KINDS[k]);

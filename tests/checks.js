@@ -454,6 +454,39 @@
       QT.store.importJson(saved);
     }
 
+    // Formula cards: unique ids, no junk, and the spaced schedule (1, 3, 7, 21, 60 days; a miss resets).
+    if (QT.flashcards) {
+      const F = QT.flashcards, ids = F.CARDS.map((c) => c[0]);
+      if (new Set(ids).size !== ids.length || F.CARDS.some((c) => c.length !== 4 || !c[2] || !c[3] || /undefined|NaN/.test(c.join(' ')))) fail('flashcards: duplicate or malformed card');
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      const t0 = Date.parse('2026-10-06T12:00:00Z'), days = (c) => Math.round((c.due - t0) / 864e5);
+      const gaps = [1, 2, 3, 4, 5, 6].map(() => days(F.grade('p-die', true, t0)));
+      const miss = F.grade('p-die', false, t0);
+      if (gaps.join() !== '1,3,7,21,60,60' || miss.box !== 0 || days(miss) !== 1) fail(`flashcards: schedule ${gaps} / miss ${JSON.stringify(miss)}`);
+      if (F.newIds().length !== F.CARDS.length - 1 || F.dueIds(t0 + 2 * 864e5).join() !== 'p-die') fail('flashcards: due and new lists');
+      QT.store.importJson(saved);
+    }
+
+    // Zetamac challenges: the same code gives the same questions; different codes differ.
+    if (QT.mental && QT.mental.seededList && QT.daily) {
+      const sig = (seed) => QT.mental.seededList(seed, QT.mental.ZM_DEFAULT).slice(0, 40).map((q) => q.q).join('|');
+      if (sig('abc12345') !== sig('abc12345') || sig('abc12345') === sig('abc12346')) fail('zetamac challenge: question lists not reproducible');
+    }
+
+    // Firm guide pages: every firm with questions gets a page listing all its questions with
+    // answers, the index and sitemap link to them, and nothing renders as undefined/NaN.
+    if (typeof firmPages !== 'undefined') {
+      const files = firmPages.renderAll(QT);
+      for (const firm of Object.keys(QT.firms).filter((k) => QT.bank.some((b) => b.firm === k))) {
+        const html = files[`firms/${firm}.html`] || '';
+        const missing = QT.bank.filter((b) => b.firm === firm && !html.includes(`id="${b.id}"`)).map((b) => b.id);
+        if (!html || missing.length || /undefined|NaN|\[object Object\]/.test(html)) { fail(`firm page ${firm}: ${html ? `missing ${missing.join(', ')} or junk` : 'not generated'}`); break; }
+        if (!files['firms/index.html'].includes(`href="${firm}.html"`) || !files['sitemap.xml'].includes(`firms/${firm}.html`)) fail(`firm page ${firm}: not linked from the index or sitemap`);
+      }
+      if (!/<title>Wincent interview questions and process/.test(files['firms/wincent.html'] || '')) fail('firm page: Wincent title');
+    }
+
     // Build consistency: every script the page loads must be precached for offline use,
     // and the version must match everywhere.
     if (files.index && files.sw) {

@@ -736,3 +736,19 @@ label.check input[type='checkbox'] { margin-top: 4px; width: 18px; height: 18px;
 .nav-sec > summary:hover { color: var(--ink); }
 .nav-sec > a { display: block; }
 .nav-home { margin-bottom: 2px; }
+
+/* ---- static firm guide pages (tools/firm-pages.js) ---- */
+main.static { margin: 0 auto; max-width: 860px; }
+.crumbs { margin-bottom: 12px; }
+.static-q { margin-top: 12px; }
+.static-q ol { padding-left: 20px; }
+.static-q li { margin-bottom: 10px; }
+.static-q details { margin-top: 6px; }
+.static-foot { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); }
+
+/* ---- formula cards ---- */
+.fc-card { min-height: 220px; display: flex; flex-direction: column; justify-content: center; gap: 18px; text-align: center; padding: 28px 22px; }
+.fc-front { font-family: var(--q-font); font-size: 1.45rem; line-height: 1.35; }
+.fc-back { font-size: 1.12rem; line-height: 1.5; padding-top: 16px; border-top: 1px dashed var(--line); }
+.fc-list dt { font-weight: 600; margin-top: 10px; }
+.fc-list dd { margin: 2px 0 0; color: var(--muted); }

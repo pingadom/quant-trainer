@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.0
+
+- **Free firm guide pages** (`/firms/`): a plain page per firm with how its process runs and every question with a hidden worked solution, plus an index. Search engines can index them (the app itself is one page to them). They're generated from the interview bank on every deploy (`tools/firm-pages.js`), listed in the sitemap, and linked from the app.
+- **Challenge a friend at Zetamac:** every game on the default settings uses a question list fixed by a short code, so "Challenge a friend" sends a link with exactly the same questions and your score to beat. No server or account needed.
+- **Formula cards:** 43 results to know cold (probability, statistics, trading rules of thumb, useful constants) as flip cards on a spaced schedule (1, 3, 7, 21, then 60 days). Space to flip, 1/2 to grade. In Learn, the ticker and the coach.
+
 ## 0.16.1
 
 - **Reorganised navigation.** The sidebar is now five groups by what you want to do: **My prep** (interview plan, daily challenge, coach, progress, roadmap), **Learn** (topics, speed tricks, case studies, stats lab), **Practise** (mixed practice, mistakes, mental maths, online tests), **Interviews** (questions, mock interview, think aloud) and **Trading games**. Each group folds away and the app remembers which you've folded; the group you're in always stays open. Mock interview has its own entry. The phone's More page uses the same groups, and the bottom tabs highlight the matching group.

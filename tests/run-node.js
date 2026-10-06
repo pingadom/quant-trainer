@@ -3,6 +3,7 @@ const vm = require('vm');
 const { loadQT, read } = require('./load-qt');
 
 const sandbox = loadQT();
+vm.runInContext(read('tools/firm-pages.js'), sandbox, { filename: 'tools/firm-pages.js' });
 vm.runInContext(read('tests/checks.js'), sandbox, { filename: 'tests/checks.js' });
 
 const { lines, fails } = sandbox.runChecks(sandbox.QT, {

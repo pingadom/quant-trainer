@@ -36,6 +36,8 @@
     }
     const due = QT.mistakes.due().length;
     if (due) items.push({ k: 'REVIEW', v: `${due} due` });
+    const cards = QT.flashcards ? QT.flashcards.dueIds().length : 0;
+    if (cards) items.push({ k: 'CARDS', v: `${cards} due` });
     const reps = QT.mental.dueReps().length;
     if (reps) items.push({ k: 'REPS', v: `${reps} due` });
     const strong = QT.coach.allIds().filter((id) => QT.coach.stat(id).status === 'strong').length;

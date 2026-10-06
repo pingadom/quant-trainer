@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -230,6 +230,31 @@ test('Zetamac: answers go through without Enter; slow and unfinished questions c
   await expect(page.locator('.review-item').first()).toContainText('Faster:');
 });
 
+test('formula cards: flip, grade, and the schedule moves on', async ({ page }) => {
+  await page.goto('./#/flashcards');
+  await page.getByRole('button', { name: /^Start/ }).click();
+  await page.keyboard.press(' ');
+  await expect(page.locator('#fc-back')).toBeVisible();
+  await page.getByRole('button', { name: 'Got it' }).click();
+  await page.getByRole('button', { name: 'Show answer' }).click();
+  await page.getByRole('button', { name: 'Not yet' }).click();
+  const deck = await page.evaluate(() => Object.values(QT.store.get().flash).map((c) => c.box).sort().join());
+  expect(deck).toBe('0,0'); // first-time right goes to box 0 (1 day); a miss also restarts at box 0
+});
+
+test('Zetamac challenge link: same questions as the sender, with the score to beat', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('qt-keypad', 'off'));
+  await page.goto('./#/mental/challenge/abc12345/30');
+  await expect(page.getByText('score to beat')).toBeVisible();
+  const expected = await page.evaluate(() => QT.mental.seededList('abc12345', QT.mental.ZM_DEFAULT).slice(0, 3).map((q) => [q.q, q.a]));
+  await page.getByRole('button', { name: 'Start the challenge' }).click();
+  for (const [q, a] of expected) {
+    await expect(page.locator('#mm-q')).toHaveText(q);
+    await page.locator('#mm-in').fill(String(a));
+  }
+  await expect(page.locator('#mm-score')).toHaveText('Score: 3');
+});
+
 test('speed-trick lesson and drill', async ({ page }) => {
   await page.goto('./#/tricks');
   await expect(page.locator('.topic-card')).toHaveCount(20);
@@ -417,7 +442,7 @@ test.describe('accessibility in every theme', () => {
   for (const theme of ['notebook', 'night', 'chalk', 'terminal']) {
     test(`no serious violations in ${theme}`, async ({ page }) => {
       await page.addInitScript((t) => localStorage.setItem('qt-theme', t), theme);
-      for (const r of ['', 'topic/bayes', 'mental', 'figgie', 'progress', 'appearance', 'tour']) {
+      for (const r of ['', 'topic/bayes', 'mental', 'figgie', 'progress', 'appearance', 'tour', 'flashcards']) {
         await page.goto(`./?demo#/${r}`);
         await expect(page.locator('main h1').first()).toBeVisible();
         await expect(page.locator('html')).toHaveAttribute('data-theme', theme);

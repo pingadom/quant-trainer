@@ -29,7 +29,7 @@
     const F = firm && QT.firms[firm];
     el.innerHTML = `
       <h1>Interview questions</h1>
-      <p class="lede">Questions candidates report being asked at trading firms, rewritten in our own words with worked solutions and a link to where each was reported. Treat attributions as candidate reports, not official material, and expect interviewers to change the numbers.</p>
+      <p class="lede">Questions candidates report being asked at trading firms, rewritten in our own words with worked solutions and a link to where each was reported. Treat attributions as candidate reports, not official material, and expect interviewers to change the numbers. Each firm also has a <a href="firms/">plain guide page</a> to read or share.</p>
       <div class="chips filter">
         <a class="chip ${firm ? '' : 'on'}" href="#/bank">All (${QT.bank.length})</a>
         ${Object.entries(QT.firms).map(([k, v]) => { const n = QT.bank.filter((b) => b.firm === k).length; return n ? `<a class="chip ${firm === k ? 'on' : ''}" href="#/bank/${k}">${v.name} (${n})</a>` : ''; }).join('')}
