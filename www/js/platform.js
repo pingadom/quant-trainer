@@ -18,6 +18,12 @@
   });
   window.addEventListener('appinstalled', () => { installEvent = null; });
 
+  // Ask the browser to treat saved progress as persistent rather than evictable cache (Safari
+  // and Chrome may otherwise clear site data under storage pressure or after long disuse).
+  if (!native && navigator.storage && navigator.storage.persist) {
+    navigator.storage.persisted().then((yes) => yes || navigator.storage.persist()).catch(() => {});
+  }
+
   const P = (QT.platform = {
     native,
     name: native ? Cap.getPlatform() : 'web', // 'android' | 'ios' | 'web'
