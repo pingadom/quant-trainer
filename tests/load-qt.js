@@ -7,7 +7,7 @@ const vm = require('vm');
 
 const root = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
-const SCRIPTS = ['config.js', 'core.js', 'gens-interview.js', 'gens-foundations.js', 'gens-extra.js', 'topics.js', 'cases.js', 'bank.js', 'review.js', 'coach.js', 'estimate.js', 'mental-tips.js', 'mental.js', 'tricks.js', 'chart.js', 'quote.js', 'kelly.js', 'figgie.js', 'daily.js', 'oa.js', 'talk.js', 'views/progress.js', 'views/plan.js'];
+const SCRIPTS = ['config.js', 'core.js', 'gens-interview.js', 'gens-foundations.js', 'gens-extra.js', 'topics.js', 'cases.js', 'bank.js', 'review.js', 'coach.js', 'estimate.js', 'mental-tips.js', 'mental.js', 'tricks.js', 'chart.js', 'quote.js', 'kelly.js', 'figgie.js', 'daily.js', 'oa.js', 'talk.js', 'views/progress.js', 'views/plan.js', 'flashcards.js'];
 
 function loadQT() {
   const sandbox = { console, localStorage: { getItem: () => null, setItem: () => {} } };

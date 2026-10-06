@@ -47,8 +47,9 @@
   const slowSecs = () => { try { const v = +localStorage.getItem(SLOW_KEY); return SLOW_CHOICES.includes(v) ? v : 6; } catch { return 6; } };
   const savedStyle = () => { try { return localStorage.getItem(STYLE_KEY) === 'typed' ? 'typed' : 'mc'; } catch { return 'mc'; } };
 
-  function render(el, sub, arg) {
+  function render(el, sub, arg, arg2) {
     if (sub === 'rep' && QT.mentalTips.KINDS[arg]) return rep(el, arg);
+    if (sub === 'challenge' && SEED_RE.test(arg || '')) return challengeIntro(el, arg, /^\d{1,4}$/.test(arg2 || '') ? +arg2 : null);
     const st = store.get().mental, style = savedStyle();
     const best = (k) => st[k]?.best ?? '–';
     el.innerHTML = `
@@ -314,8 +315,29 @@
     });
   }
 
-  function zetamac(el) {
-    const s = zmSettings(), def = zmIsDefault(s), key = def ? 'zetamac' : 'zetamacCustom', end = Date.now() + s.secs * 1000;
+  // ---- challenge a friend ----
+  // Default-settings games draw from a question list fixed by a short code, so a link with the
+  // code gives a friend exactly the same questions (no server needed).
+  const SEED_RE = /^[a-z0-9]{6,12}$/;
+  const newSeed = () => Math.random().toString(36).slice(2, 10).padEnd(8, '0');
+  const seededList = (seed, s) => QT.daily.withSeed(QT.daily.hash(`zm:${seed}`), () => Array.from({ length: 600 }, () => zmQuestion(s)));
+
+  function challengeIntro(el, seed, target) {
+    el.innerHTML = `
+      <a class="back" href="#/mental">← Mental maths</a>
+      <h1>Zetamac challenge</h1>
+      <p class="lede">A friend sent you their game: the same questions, in the same order, on Zetamac's default settings (120 seconds, answers go through when they're right).</p>
+      <div class="card">
+        ${target !== null ? `<div class="tiles"><div class="tile"><div class="v">${target}</div><div class="k">score to beat</div></div></div>` : ''}
+        <button id="zm-go" class="btn-lg">Start the challenge</button>
+      </div>`;
+    el.querySelector('#zm-go').addEventListener('click', () => zetamac(el, { seed, target, force: true }));
+  }
+
+  function zetamac(el, opts = {}) {
+    const s = opts.force ? { ...ZM_DEFAULT } : zmSettings(), def = zmIsDefault(s), key = def ? 'zetamac' : 'zetamacCustom', end = Date.now() + s.secs * 1000;
+    const seed = def ? opts.seed || newSeed() : null, list = seed ? seededList(seed, s) : null;
+    let qi = 0;
     const answered = [];
     let cur = null, shownAt = 0, done = false;
     el.innerHTML = `
@@ -332,7 +354,7 @@
     const timer = setInterval(tick, 200);
     QT.cleanup = () => clearInterval(timer);
     function next() {
-      cur = zmQuestion(s);
+      cur = list ? list[qi++ % list.length] : zmQuestion(s);
       $q.textContent = cur.q;
       $in.value = '';
       shownAt = Date.now();
@@ -378,11 +400,29 @@
           <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best</div></div>
           <div class="tile"><div class="v">${avg}</div><div class="k">seconds per answer</div></div>
         </div>
+        ${seed ? `<div class="card">
+          ${opts.target != null ? `<p style="margin-top:0"><b>${score > opts.target ? 'You won the challenge' : score === opts.target ? 'A tie' : 'Your friend wins this one'}:</b> ${score} against ${opts.target}.</p>` : ''}
+          <p class="small" style="margin-top:0">Send a friend these exact questions and your score to beat.</p>
+          <div class="row"><button id="zm-share">Challenge a friend</button><span class="small" id="zm-msg" aria-live="polite"></span></div>
+        </div>` : ''}
         ${review(answered, slowSecs())}
         ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}.</p>` : ''}
         <div class="row" style="margin-top:18px"><button id="again">Play again</button><a class="btn ghost" href="#/mental">Back</a></div>`;
       el.querySelector('#again').addEventListener('click', () => zetamac(el));
       wireReview(el);
+      const share = el.querySelector('#zm-share');
+      if (share) share.addEventListener('click', async () => {
+        const url = `${location.origin}${location.pathname}#/mental/challenge/${seed}/${score}`, text = `I scored ${score} on Zetamac (default settings). Same questions, can you beat me?`;
+        const msg = el.querySelector('#zm-msg');
+        try {
+          if (navigator.share) return await navigator.share({ text, url });
+          await navigator.clipboard.writeText(`${text} ${url}`);
+          msg.textContent = 'Link copied. Send it to a friend.';
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+          msg.innerHTML = `Copy this link: <span class="mono">${QT.escapeHtml(url)}</span>`;
+        }
+      });
     }
     tick();
     next();
@@ -605,5 +645,5 @@
     return vals.length ? Math.max(...vals) : null;
   };
 
-  QT.mental = { render, gens, options, best80, review, scheduleReps, dueReps, zmQuestion, zmValid, ZM_DEFAULT, genOfKind };
+  QT.mental = { render, gens, options, best80, review, scheduleReps, dueReps, zmQuestion, zmValid, ZM_DEFAULT, genOfKind, seededList };
 })();

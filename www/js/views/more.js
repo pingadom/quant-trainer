@@ -19,6 +19,7 @@
       <h2 class="menu-head">Learn</h2>
       <div class="menu">
         <a class="card" href="#/practice"><b>Topics</b><span class="small">Formula sheets and endless questions in ${QT.topics.length} topics</span></a>
+        <a class="card" href="#/flashcards"><b>Formula cards</b><span class="small">${QT.flashcards.CARDS.length} formulas to know cold, on a spaced schedule</span></a>
         <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">20 guides to faster arithmetic, each with a drill</span></a>
         <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
         <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
@@ -34,6 +35,7 @@
       <div class="menu">
         <a class="card" href="#/bank"><b>Interview questions</b><span class="small">Questions candidates report, by firm, with sources</span></a>
         <a class="card" href="#/mock"><b>Mock interview</b><span class="small">Five questions against the clock</span></a>
+        <a class="card" href="firms/"><b>Firm guides</b><span class="small">Each firm's process and reported questions, as plain pages to read or share</span></a>
         <a class="card" href="#/talk"><b>Think aloud</b><span class="small">Answer out loud, record yourself, review</span></a>
       </div>
       <h2 class="menu-head">Trading games</h2>
