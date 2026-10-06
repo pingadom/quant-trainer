@@ -27,7 +27,7 @@
     },
     {
       title: 'Speed under pressure',
-      body: 'The 80-in-8 mental maths test, a 2-minute sprint, and 20 guides to faster arithmetic.',
+      body: 'The 80-in-8 mental maths test, Zetamac (default settings or your own), and 20 guides to faster arithmetic.',
       points: ['After each run, slow questions come back with the fastest method for each one.', 'Slow question types return as short timed "speed reps".', 'Online tests: number sequences, digit span, running totals.'],
       href: '#/mental', cta: 'Mental maths',
     },

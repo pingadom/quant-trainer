@@ -101,11 +101,11 @@
       null);
 
     const net = (r) => r.correct - r.wrong;
-    const full = s.mental.full?.runs || [], typed = s.mental.fullTyped?.runs || [], sprint = s.mental.sprint?.runs || [];
+    const full = s.mental.full?.runs || [], typed = s.mental.fullTyped?.runs || [], zm = s.mental.zetamac?.runs || [];
     add(full.length + typed.length >= 2, card('80 in 8', 'Net score per run (right − wrong). ~55 is a commonly quoted pass line.',
       C.line([...(full.length ? [{ name: 'Multiple choice', values: full.map(net) }] : []), ...(typed.length ? [{ name: 'Typed', values: typed.map(net), dashed: true }] : [])], { label: `80 in 8 net scores over ${full.length + typed.length} runs`, target: { y: 55, name: 'Pass line ~55' }, xFirst: 'first run', xLast: 'latest' })),
       ['80 in 8', '#/mental', 'play it twice']);
-    add(sprint.length >= 2, card('2-minute sprint', 'Correct answers per sprint.', C.line([{ name: 'Correct', values: sprint.map((r) => r.correct) }], { label: `Sprint scores over ${sprint.length} runs`, xFirst: 'first run', xLast: 'latest' })), null);
+    add(zm.length >= 2, card('Zetamac', 'Score per game on the default settings.', C.line([{ name: 'Score', values: zm.map((r) => r.correct) }], { label: `Zetamac scores over ${zm.length} games`, xFirst: 'first game', xLast: 'latest' })), ['Zetamac', '#/mental', 'play two games on the default settings']);
 
     const est = s.estimate.history;
     add(est.length >= 2, card('Calibration', 'Share of your ranges that contained the truth, per round. Honest 90% ranges should land near the line.',

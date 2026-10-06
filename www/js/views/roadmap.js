@@ -14,7 +14,7 @@
       items: [
         { id: 'p100', text: 'Solve 150 interview-track problems at 80%+ accuracy', auto: () => { const s = trackStats('interview'); return { done: s.a >= 150 && s.acc >= 0.8, note: `${s.a}/150 · ${U.pctStr(s.acc)}` }; } },
         { id: 'mosteller', text: 'Work through "Fifty Challenging Problems in Probability" (Mosteller)' },
-        { id: 'sprint', text: 'Score 20+ on the 2-minute mental-maths sprint', auto: () => { const b = store.get().mental.sprint?.best ?? 0; return { done: b >= 20, note: `best ${b}` }; } },
+        { id: 'sprint', text: 'Score 40+ on Zetamac (default settings)', auto: () => { const b = store.get().mental.zetamac?.best ?? 0; return { done: b >= 40, note: `best ${b}` }; } },
       ],
     },
     {

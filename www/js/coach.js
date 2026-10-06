@@ -255,7 +255,7 @@
     // Best 80-in-8 net in either answer style (multiple choice or typed).
     const b80 = QT.mental ? QT.mental.best80() : (mm.full?.best ?? null);
     if (b80 === null) recs.push({ pri: totalAttempts >= 10 ? 45 : 30, kind: 'mental', voice: 'No number on your mental maths yet. Put one on the board.', title: 'Take an 80-in-8 baseline', why: 'Mental maths screens are reported at Optiver and others. Find out where you stand.', href: '#/mental', label: 'Mental maths' });
-    else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', voice: `${b80} net. The desk wants 55. Close the gap.`, title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then do a 2-minute sprint every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
+    else if (b80 < 55) recs.push({ pri: 60, kind: 'mental', voice: `${b80} net. The desk wants 55. Close the gap.`, title: `Mental maths: best ${b80} net, ~55 is the commonly reported pass line`, why: 'Learn the speed tricks, then play Zetamac every day. Fractions and decimal multiplication are where most points are lost.', href: '#/tricks', label: 'Speed tricks' });
 
     // An interview prep plan with tasks left today outranks everything else.
     const ps = QT.plan && QT.plan.todayStatus();

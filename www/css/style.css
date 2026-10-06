@@ -563,7 +563,7 @@ input[type='range'] { accent-color: var(--accent); }
 
 /* ---- think aloud ---- */
 label.check { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; cursor: pointer; }
-label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+label.check input[type='checkbox'] { margin-top: 4px; width: 18px; height: 18px; flex: none; }
 .transcript { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; margin: 10px 0; max-height: 240px; overflow-y: auto; white-space: pre-wrap; }
 
 /* ---- mental maths review ---- */
@@ -719,3 +719,9 @@ label.check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
   .greet { flex-direction: column; align-items: flex-start; gap: 6px; }
   .greet .week { flex-direction: row-reverse; align-items: center; gap: 10px; }
 }
+
+/* ---- Zetamac settings ---- */
+.zm-settings { margin-top: 12px; }
+.zm-settings form { margin-top: 8px; }
+.zm-settings label.check { flex-wrap: wrap; align-items: center; }
+.zm-num { width: 70px; padding: 4px 6px; }

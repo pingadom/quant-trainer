@@ -23,7 +23,7 @@
       const runs = [...(s.mental.full?.runs || []), ...(s.mental.fullTyped?.runs || [])].sort((a, b) => (a.date < b.date ? -1 : 1));
       items.push({ k: '80-IN-8', v: String(b80), ...arrow(last2(runs, (r) => r.correct - r.wrong)) });
     }
-    if (s.mental.sprint?.best != null) items.push({ k: 'SPRINT', v: String(s.mental.sprint.best), ...arrow(last2(s.mental.sprint.runs, (r) => r.correct)) });
+    if (s.mental.zetamac?.best != null) items.push({ k: 'ZETAMAC', v: String(s.mental.zetamac.best), ...arrow(last2(s.mental.zetamac.runs, (r) => r.correct)) });
     if (s.estimate.n >= 10) items.push({ k: 'CALIB', v: `${Math.round((100 * s.estimate.hits) / s.estimate.n)}%`, ...arrow(last2(s.estimate.history, (r) => r.hits) * 10) });
     if (s.figgie.games) {
       const lastPnl = s.figgie.history.length ? s.figgie.history[s.figgie.history.length - 1].pnl : 0;

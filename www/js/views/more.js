@@ -16,7 +16,7 @@
       <h2 class="menu-head">Interview prep</h2>
       <div class="menu">
         <a class="card" href="#/talk"><b>Think aloud</b><span class="small">Talk through a real question out loud, record yourself, review</span></a>
-        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 (multiple choice or typed) and a 2-minute sprint</span></a>
+        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 (multiple choice or typed) and Zetamac</span></a>
         <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">20 guides to faster arithmetic, each with a drill</span></a>
         <a class="card" href="#/oa"><b>Online tests</b><span class="small">Number sequences, digit span and running totals, timed</span></a>
       </div>
