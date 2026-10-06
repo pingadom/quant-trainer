@@ -66,7 +66,9 @@
         installBox.innerHTML = `<h2>Install the app</h2><div class="card"><p style="margin-top:0">Add Quant Trainer to your home screen. It opens full-screen and works offline.</p><button id="do-install">Install</button></div>`;
         installBox.querySelector('#do-install').addEventListener('click', async () => { if (await P.install()) drawInstall(); });
       } else if (P.isIOS) {
-        installBox.innerHTML = `<h2>Install the app</h2><div class="card"><p style="margin:0">In Safari, tap <b>Share</b> then <b>Add to Home Screen</b>. It opens full-screen and works offline.</p></div>`;
+        installBox.innerHTML = `<h2>Install the app</h2><div class="card">
+          <p style="margin-top:0">In Safari, tap <b>Share</b> then <b>Add to Home Screen</b>. It opens full-screen, works offline, and iOS keeps its data safe from Safari's automatic clean-ups.</p>
+          <p class="small" style="margin:0">The home-screen app keeps its own progress, separate from this Safari tab. To bring your progress across, tap <b>Export progress</b> below first, then <b>Import</b> it inside the app.</p></div>`;
       } else installBox.innerHTML = '';
     };
     drawInstall();

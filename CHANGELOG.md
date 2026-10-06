@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.2
+
+- **iPhone:** the install note explains that the home-screen app keeps its own progress (export from Safari, import in the app); the app now asks the browser to keep saved progress persistent; the launch screen and app colours match the Notebook theme.
+
 ## 0.14.1
 
 - **Fix:** rows of tags and filters that wrapped onto a second line (interview-question firm filters, case-study tags) spilled over the content below. The Figgie chip-stack style had reused the `.chips` class name and fixed its height. The chart legend had likewise reused the skill map's `.legend`; both now have their own names.
