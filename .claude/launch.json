@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "quant-trainer",
+      "name": "theo",
       "runtimeExecutable": "python",
       "runtimeArgs": ["tools/serve.py", "8765"],
       "port": 8765

@@ -1,13 +1,15 @@
-# Quant Trainer
+# Theo
+
+*Formerly Quant Trainer. "Theo" is trader shorthand for theoretical value.*
 
 **Interview practice for quant trading: probability, statistics, mental maths and market making, with an adaptive coach and real questions candidates report from trading firms.** It runs as a website and an Android app from one codebase.
 
-[![Quality](https://github.com/pingadom/quant-trainer/actions/workflows/ci.yml/badge.svg)](https://github.com/pingadom/quant-trainer/actions/workflows/ci.yml)
-[![Deploy](https://github.com/pingadom/quant-trainer/actions/workflows/deploy.yml/badge.svg)](https://github.com/pingadom/quant-trainer/actions/workflows/deploy.yml)
-[![Release](https://img.shields.io/github/v/release/pingadom/quant-trainer)](https://github.com/pingadom/quant-trainer/releases/latest)
+[![Quality](https://github.com/pingadom/theo/actions/workflows/ci.yml/badge.svg)](https://github.com/pingadom/theo/actions/workflows/ci.yml)
+[![Deploy](https://github.com/pingadom/theo/actions/workflows/deploy.yml/badge.svg)](https://github.com/pingadom/theo/actions/workflows/deploy.yml)
+[![Release](https://img.shields.io/github/v/release/pingadom/theo)](https://github.com/pingadom/theo/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**[Open the app](https://pingadom.github.io/quant-trainer/)** · **[Explore with sample data](https://pingadom.github.io/quant-trainer/?demo#/coach)** · **[Android APK](https://github.com/pingadom/quant-trainer/releases/latest)** · **[Research report](research/REPORT.md)**
+**[Open the app](https://pingadom.github.io/theo/)** · **[Explore with sample data](https://pingadom.github.io/theo/?demo#/coach)** · **[Android APK](https://github.com/pingadom/theo/releases/latest)** · **[Research report](research/REPORT.md)**
 
 ![Home screen with the coach's next recommendation](docs/screenshots/desktop-home.png)
 
@@ -85,11 +87,11 @@ npm run research                  # learner-model study → research/REPORT.md
 - **Code:** [`www/`](www/) is the whole app: views in `js/views/`, the coach and Elo model in `js/coach.js`, storage and input validation in `js/core.js`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - **Website:** every push to `main` is tested and deployed to GitHub Pages; Netlify and Vercel configs are included.
 - **Android and Play Store:** tagging a version builds the APK. Releases and Play Store signing are covered in [docs/RELEASING.md](docs/RELEASING.md).
-- **Privacy:** all progress stays on the device. See the [privacy notice](https://pingadom.github.io/quant-trainer/privacy.html).
+- **Privacy:** all progress stays on the device. See the [privacy notice](https://pingadom.github.io/theo/privacy.html).
 
 ## Contributing
 
-If you've had a quant interview, the most useful thing you can add is a question you were asked. The [question form](https://github.com/pingadom/quant-trainer/issues/new?template=interview-question.yml) takes two minutes. See [CONTRIBUTING.md](CONTRIBUTING.md).
+If you've had a quant interview, the most useful thing you can add is a question you were asked. The [question form](https://github.com/pingadom/theo/issues/new?template=interview-question.yml) takes two minutes. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Acknowledgements
 

@@ -1,6 +1,6 @@
 {
   "appId": "dev.quanttrainer.app",
-  "appName": "Quant Trainer",
+  "appName": "Theo",
   "webDir": "www",
   "android": {
     "allowMixedContent": false

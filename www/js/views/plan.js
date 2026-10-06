@@ -75,7 +75,7 @@
         <h1>How did ${name} go?</h1>
         <div class="card">
           <p style="margin-top:0">Your interview was on ${pretty(p.date)}. If you remember any questions, adding them helps everyone preparing for ${name}, and they'll appear in the app once checked.</p>
-          <div class="row"><a class="btn" href="https://github.com/pingadom/quant-trainer/issues/new?template=interview-question.yml" target="_blank" rel="noopener">Add a question you were asked</a><button class="ghost" id="end">Start a new plan</button></div>
+          <div class="row"><a class="btn" href="https://github.com/pingadom/theo/issues/new?template=interview-question.yml" target="_blank" rel="noopener">Add a question you were asked</a><button class="ghost" id="end">Start a new plan</button></div>
         </div>`;
       el.querySelector('#end').addEventListener('click', () => { store.get().plan = null; store.save(); view(el); });
       return;

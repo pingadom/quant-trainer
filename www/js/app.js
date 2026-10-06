@@ -64,7 +64,7 @@
     QT.ui.updateBadges();
     QT.flair.ticker();
     const h1 = main.querySelector('h1');
-    document.title = key && h1 ? `${h1.textContent} · Quant Trainer` : 'Quant Trainer';
+    document.title = key && h1 ? `${h1.textContent} · Theo` : 'Theo · Quant trading interview practice';
     window.scrollTo(0, 0);
     QT.platform.track();
   }
@@ -80,7 +80,7 @@
     else QT.ui.updateBadges();
   };
 
-  // Shareable link that opens straight into the demo profile: …/quant-trainer/?demo
+  // Shareable link that opens straight into the demo profile: …/theo/?demo
   if (new URLSearchParams(location.search).has('demo')) {
     if (store.isEmpty()) QT.demo.load();
     history.replaceState(null, '', location.pathname + location.hash); // so "Start my own" sticks after a reload

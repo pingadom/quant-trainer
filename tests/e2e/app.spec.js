@@ -331,7 +331,7 @@ test('daily challenge: same questions after a reload, one attempt, shareable', a
   await expect(page.locator('main').getByText("Today's topics")).toHaveText(topics);
   await page.getByRole('button', { name: 'Start' }).click();
   for (let i = 0; i < 5; i++) await skip(page);
-  await expect(page.locator('#dc-text')).toContainText('Quant Trainer daily #');
+  await expect(page.locator('#dc-text')).toContainText('Theo daily #');
   await expect(page.locator('#dc-text')).toContainText('🟥🟥🟥🟥🟥 0/5');
   await page.reload();
   await expect(page.getByRole('button', { name: 'Share result' })).toBeVisible(); // no second attempt

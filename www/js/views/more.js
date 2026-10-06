@@ -69,7 +69,7 @@
         <button class="ghost" id="rst">Reset</button>
       </div>
       <p class="small" id="exp-msg"></p>
-      <p class="small version">Quant Trainer ${QT.VERSION} · running as ${QT.platform.mode()}</p>`;
+      <p class="small version">Theo ${QT.VERSION} · running as ${QT.platform.mode()}</p>`;
 
     // "Install as an app" card: only on the website, and only where installing is possible.
     const installBox = el.querySelector('#install');
@@ -77,7 +77,7 @@
       const P = QT.platform;
       if (P.native || P.standalone()) return (installBox.innerHTML = '');
       if (P.canInstall()) {
-        installBox.innerHTML = `<h2>Install the app</h2><div class="card"><p style="margin-top:0">Add Quant Trainer to your home screen. It opens full-screen and works offline.</p><button id="do-install">Install</button></div>`;
+        installBox.innerHTML = `<h2>Install the app</h2><div class="card"><p style="margin-top:0">Add Theo to your home screen. It opens full-screen and works offline.</p><button id="do-install">Install</button></div>`;
         installBox.querySelector('#do-install').addEventListener('click', async () => { if (await P.install()) drawInstall(); });
       } else if (P.isIOS) {
         installBox.innerHTML = `<h2>Install the app</h2><div class="card">
@@ -94,7 +94,7 @@
     el.querySelector('#exp').addEventListener('click', async () => {
       const msg = el.querySelector('#exp-msg');
       try {
-        const how = await QT.platform.exportFile(`quant-trainer-progress-${new Date().toISOString().slice(0, 10)}.json`, store.exportJson());
+        const how = await QT.platform.exportFile(`theo-progress-${new Date().toISOString().slice(0, 10)}.json`, store.exportJson());
         msg.textContent = how === 'copied' ? 'Progress copied to the clipboard. Paste it somewhere safe.' : how === 'downloaded' ? 'Progress file downloaded.' : '';
       } catch {
         msg.textContent = 'Export failed. Try again.';

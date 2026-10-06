@@ -3,7 +3,7 @@
 (function () {
   const STEPS = [
     {
-      title: 'Quant Trainer in a minute',
+      title: 'Theo in a minute',
       body: 'Practice for quant trading interviews: probability and statistics, fast mental maths, trading games, and real questions candidates report from the firms.',
       points: ['Everything stays on this device; there is no account.', 'Each step below links to the place it describes.'],
     },

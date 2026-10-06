@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.0
+
+- **New name: Theo** (formerly Quant Trainer), after the trader's word for theoretical value. New icon (a serif θ on the notebook's ink and paper) and share image.
+- **New address:** https://pingadom.github.io/theo/ (the repository moved to `pingadom/theo`). Progress saved in the browser carries over, because it's stored per site and the site is unchanged; the storage key keeps the old name for that reason. The Android app keeps its package ID, so installed copies update as normal.
+
 ## 0.17.0
 
 - **Free firm guide pages** (`/firms/`): a plain page per firm with how its process runs and every question with a hidden worked solution, plus an index. Search engines can index them (the app itself is one page to them). They're generated from the interview bank on every deploy (`tools/firm-pages.js`), listed in the sitemap, and linked from the app.
