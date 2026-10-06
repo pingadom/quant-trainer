@@ -48,7 +48,7 @@
   };
   const clock = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const squares = (r) => r.map((x) => (x ? '🟩' : '🟥')).join('');
-  const shareText = (day, rec) => `Quant Trainer daily #${dayNo(day)}\n${squares(rec.r)} ${rec.r.filter(Boolean).length}/${N} · ${clock(rec.ms)}\n${location.origin}${location.pathname}#/daily`;
+  const shareText = (day, rec) => `Theo daily #${dayNo(day)}\n${squares(rec.r)} ${rec.r.filter(Boolean).length}/${N} · ${clock(rec.ms)}\n${location.origin}${location.pathname}#/daily`;
 
   // Consecutive completed days, counting back from today (or yesterday if today isn't done yet).
   function streak() {

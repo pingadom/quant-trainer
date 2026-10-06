@@ -2,7 +2,7 @@
 
 ## Add an interview question you were asked
 
-The easiest way is the [question form](https://github.com/pingadom/quant-trainer/issues/new?template=interview-question.yml). Paraphrase it in your own words and include the firm, role and stage if you're comfortable sharing them.
+The easiest way is the [question form](https://github.com/pingadom/theo/issues/new?template=interview-question.yml). Paraphrase it in your own words and include the firm, role and stage if you're comfortable sharing them.
 
 To add one directly, edit `www/js/bank.js`:
 

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pingadom.github.io/quant-trainer/sitemap.xml
+Sitemap: https://pingadom.github.io/theo/sitemap.xml

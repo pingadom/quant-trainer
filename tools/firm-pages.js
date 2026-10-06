@@ -6,7 +6,7 @@
 //   node tools/firm-pages.js            → writes www/firms/*.html and www/sitemap.xml
 // renderAll(QT) is pure and also runs in the browser (tests/check.html checks its output).
 (function (root) {
-  const SITE = 'https://pingadom.github.io/quant-trainer/';
+  const SITE = 'https://pingadom.github.io/theo/';
   const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'";
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const plain = (html) => String(html).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
@@ -33,7 +33,7 @@
 <body>
   <main class="static">
 ${body}
-    <footer class="static-foot small">Quant Trainer is free and open source. Questions are paraphrased from public candidate reports and linked to their sources; firm names are used only to attribute those reports. <a href="../privacy.html">Privacy</a></footer>
+    <footer class="static-foot small">Theo is free and open source. Questions are paraphrased from public candidate reports and linked to their sources; firm names are used only to attribute those reports. <a href="../privacy.html">Privacy</a></footer>
   </main>
 </body>
 </html>
@@ -46,7 +46,7 @@ ${body}
     const F = QT.firms[id], qs = QT.bank.filter((b) => b.firm === id), f = QT.fmtNum;
     const name = id === 'common' ? 'Common trading-interview formats' : F.name;
     const reported = qs.filter((b) => b.kind === 'reported').length;
-    const title = id === 'common' ? 'Common trading interview question formats, with solutions | Quant Trainer' : `${F.name} interview questions and process | Quant Trainer`;
+    const title = id === 'common' ? 'Common trading interview question formats, with solutions | Theo' : `${F.name} interview questions and process | Theo`;
     const description = id === 'common'
       ? `${qs.length} question formats used across trading-firm interviews (market making, options, quoting), with worked solutions. Free.`
       : `${reported} interview question${reported === 1 ? '' : 's'} candidates report from ${F.name}, with worked solutions and how the interview process runs. Free practice, no sign-up.`;
@@ -66,7 +66,7 @@ ${body}
       </article>`).join('');
     const others = firmsWithQuestions(QT).filter(([k]) => k !== id).map(([k, v]) => `<a href="${k}.html">${esc(k === 'common' ? 'Common formats' : v.name)}</a>`).join(' · ');
     const body = `
-    <nav class="crumbs small"><a href="../">Quant Trainer</a> › <a href="./">Firm guides</a> › ${esc(name)}</nav>
+    <nav class="crumbs small"><a href="../">Theo</a> › <a href="./">Firm guides</a> › ${esc(name)}</nav>
     <h1>${esc(id === 'common' ? name : `${F.name} interview questions`)}</h1>
     <p class="lede">${id === 'common' ? 'Formats that come up at many trading firms, with worked solutions.' : `How ${esc(F.name)}'s process runs, as candidates and the firm describe it, and the questions candidates report, each with a worked solution.`} Free, no sign-up.</p>
     <p><a class="btn" href="../#/bank/${id}">Practise these in the app</a> <a class="btn ghost" href="../#/mock/${id}">Mock interview</a></p>
@@ -87,12 +87,12 @@ ${body}
       return `<a class="card topic-card" href="${id}.html"><h3>${esc(id === 'common' ? 'Common formats' : F.name)}</h3><div class="small">${qs.length} question${qs.length === 1 ? '' : 's'}${id === 'common' ? '' : ` · ${rep} reported by candidates`}</div></a>`;
     }).join('');
     const body = `
-    <nav class="crumbs small"><a href="../">Quant Trainer</a> › Firm guides</nav>
+    <nav class="crumbs small"><a href="../">Theo</a> › Firm guides</nav>
     <h1>Trading firm interview guides</h1>
     <p class="lede">Free guides to quant and trading interviews at ${firmsWithQuestions(QT).length - 1} firms: how each process runs, and the questions candidates report, with worked solutions.</p>
     <p><a class="btn" href="../">Open the free practice app</a></p>
     <div class="grid">${rows}</div>`;
-    return page({ title: 'Trading firm interview questions and guides | Quant Trainer', description: 'Free guides to quant trading interviews at Jane Street, Optiver, SIG, IMC, Wincent and more: the process and reported questions with worked solutions.', canonical: `${SITE}firms/`, body });
+    return page({ title: 'Trading firm interview questions and guides | Theo', description: 'Free guides to quant trading interviews at Jane Street, Optiver, SIG, IMC, Wincent and more: the process and reported questions with worked solutions.', canonical: `${SITE}firms/`, body });
   }
 
   function sitemap(QT) {

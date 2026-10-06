@@ -41,7 +41,7 @@ Google Play needs a **signed release bundle** (`.aab`). The workflow builds one 
 3. **Pick a permanent app ID.** Change `appId` in [`capacitor.config.json`](../capacitor.config.json) from `dev.quanttrainer.app` to a reverse domain you control. It can't be changed after the first Play release.
 4. **Play Console** ([play.google.com/console](https://play.google.com/console), one-off $25 registration):
    - create the app;
-   - use the privacy policy at `https://pingadom.github.io/quant-trainer/privacy.html`;
+   - use the privacy policy at `https://pingadom.github.io/theo/privacy.html`;
    - complete the content rating and data-safety forms (no data is collected or shared);
    - upload the `.aab` from the release to an internal testing track first.
 5. **Store assets:** the 512×512 icon is `www/icons/icon-512.png`, and the 1024×500 feature graphic can be cropped from `www/icons/og-image.png`.

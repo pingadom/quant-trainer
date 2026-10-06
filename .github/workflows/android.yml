@@ -53,7 +53,7 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
       - name: Name the APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk "quant-trainer-${GITHUB_REF_NAME//\//-}.apk"
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "theo-${GITHUB_REF_NAME//\//-}.apk"
 
       - name: Build signed release bundle for Google Play
         if: env.HAS_KEYSTORE == 'true'
@@ -70,18 +70,18 @@ jobs:
             -Pandroid.injected.signing.store.password="$KS_PASS" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASS"
-          cp app/build/outputs/bundle/release/app-release.aab "../quant-trainer-${GITHUB_REF_NAME//\//-}.aab"
+          cp app/build/outputs/bundle/release/app-release.aab "../theo-${GITHUB_REF_NAME//\//-}.aab"
           rm "$RUNNER_TEMP/release.keystore"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: quant-trainer-android
+          name: theo-android
           path: |
-            quant-trainer-*.apk
-            quant-trainer-*.aab
+            theo-*.apk
+            theo-*.aab
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            quant-trainer-*.apk
-            quant-trainer-*.aab
+            theo-*.apk
+            theo-*.aab
