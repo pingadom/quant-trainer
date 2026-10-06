@@ -57,6 +57,7 @@
           <a class="hero-alt" href="#/review">or jump straight into practice →</a>
           <p class="small" style="margin:14px 0 0">New here? <a href="#/tour">Take the 1-minute tour</a>.</p>
         </div>
+        ${QT.plan.todayStatus() ? planCard() : ''}
         <p class="small">Just looking around? <button type="button" class="link" id="demo">See it with sample data</button> to explore the coach and skill map without practising first.</p>
         <h2>How it works</h2>
         <ol class="steps">

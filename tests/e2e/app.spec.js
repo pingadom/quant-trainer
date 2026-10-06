@@ -66,11 +66,12 @@ test('an empty answer gets a nudge, not an error', async ({ page, isMobile }) =>
 
 test('diagnostic builds a coaching plan', async ({ page }) => {
   await page.goto('./#/coach/diagnostic');
-  for (let i = 0; i < 14; i++) await skip(page);
+  const [topics, skills] = await page.evaluate(() => [QT.topics.length, QT.coach.allIds().length]);
+  for (let i = 0; i < topics; i++) await skip(page); // one question per topic
   await expect(page.getByText(/Diagnostic complete/)).toBeVisible();
   await page.getByRole('link', { name: 'See your plan' }).click();
   await expect(page.locator('.recs .rec').first()).toBeVisible();
-  await expect(page.locator('.skill-chips .sk')).toHaveCount(79);
+  await expect(page.locator('.skill-chips .sk')).toHaveCount(skills);
 });
 
 test('wrong answers come back for review', async ({ page }) => {
