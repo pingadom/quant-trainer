@@ -22,8 +22,8 @@ export default [
   },
   { files: ['www/sw.js'], languageOptions: { globals: { ...globals.serviceworker } } },
   {
-    files: ['tests/**/*.js', 'playwright.config.js'],
-    languageOptions: { ecmaVersion: 2023, sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser, QT: 'readonly', runChecks: 'writable' } },
+    files: ['tests/**/*.js', 'tools/**/*.js', 'playwright.config.js'],
+    languageOptions: { ecmaVersion: 2023, sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser, QT: 'readonly', runChecks: 'writable', firmPages: 'readonly' } },
     rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }] },
   },
 ];
