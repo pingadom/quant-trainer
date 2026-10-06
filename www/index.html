@@ -37,32 +37,44 @@
   <div class="shell">
     <nav class="nav" aria-label="Sections">
       <div class="brand">Quant<span>Trainer</span></div>
-      <a href="#/" data-route="">Home</a>
-      <a href="#/daily" data-route="daily">Daily challenge</a>
-      <a href="#/plan" data-route="plan">Interview plan</a>
-      <a href="#/coach" data-route="coach">Coach</a>
-      <a href="#/progress" data-route="progress">Progress</a>
-      <div class="nav-group">Practise</div>
-      <a href="#/review" data-route="review">Mixed practice</a>
-      <a href="#/practice" data-route="practice">Topics</a>
-      <a href="#/mistakes" data-route="mistakes">Mistakes to review <span class="badge" data-badge="mistakes" hidden></span></a>
-      <div class="nav-group">Interview prep</div>
-      <a href="#/bank" data-route="bank">Interview questions</a>
-      <a href="#/talk" data-route="talk" class="nav-sub">Think aloud</a>
-      <a href="#/mental" data-route="mental">Mental maths</a>
-      <a href="#/tricks" data-route="tricks" class="nav-sub">Speed tricks</a>
-      <a href="#/oa" data-route="oa">Online tests</a>
-      <div class="nav-group">Trading games</div>
-      <a href="#/figgie" data-route="figgie">Figgie</a>
-      <a href="#/quote" data-route="quote">Make me a market</a>
-      <a href="#/market" data-route="market">Market making</a>
-      <a href="#/kelly" data-route="kelly">Bet sizing</a>
-      <a href="#/estimate" data-route="estimate">Estimation</a>
-      <div class="nav-group">Learn</div>
-      <a href="#/cases" data-route="cases">Case studies</a>
-      <a href="#/lab" data-route="lab">Stats lab</a>
-      <a href="#/roadmap" data-route="roadmap">Roadmap</a>
-      <a href="#/more" data-route="more" class="nav-foot">Settings &amp; data</a>
+      <a href="#/" data-route="" class="nav-home">Home</a>
+      <details class="nav-sec" data-sec="prep" open>
+        <summary>My prep</summary>
+        <a href="#/plan" data-route="plan">Interview plan</a>
+        <a href="#/daily" data-route="daily">Daily challenge</a>
+        <a href="#/coach" data-route="coach">Coach</a>
+        <a href="#/progress" data-route="progress">Progress</a>
+        <a href="#/roadmap" data-route="roadmap">Roadmap</a>
+      </details>
+      <details class="nav-sec" data-sec="learn" open>
+        <summary>Learn</summary>
+        <a href="#/practice" data-route="practice">Topics</a>
+        <a href="#/tricks" data-route="tricks">Speed tricks</a>
+        <a href="#/cases" data-route="cases">Case studies</a>
+        <a href="#/lab" data-route="lab">Stats lab</a>
+      </details>
+      <details class="nav-sec" data-sec="practise" open>
+        <summary>Practise</summary>
+        <a href="#/review" data-route="review">Mixed practice</a>
+        <a href="#/mistakes" data-route="mistakes">Mistakes to review <span class="badge" data-badge="mistakes" hidden></span></a>
+        <a href="#/mental" data-route="mental">Mental maths</a>
+        <a href="#/oa" data-route="oa">Online tests</a>
+      </details>
+      <details class="nav-sec" data-sec="interviews" open>
+        <summary>Interviews</summary>
+        <a href="#/bank" data-route="bank">Interview questions</a>
+        <a href="#/mock" data-route="mock">Mock interview</a>
+        <a href="#/talk" data-route="talk">Think aloud</a>
+      </details>
+      <details class="nav-sec" data-sec="games" open>
+        <summary>Trading games</summary>
+        <a href="#/figgie" data-route="figgie">Figgie</a>
+        <a href="#/quote" data-route="quote">Make me a market</a>
+        <a href="#/market" data-route="market">Market making</a>
+        <a href="#/kelly" data-route="kelly">Bet sizing</a>
+        <a href="#/estimate" data-route="estimate">Estimation</a>
+      </details>
+      <a href="#/more" data-route="more" class="nav-foot">Settings</a>
     </nav>
     <main id="main"><noscript><p>Quant Trainer needs JavaScript enabled.</p></noscript></main>
   </div>

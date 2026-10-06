@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.1
+
+- **Reorganised navigation.** The sidebar is now five groups by what you want to do: **My prep** (interview plan, daily challenge, coach, progress, roadmap), **Learn** (topics, speed tricks, case studies, stats lab), **Practise** (mixed practice, mistakes, mental maths, online tests), **Interviews** (questions, mock interview, think aloud) and **Trading games**. Each group folds away and the app remembers which you've folded; the group you're in always stays open. Mock interview has its own entry. The phone's More page uses the same groups, and the bottom tabs highlight the matching group.
+
 ## 0.16.0
 
 - **Zetamac replaces the 2-minute sprint.** It uses Zetamac's default settings: addition (2–100) + (2–100), subtraction as addition in reverse, multiplication (2–12) × (2–100), division as multiplication in reverse, 120 seconds. As on arithmetic.zetamac.com, an answer goes through the moment it's right, with no Enter key. All settings can be changed (operations, ranges, duration), with a one-tap reset to the defaults. Default-settings and custom bests are kept separately.

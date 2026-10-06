@@ -7,18 +7,34 @@
     try { pref = localStorage.getItem('qt-keypad') || 'auto'; } catch { /* storage blocked: use default */ }
     el.innerHTML = `
       <h1>More</h1>
+      <p class="lede">Everything in the app, grouped the same way as the sidebar.</p>
+      <h2 class="menu-head">My prep</h2>
       <div class="menu">
         <a class="card" href="#/plan"><b>Interview plan</b><span class="small">A daily checklist up to your interview, for the firm you're seeing</span></a>
         <a class="card" href="#/daily"><b>Daily challenge</b><span class="small">The same 5 questions for everyone today, with a shareable result</span></a>
-        <a class="card" href="#/tour"><b>Take the tour</b><span class="small">Everything the app does, in seven short steps</span></a>
+        <a class="card" href="#/coach"><b>Coach</b><span class="small">What to practise next, your skill map and the diagnostic</span></a>
         <a class="card" href="#/progress"><b>Progress</b><span class="small">Charts of your accuracy, speed and scores over time</span></a>
+        <a class="card" href="#/roadmap"><b>Roadmap</b><span class="small">Stages, books and milestones</span></a>
       </div>
-      <h2 class="menu-head">Interview prep</h2>
+      <h2 class="menu-head">Learn</h2>
       <div class="menu">
-        <a class="card" href="#/talk"><b>Think aloud</b><span class="small">Talk through a real question out loud, record yourself, review</span></a>
-        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80-in-8 (multiple choice or typed) and Zetamac</span></a>
+        <a class="card" href="#/practice"><b>Topics</b><span class="small">Formula sheets and endless questions in ${QT.topics.length} topics</span></a>
         <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">20 guides to faster arithmetic, each with a drill</span></a>
+        <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
+        <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
+      </div>
+      <h2 class="menu-head">Practise</h2>
+      <div class="menu">
+        <a class="card" href="#/review"><b>Mixed practice</b><span class="small">Questions picked for you across every topic</span></a>
+        <a class="card" href="#/mistakes"><b>Mistakes to review</b><span class="small">Wrong answers coming back on a schedule</span></a>
+        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80 in 8 (multiple choice or typed), Zetamac and speed reps</span></a>
         <a class="card" href="#/oa"><b>Online tests</b><span class="small">Number sequences, digit span and running totals, timed</span></a>
+      </div>
+      <h2 class="menu-head">Interviews</h2>
+      <div class="menu">
+        <a class="card" href="#/bank"><b>Interview questions</b><span class="small">Questions candidates report, by firm, with sources</span></a>
+        <a class="card" href="#/mock"><b>Mock interview</b><span class="small">Five questions against the clock</span></a>
+        <a class="card" href="#/talk"><b>Think aloud</b><span class="small">Answer out loud, record yourself, review</span></a>
       </div>
       <h2 class="menu-head">Trading games</h2>
       <div class="menu">
@@ -28,17 +44,12 @@
         <a class="card" href="#/kelly"><b>Bet sizing</b><span class="small">How much to stake: the Kelly criterion in practice</span></a>
         <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
       </div>
-      <h2 class="menu-head">Learn</h2>
-      <div class="menu">
-        <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
-        <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
-        <a class="card" href="#/roadmap"><b>Roadmap</b><span class="small">Stages, books and milestones</span></a>
-      </div>
 
       <div id="install"></div>
 
       <h2>Settings</h2>
       <div class="menu" style="margin-bottom:12px">
+        <a class="card" href="#/tour"><b>Take the tour</b><span class="small">Everything the app does, in seven short steps</span></a>
         <a class="card" href="#/appearance"><b>Appearance</b><span class="small">Theme (${QT.theme.choice() === 'auto' ? 'matching your system' : QT.theme.THEMES[QT.theme.choice()].name}), ticker, animations, sounds</span></a>
       </div>
       <div class="card">
