@@ -17,8 +17,14 @@
     talk: (el, id) => QT.talk.render(el, id),
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
-  const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', mock: 'bank', drill: 'coach', tricks: 'mental', appearance: 'more' };
-  const TAB_PARENT = { topic: 'practice', review: 'practice', mistakes: 'practice', drill: 'coach', cases: 'more', case: 'more', iq: 'bank', mock: 'bank', mental: 'more', tricks: 'more', market: 'more', estimate: 'more', lab: 'more', roadmap: 'more', quote: 'more', kelly: 'more', figgie: 'more', oa: 'more', talk: 'bank', daily: '', progress: 'more', appearance: 'more', tour: '', plan: '' };
+  const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', drill: 'coach', appearance: 'more', tour: '' };
+  // Phone tabs: Home · Coach (my prep) · Practice (learn and practise) · Interviews · More (games, settings).
+  const TAB_PARENT = {
+    plan: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
+    topic: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice',
+    iq: 'bank', mock: 'bank', talk: 'bank',
+    figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '',
+  };
 
   const decode = (s) => {
     try {
@@ -52,6 +58,8 @@
     }
     const navKey = NAV_PARENT[key] ?? key, tabKey = TAB_PARENT[key] ?? key;
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
+    // The section holding the current page is always open.
+    document.querySelector('.nav a.active')?.closest('details.nav-sec')?.setAttribute('open', '');
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));
     QT.ui.updateBadges();
     QT.flair.ticker();
@@ -77,6 +85,18 @@
     if (store.isEmpty()) QT.demo.load();
     history.replaceState(null, '', location.pathname + location.hash); // so "Start my own" sticks after a reload
   }
+
+  // Sidebar sections fold open or shut; remember each one's state on this device.
+  const NAV_KEY = 'qt-nav';
+  let folded = {};
+  try { folded = JSON.parse(localStorage.getItem(NAV_KEY) || '{}') || {}; } catch { /* storage blocked */ }
+  document.querySelectorAll('details.nav-sec').forEach((d) => {
+    if (folded[d.dataset.sec]) d.removeAttribute('open');
+    d.addEventListener('toggle', () => {
+      folded[d.dataset.sec] = !d.open;
+      try { localStorage.setItem(NAV_KEY, JSON.stringify(folded)); } catch { /* storage blocked */ }
+    });
+  });
 
   window.addEventListener('hashchange', route);
   // A link to the screen you're already on (e.g. "Back" on a game's results, which shares the
