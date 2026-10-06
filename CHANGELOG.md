@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.0
+
+- **Zetamac replaces the 2-minute sprint.** It uses Zetamac's default settings: addition (2–100) + (2–100), subtraction as addition in reverse, multiplication (2–12) × (2–100), division as multiplication in reverse, 120 seconds. As on arithmetic.zetamac.com, an answer goes through the moment it's right, with no Enter key. All settings can be changed (operations, ranges, duration), with a one-tap reset to the defaults. Default-settings and custom bests are kept separately.
+- Slow Zetamac questions get the same end-of-game review as 80 in 8, with the fast method and its guide. The question you were stuck on when time ran out is included. Slow question types join your spaced speed reps. The ticker, progress chart, roadmap milestone and interview plan now use Zetamac.
+- Fix: number boxes inside checkbox rows were squashed to checkbox size.
+
 ## 0.15.1
 
 - **Wincent, from the full Glassdoor reports:** four more questions candidates report: the hat of $1, $10 and $100 bills where you call "stop" and take the next bill (a martingale: no strategy beats $2.70), dice rolled until the total passes 100 (estimate the final total and the number of rolls), a stick broken at two points forming a triangle, and estimating the number of primes below a million. The cube-walk and ants questions are now marked as reported (the ants version uses 500 ants, as described). The firm profile adds what candidates say about each stage, including first interviews that end early after a weak first answer.

@@ -11,7 +11,6 @@
   const SLOW_CHOICES = [3, 4, 5, 6, 8, 10];
 
   const MODES = {
-    sprint: { label: '2-minute sprint', secs: 120, scoring: 'correct', desc: 'Type your answers. A daily warm-up; aim for 20+.' },
     full: { label: '80 in 8', secs: 480, max: 80, scoring: 'net', desc: '80 questions in 8 minutes, +1 right, −1 wrong, no going back. The format commonly reported for trading-firm numerical screens: ~55 net is a commonly quoted pass line, 70+ is strong.' },
   };
   // Where each mode/style's personal best is stored.
@@ -69,12 +68,7 @@
           <p class="small">Best: <b>${best('full')}</b> net (multiple choice) · <b>${best('fullTyped')}</b> net (typed)</p>
           <button data-mode="full">Start</button>
         </div>
-        <div class="card">
-          <h3>${MODES.sprint.label}</h3>
-          <p class="small">${MODES.sprint.desc}</p>
-          <p class="small">Best: <b>${best('sprint')}</b> correct${st.sprint?.runs?.length ? ` · ${st.sprint.runs.length} runs` : ''}</p>
-          <button data-mode="sprint">Start</button>
-        </div>
+        ${zetamacCard()}
       </div>
       <div class="card" style="margin-top:12px">
         <label for="slow">Review questions slower than</label>
@@ -91,7 +85,8 @@
       render(el);
     }));
     el.querySelector('[data-mode="full"]').addEventListener('click', () => run(el, 'full', savedStyle()));
-    el.querySelector('[data-mode="sprint"]').addEventListener('click', () => run(el, 'sprint', 'typed'));
+    el.querySelector('[data-mode="zetamac"]').addEventListener('click', () => zetamac(el));
+    wireZetamac(el, () => render(el));
   }
 
   function run(el, modeId, style) {
@@ -229,6 +224,171 @@
     next();
   }
 
+  // ---- Zetamac ----
+  // The arithmetic game at arithmetic.zetamac.com, with its default settings: addition
+  // (2–100) + (2–100), subtraction as addition in reverse, multiplication (2–12) × (2–100),
+  // division as multiplication in reverse, 120 seconds. Answers go through the moment they're
+  // right (no Enter key); a wrong answer just sits there until you fix it. Score = number right.
+  const ZM_KEY = 'qt-zetamac';
+  const ZM_DEFAULT = { add: true, sub: true, mul: true, div: true, addA: [2, 100], addB: [2, 100], mulA: [2, 12], mulB: [2, 100], secs: 120 };
+  const ZM_SECS = [30, 60, 120, 300, 600];
+  const zmSettings = () => {
+    try {
+      const s = JSON.parse(localStorage.getItem(ZM_KEY) || 'null');
+      return zmValid(s) ? s : { ...ZM_DEFAULT };
+    } catch {
+      return { ...ZM_DEFAULT };
+    }
+  };
+  const range = (r) => Array.isArray(r) && r.length === 2 && r.every((x) => Number.isInteger(x) && x >= 0 && x <= 10000) && r[0] <= r[1];
+  function zmValid(s) {
+    return !!s && ['add', 'sub', 'mul', 'div'].some((k) => s[k] === true) && range(s.addA) && range(s.addB) && range(s.mulA) && range(s.mulB) && s.mulA[0] >= 1 && ZM_SECS.includes(s.secs);
+  }
+  const zmIsDefault = (s) => JSON.stringify(s) === JSON.stringify(ZM_DEFAULT);
+  const zmSummary = (s) => [s.add && `+ (${s.addA.join('–')}) + (${s.addB.join('–')})`, s.sub && '− in reverse', s.mul && `× (${s.mulA.join('–')}) × (${s.mulB.join('–')})`, s.div && '÷ in reverse'].filter(Boolean).join(' · ') + ` · ${s.secs} s`;
+
+  // One question. `only` restricts to one operation (used by speed reps and drills).
+  function zmQuestion(s, only) {
+    const ops = only ? [only] : ['add', 'sub', 'mul', 'div'].filter((k) => s[k]);
+    const op = R.pick(ops);
+    if (op === 'add' || op === 'sub') {
+      const a = R.int(...s.addA), b = R.int(...s.addB);
+      return op === 'add' ? { q: `${a} + ${b}`, a: a + b, kind: 'zAdd', v: [a, b] } : { q: `${a + b} − ${a}`, a: b, kind: 'zSub', v: [a + b, a] };
+    }
+    const a = R.int(...s.mulA), b = R.int(...s.mulB);
+    return op === 'mul' ? { q: `${a} × ${b}`, a: a * b, kind: 'zMul', v: [a, b] } : { q: `${a * b} ÷ ${a}`, a: b, kind: 'zDiv', v: [a * b, a] };
+  }
+  const ZM_KIND_OP = { zAdd: 'add', zSub: 'sub', zMul: 'mul', zDiv: 'div' };
+  // A question of a given type, for speed reps and drills: Zetamac types use default settings.
+  function genOfKind(kind) {
+    if (ZM_KIND_OP[kind]) return zmQuestion(ZM_DEFAULT, ZM_KIND_OP[kind]);
+    for (let t = 0; t < 300; t++) {
+      const g = R.pick(gens)();
+      if (g.kind === kind) return g;
+    }
+    return R.pick(gens)();
+  }
+
+  function zetamacCard() {
+    const s = zmSettings(), st = store.get().mental, def = zmIsDefault(s);
+    const bestD = st.zetamac?.best, bestC = st.zetamacCustom?.best;
+    const num = (id, v, label) => `<input type="number" inputmode="numeric" min="0" max="10000" id="${id}" value="${v}" aria-label="${label}" class="zm-num">`;
+    return `
+      <div class="card wide">
+        <h3>Zetamac</h3>
+        <p class="small">The classic arithmetic speed game (<a href="https://arithmetic.zetamac.com/" target="_blank" rel="noopener">arithmetic.zetamac.com</a>). Each answer goes through the moment it's right, with no Enter key, so type fast and fix mistakes on the fly. Score = number right.</p>
+        <p class="small"><b>${def ? 'Zetamac default settings' : 'Custom settings'}:</b> ${zmSummary(s)}</p>
+        <p class="small">Best: <b>${bestD ?? '–'}</b> (default settings)${bestC != null ? ` · <b>${bestC}</b> (custom)` : ''}</p>
+        <button data-mode="zetamac">Start</button>
+        <details class="zm-settings"${def ? '' : ' open'}><summary>Settings</summary>
+          <form id="zm-form">
+            <label class="check"><input type="checkbox" id="zm-add" ${s.add ? 'checked' : ''}> Addition: (${num('zm-a1', s.addA[0], 'Addition, first number from')} to ${num('zm-a2', s.addA[1], 'Addition, first number to')}) + (${num('zm-b1', s.addB[0], 'Addition, second number from')} to ${num('zm-b2', s.addB[1], 'Addition, second number to')})</label>
+            <label class="check"><input type="checkbox" id="zm-sub" ${s.sub ? 'checked' : ''}> Subtraction: addition problems in reverse</label>
+            <label class="check"><input type="checkbox" id="zm-mul" ${s.mul ? 'checked' : ''}> Multiplication: (${num('zm-m1', s.mulA[0], 'Multiplication, first number from')} to ${num('zm-m2', s.mulA[1], 'Multiplication, first number to')}) × (${num('zm-n1', s.mulB[0], 'Multiplication, second number from')} to ${num('zm-n2', s.mulB[1], 'Multiplication, second number to')})</label>
+            <label class="check"><input type="checkbox" id="zm-div" ${s.div ? 'checked' : ''}> Division: multiplication problems in reverse</label>
+            <label for="zm-secs">Duration</label>
+            <select id="zm-secs" style="margin-left:8px">${ZM_SECS.map((v) => `<option value="${v}" ${v === s.secs ? 'selected' : ''}>${v < 60 ? `${v} seconds` : `${v / 60} minute${v > 60 ? 's' : ''}`}</option>`).join('')}</select>
+            <div class="row" style="margin-top:10px"><button type="button" class="ghost" id="zm-reset">Zetamac defaults</button><span class="small" id="zm-msg" aria-live="polite"></span></div>
+          </form>
+        </details>
+      </div>`;
+  }
+
+  function wireZetamac(el, rerender) {
+    const $ = (id) => el.querySelector('#' + id), form = $('zm-form');
+    const read = () => ({
+      add: $('zm-add').checked, sub: $('zm-sub').checked, mul: $('zm-mul').checked, div: $('zm-div').checked,
+      addA: [+$('zm-a1').value, +$('zm-a2').value], addB: [+$('zm-b1').value, +$('zm-b2').value],
+      mulA: [+$('zm-m1').value, +$('zm-m2').value], mulB: [+$('zm-n1').value, +$('zm-n2').value], secs: +$('zm-secs').value,
+    });
+    form.addEventListener('change', () => {
+      const s = read();
+      if (!zmValid(s)) return ($('zm-msg').textContent = 'Pick at least one operation; each range needs whole numbers with "from" ≤ "to" (multiplication from 1).');
+      try { localStorage.setItem(ZM_KEY, JSON.stringify(s)); } catch { /* storage blocked: applies this visit */ }
+      rerender();
+    });
+    form.addEventListener('submit', (e) => e.preventDefault());
+    $('zm-reset').addEventListener('click', () => {
+      try { localStorage.removeItem(ZM_KEY); } catch { /* storage blocked */ }
+      rerender();
+    });
+  }
+
+  function zetamac(el) {
+    const s = zmSettings(), def = zmIsDefault(s), key = def ? 'zetamac' : 'zetamacCustom', end = Date.now() + s.secs * 1000;
+    const answered = [];
+    let cur = null, shownAt = 0, done = false;
+    el.innerHTML = `
+      <h1>Zetamac <span class="small">${def ? 'default settings' : 'custom'}</span></h1>
+      <div class="card" id="mm-card">
+        <div class="mm-top"><span id="mm-time"></span><span id="mm-score">Score: 0</span></div>
+        <div class="mm-q" id="mm-q" aria-live="polite"></div>
+        <form class="answer-row" id="zm-play" autocomplete="off">
+          <input type="text" id="mm-in" inputmode="numeric" autocomplete="off" placeholder="Type the answer" aria-label="Your answer">
+        </form>
+        <p class="small" style="margin:8px 0 0">No Enter needed: the next question appears as soon as your answer is right.</p>
+      </div>`;
+    const $ = (sel) => el.querySelector(sel), $in = $('#mm-in'), $q = $('#mm-q'), $s = $('#mm-score'), $t = $('#mm-time');
+    const timer = setInterval(tick, 200);
+    QT.cleanup = () => clearInterval(timer);
+    function next() {
+      cur = zmQuestion(s);
+      $q.textContent = cur.q;
+      $in.value = '';
+      shownAt = Date.now();
+    }
+    $in.addEventListener('input', () => {
+      if (done) return;
+      const v = QT.parseAnswer($in.value);
+      if (v === cur.a) {
+        answered.push({ ...cur, ok: true, you: String(v), ms: Date.now() - shownAt });
+        $s.textContent = `Score: ${answered.length}`;
+        next();
+      }
+    });
+    $('#zm-play').addEventListener('submit', (e) => e.preventDefault());
+    QT.keypad.attach($('#zm-play'), [$in], () => {});
+    function tick() {
+      const left = Math.max(0, end - Date.now());
+      $t.textContent = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`;
+      if (!left) finish();
+    }
+    function finish() {
+      if (done) return;
+      done = true;
+      clearInterval(timer);
+      QT.cleanup = null;
+      const score = answered.length, st = store.get(), rec = (st.mental[key] ||= { best: null, runs: [] }), prev = rec.best;
+      // The question you were stuck on when time ran out is saved for review too, if you'd
+      // already spent longer than your threshold on it.
+      const stuckMs = Date.now() - shownAt;
+      if (cur && stuckMs > slowSecs() * 1000) answered.push({ ...cur, ok: false, you: 'time ran out', ms: stuckMs });
+      rec.best = prev === null ? score : Math.max(prev, score);
+      rec.runs.push({ date: new Date().toISOString(), correct: score, wrong: 0 });
+      if (rec.runs.length > 50) rec.runs.shift();
+      recordSpeed(answered);
+      const added = scheduleReps(answered, slowSecs());
+      store.touchDay();
+      store.save();
+      const avg = score ? (s.secs / score).toFixed(1) : '–';
+      el.innerHTML = `
+        <div class="title-row"><h1>Zetamac: done</h1>${prev === null || score > prev ? QT.flair.milestone('New best') : ''}</div>
+        <div class="tiles">
+          <div class="tile"><div class="v">${score}</div><div class="k">score (${def ? 'default settings' : 'custom'})</div></div>
+          <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best</div></div>
+          <div class="tile"><div class="v">${avg}</div><div class="k">seconds per answer</div></div>
+        </div>
+        ${review(answered, slowSecs())}
+        ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}.</p>` : ''}
+        <div class="row" style="margin-top:18px"><button id="again">Play again</button><a class="btn ghost" href="#/mental">Back</a></div>`;
+      el.querySelector('#again').addEventListener('click', () => zetamac(el));
+      wireReview(el);
+    }
+    tick();
+    next();
+    if (!QT.keypad.enabled()) $in.focus();
+  }
+
   // ---- speed reps: spaced, timed practice of one question type ----
   // A type with 2+ slow or missed answers in a run is scheduled for tomorrow. Each rep is 8 timed
   // questions of that type; pass (≤1 miss, median under your threshold) and it comes back after
@@ -299,13 +459,7 @@
     const $ = (s) => el.querySelector(s), $in = $('#rp-in'), form = $('#rp-form'), hint = $('#rp-hint'), baseHint = hint.innerHTML;
     const timer = setInterval(() => { $('#rp-t').textContent = `${((Date.now() - shownAt) / 1000).toFixed(1)} s`; }, 100);
     QT.cleanup = () => clearInterval(timer);
-    const make = () => {
-      for (let t = 0; t < 300; t++) {
-        const g = R.pick(gens)();
-        if (g.kind === kind) return g;
-      }
-      return R.pick(gens)();
-    };
+    const make = () => genOfKind(kind);
     function next() {
       if (n >= REP_N) return finish();
       cur = make();
@@ -383,7 +537,7 @@
       <div class="card table-wrap"><table>
         <tr><th>Type</th><th class="num">Median</th><th class="num">Missed</th><th>Guide</th></tr>
         ${rows.map((r) => `<tr><td>${r.label}</td><td class="num ${r.median > secs ? 'neg' : ''}">${r.median.toFixed(1)} s</td><td class="num">${Math.round(r.missRate * 100)}%</td><td>${guide(r.guide) ? `<a href="#/tricks/${r.guide}">${guide(r.guide).title}</a>` : ''}</td></tr>`).join('')}
-      </table><p class="small">Over up to your last 30 answers of each type, from both 80 in 8 and the sprint. Red: slower than your ${secs} s review threshold.</p></div>`;
+      </table><p class="small">Over up to your last 30 answers of each type, from 80 in 8, Zetamac and speed reps. Red: slower than your ${secs} s review threshold.</p></div>`;
   }
 
   // End-of-session review: per-type timings, then each slow or missed question with the fastest
@@ -403,7 +557,7 @@
     const sec = (ms) => `${(ms / 1000).toFixed(1)} s`;
     const item = (x) => {
       const fw = T.fastWay(x), g = fw && guide(fw.guide);
-      const tag = x.ok ? '<span class="flag slow">slow</span>' : `<span class="flag bad">${x.you === 'passed' ? 'passed' : `✗ you said ${esc(x.you)}`}</span>`;
+      const tag = x.ok ? '<span class="flag slow">slow</span>' : `<span class="flag bad">${['passed', 'time ran out'].includes(x.you) ? x.you : `✗ you said ${esc(x.you)}`}</span>`;
       return `<div class="card review-item">
         <div class="review-head"><span class="mono">${esc(x.q)} = <b>${QT.fmtNum(x.a)}</b></span><span class="review-meta">${tag}<span class="mono small">${sec(x.ms)}</span></span></div>
         ${fw ? `<p class="small review-how"><b>Faster: ${fw.name}.</b> ${fw.steps}${g ? ` <a href="#/tricks/${g.id}">Guide: ${g.title} →</a>` : ''}</p>` : ''}
@@ -428,13 +582,7 @@
   function drill(el, kinds) {
     const T = QT.mentalTips, labels = kinds.map((k) => T.KINDS[k]?.label).filter(Boolean);
     el.innerHTML = `<a class="back" href="#/mental">← Mental maths</a><h1>Speed drill</h1><p class="lede">${labels.join(', ')}. Untimed: use the fast method each time, then compare with the worked solution.</p><div id="sd-box"></div>`;
-    const make = (kind) => {
-      for (let t = 0; t < 200; t++) {
-        const g = R.pick(gens)();
-        if (g.kind === kind) return g;
-      }
-      return R.pick(gens)();
-    };
+    const make = genOfKind;
     let k = 0;
     const source = () => {
       if (k >= 10) return null;
@@ -457,5 +605,5 @@
     return vals.length ? Math.max(...vals) : null;
   };
 
-  QT.mental = { render, gens, options, best80, review, scheduleReps, dueReps };
+  QT.mental = { render, gens, options, best80, review, scheduleReps, dueReps, zmQuestion, zmValid, ZM_DEFAULT, genOfKind };
 })();

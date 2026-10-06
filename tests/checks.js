@@ -217,6 +217,23 @@
       QT.store.importJson(saved);
     }
 
+    // Zetamac: default settings match arithmetic.zetamac.com, questions stay in range, and every
+    // question type has a fast method that reaches the answer.
+    if (QT.mental && QT.mental.zmQuestion) {
+      const M = QT.mental, D = M.ZM_DEFAULT, seen = new Set();
+      if (JSON.stringify([D.addA, D.addB, D.mulA, D.mulB, D.secs]) !== '[[2,100],[2,100],[2,12],[2,100],120]' || !(D.add && D.sub && D.mul && D.div)) fail('zetamac: defaults differ from Zetamac');
+      const inR = (x, [lo, hi]) => Number.isInteger(x) && x >= lo && x <= hi;
+      for (let k = 0; k < 4000; k++) {
+        const g = M.zmQuestion(D), [x, y] = g.v, fw = QT.mentalTips.fastWay(g);
+        seen.add(g.kind);
+        const ok = { zAdd: inR(x, D.addA) && inR(y, D.addB) && g.a === x + y, zSub: inR(y, D.addA) && inR(x - y, D.addB) && g.a === x - y, zMul: inR(x, D.mulA) && inR(y, D.mulB) && g.a === x * y, zDiv: inR(y, D.mulA) && inR(x / y, D.mulB) && g.a === x / y }[g.kind];
+        if (!ok || !fw || fw.value !== g.a || /undefined|NaN/.test(fw.steps) || !QT.mentalTips.KINDS[g.kind]) { fail(`zetamac: bad question ${JSON.stringify(g)} / ${fw && fw.value}`); break; }
+      }
+      if (seen.size !== 4) fail(`zetamac: saw ${seen.size} question types`);
+      if (M.zmValid({ ...D, add: false, sub: false, mul: false, div: false }) || M.zmValid({ ...D, mulA: [0, 12] }) || M.zmValid({ ...D, addA: [50, 10] }) || !M.zmValid(D)) fail('zetamac: settings validation');
+      if (M.genOfKind('zDiv').kind !== 'zDiv' || M.genOfKind('frac').kind !== 'frac') fail('zetamac: questions of a given type for speed reps');
+    }
+
     // Speed reps: two slow or missed answers of a type schedule it once, due tomorrow.
     if (QT.mental && QT.mental.scheduleReps) {
       const saved = QT.store.exportJson();

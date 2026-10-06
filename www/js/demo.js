@@ -44,7 +44,7 @@
     const trend = (n, from, to, noise) => Array.from({ length: n }, (_, i) => from + ((to - from) * i) / (n - 1) + (rnd() - 0.5) * noise);
     const fullNet = trend(8, 34, 52, 8).map(Math.round);
     s.mental = {
-      sprint: { best: 19, runs: trend(6, 12, 18, 4).map((c, i) => ({ date: ago(i, 6), correct: Math.round(c), wrong: 2 })) },
+      zetamac: { best: 38, runs: trend(6, 24, 37, 5).map((c, i) => ({ date: ago(i, 6), correct: Math.round(c), wrong: 0 })) },
       full: { best: Math.max(...fullNet), runs: fullNet.map((x, i) => ({ date: ago(i, 8), correct: x + 9, wrong: 9 })) },
     };
     const pnl = trend(6, -6, 4, 6).map(Math.round);

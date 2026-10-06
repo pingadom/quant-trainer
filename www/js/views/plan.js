@@ -31,7 +31,7 @@
     if (left === 0) {
       return [
         { id: 'light', label: `Light review: reread the worked solutions for 2–3 ${name} questions. Nothing new today.`, href: `#/bank/${p.firm}` },
-        { id: 'warm', label: 'Warm up with a 2-minute sprint', href: '#/mental', auto: () => (s.mental.sprint?.runs || []).some((r) => on(r.date, day)) },
+        { id: 'warm', label: 'Warm up with a game of Zetamac', href: '#/mental', auto: () => ['zetamac', 'zetamacCustom'].some((k) => (s.mental[k]?.runs || []).some((r) => on(r.date, day))) },
       ];
     }
     const out = [];
@@ -42,7 +42,7 @@
       const b = qs[(dayIndex * 2 + k) % qs.length];
       out.push({ id: `iq-${b.id}`, label: `${name} question: ${b.cat.toLowerCase()}`, href: `#/iq/${b.id}`, auto: () => (s.bank[b.id]?.results || []).some((r) => r !== null && r !== undefined) });
     }
-    if (F.mental) out.push({ id: 'mental', label: dayIndex % 2 ? '2-minute sprint' : '80 in 8', href: '#/mental', auto: () => ['full', 'fullTyped', 'sprint'].some((k) => (s.mental[k]?.runs || []).some((r) => on(r.date, day))) });
+    if (F.mental) out.push({ id: 'mental', label: dayIndex % 2 ? 'Zetamac (2 minutes)' : '80 in 8', href: '#/mental', auto: () => ['full', 'fullTyped', 'zetamac', 'zetamacCustom'].some((k) => (s.mental[k]?.runs || []).some((r) => on(r.date, day))) });
     if (F.oa && dayIndex % 2) out.push({ id: 'oa', label: 'Online tests: number sequences', href: '#/oa', auto: () => (s.oa.seq?.runs || []).some((r) => on(r.date, day)) });
     if (dayIndex % 2 === 0 && F.games.length) {
       const [key, label, href] = F.games[(dayIndex / 2) % F.games.length];

@@ -211,6 +211,25 @@ test('the tour walks through every section', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Start the diagnostic' })).toBeVisible();
 });
 
+test('Zetamac: answers go through without Enter; slow and unfinished questions come back for review', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('qt-keypad', 'off')); // type directly, also on the phone project
+  await page.clock.install();
+  await page.goto('./#/mental');
+  await expect(page.getByText('Zetamac default settings')).toBeVisible();
+  await page.locator('[data-mode="zetamac"]').click();
+  const solve = (q) => { const [a, op, b] = q.split(' '); const x = +a, y = +b; return String(op === '+' ? x + y : op === '−' ? x - y : op === '×' ? x * y : x / y); };
+  await page.clock.runFor(8_000); // dawdle on the first question: slower than the 6 s threshold
+  for (let i = 0; i < 4; i++) await page.locator('#mm-in').fill(solve(await page.locator('#mm-q').textContent()));
+  await expect(page.locator('#mm-score')).toHaveText('Score: 4');
+  await page.locator('#mm-in').fill('1'); // a wrong answer just sits there
+  await expect(page.locator('#mm-score')).toHaveText('Score: 4');
+  await page.clock.runFor(120_000);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Zetamac: done');
+  await expect(page.locator('.review-item .flag.slow')).toHaveCount(1);
+  await expect(page.locator('.review-item .flag.bad')).toHaveText('time ran out');
+  await expect(page.locator('.review-item').first()).toContainText('Faster:');
+});
+
 test('speed-trick lesson and drill', async ({ page }) => {
   await page.goto('./#/tricks');
   await expect(page.locator('.topic-card')).toHaveCount(20);

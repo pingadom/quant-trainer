@@ -22,6 +22,11 @@
     sub3: { label: '3-digit subtraction', guide: 'round-and-compensate' },
     missMul: { label: 'Missing factor', guide: 'missing-operand' },
     missAdd: { label: 'Missing number (addition)', guide: 'round-and-compensate' },
+    // Zetamac's four question types (see mental.js).
+    zAdd: { label: 'Zetamac addition', guide: 'left-to-right-adding' },
+    zSub: { label: 'Zetamac subtraction', guide: 'round-and-compensate' },
+    zMul: { label: 'Zetamac multiplication', guide: 'split-left-to-right' },
+    zDiv: { label: 'Zetamac division', guide: 'missing-operand' },
   };
 
   // Each method returns { name, guide, steps (HTML), value }.
@@ -148,6 +153,36 @@
       return { ...m, steps: `? = ${t} − ${y}. ${m.steps}` };
     },
   };
+
+  // ---- Zetamac: (a + b), its reverse, (a × b) with a small, and its reverse ----
+  Object.assign(METHODS, {
+    zAdd([x, y]) {
+      const [big, small] = x >= y ? [x, y] : [y, x], u = small % 10, t = small - u;
+      if (u >= 8) return { name: 'Round up, then take back', guide: 'round-and-compensate', value: x + y, steps: `${small} is ${10 - u} short of ${small + 10 - u}: ${big} + ${small + 10 - u} = ${big + small + 10 - u}, minus ${10 - u}: ${b(x + y)}.` };
+      return { name: 'Tens first, then units', guide: 'left-to-right-adding', value: x + y, steps: `${big} + ${t} = ${big + t}${u ? `, then + ${u} = ${b(x + y)}` : ` = ${b(x + y)}`}.` };
+    },
+    zSub([c, x]) {
+      const u = x % 10, t = x - u;
+      if (u >= 7) {
+        const R = t + 10;
+        return { name: 'Round and compensate', guide: 'round-and-compensate', value: c - x, steps: `Take away ${R} instead: ${c} − ${R} = ${c - R}, then add back the ${R - x} extra: ${b(c - x)}.` };
+      }
+      return { name: 'Tens, then units', guide: 'round-and-compensate', value: c - x, steps: `${c} − ${t} = ${c - t}${u ? `, then − ${u} = ${b(c - x)}` : ` = ${b(c - x)}`}. (Or count up from ${x} to ${c}.)` };
+    },
+    zMul([x, y]) {
+      const [m, n] = x <= y ? [x, y] : [y, x];
+      if (m === 5) return { name: '× 5 is × 10 ÷ 2', guide: 'times-5-25-125', value: m * n, steps: `${n} × 10 = ${n * 10}, halved: ${b(m * n)}.` };
+      if (m === 9) return { name: '× 9 is × 10 minus one', guide: 'times-9-11-99', value: m * n, steps: `${n} × 10 = ${n * 10}, minus ${n}: ${b(m * n)}.` };
+      if (m === 11) return { name: '× 11 is × 10 plus one', guide: 'times-9-11-99', value: m * n, steps: `${n} × 10 = ${n * 10}, plus ${n}: ${b(m * n)}.` };
+      const u = n % 10, t = n - u;
+      if (u >= 8) return { name: 'Round and compensate', guide: 'round-and-compensate', value: m * n, steps: `${m} × ${t + 10} = ${m * (t + 10)}, minus ${m} × ${10 - u} = ${m * (10 - u)}: ${b(m * n)}.` };
+      return { name: 'Split and multiply', guide: 'split-left-to-right', value: m * n, steps: `${m} × ${t} = ${m * t}${u ? `, ${m} × ${u} = ${m * u}, total ${b(m * n)}` : ` = ${b(m * n)}`}.` };
+    },
+    zDiv([N, x]) {
+      const k = N / x, kt = Math.floor(k / 10) * 10;
+      return { name: 'Turn it into a times table', guide: 'missing-operand', value: k, steps: kt ? `Ask “${x} × what = ${N}?”. ${x} × ${kt} = ${x * kt}, leaving ${N - x * kt} = ${x} × ${k - kt}. So ${b(k)}.` : `Ask “${x} × what = ${N}?”: ${x} × ${k} = ${N}, so ${b(k)}.` };
+    },
+  });
 
   const fastWay = (item) => (METHODS[item.kind] ? METHODS[item.kind](item.v) : null);
 
