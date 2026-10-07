@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.20.0
+
+- **Free topic guides** (`/topics/`): a plain page for each of the 15 topics with its key results and a worked example of every question type (one per skill the coach tracks), plus an index. Like the firm guides, they're generated from the app's own content on every deploy, so they never drift, and search engines can index them. Examples use fixed seeds, so a page only changes when its generator does. Linked from the sidebar (Learn), More, the Practice page and the firm guides.
+- **Guide pages read better:** exact answers with recurring decimals show as fractions ("4/13 ≈ 0.30769"), and follow-up questions are no longer labelled "our follow-up" twice.
+
 ## 0.19.0
 
 - **Search** (`#/search`, or press `/` on a keyboard): one box across interview questions (including their follow-ups), topics, formula cards (the formula shows in the result), speed tricks, case studies and the app's own screens, so "ants", "kelly" or "zetamac" goes straight there. Every word must match; title matches rank first. Results update as you type and the address is shareable (`#/search/kelly`). In the sidebar under Home and at the top of More on phones.

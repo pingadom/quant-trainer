@@ -11,3 +11,4 @@ __pycache__/
 
 # Generated at deploy time by tools/firm-pages.js
 www/firms/
+www/topics/

@@ -44,6 +44,7 @@
 | | |
 |---|---|
 | **Interview plan** | Pick the firm and date; get a daily checklist weighted to what that firm tests, with a countdown on the home screen. |
+| **Topic guides** | Static pages per topic (key results and a worked example of each question type) generated at deploy, alongside the firm guides. |
 | **Search** | One box across questions, topics, formula cards, speed tricks, case studies and screens; `/` opens it on a keyboard. |
 | **Coach** | Tracks 84 skills, diagnoses error types, ranks what to practise next with reasons, and offers a 15-question diagnostic and one-tap drills. |
 | **Practice** | 15 topics and 84 randomised question generators with worked solutions and a "check by simulation" button. Adaptive mixed practice. |

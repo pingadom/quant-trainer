@@ -507,6 +507,15 @@
         if (!files['firms/index.html'].includes(`href="${firm}.html"`) || !files['sitemap.xml'].includes(`firms/${firm}.html`)) fail(`firm page ${firm}: not linked from the index or sitemap`);
       }
       if (!/<title>Wincent interview questions and process/.test(files['firms/wincent.html'] || '')) fail('firm page: Wincent title');
+      if (/Follow-up \(ours\)[^<]*<span class="small">\(our follow-up\)/.test(Object.values(files).join(''))) fail('firm page: follow-up labelled twice');
+      // Topic guides: a page per topic with one worked example per question type, stable between builds.
+      const again = firmPages.renderAll(QT);
+      for (const t of QT.topics) {
+        const html = files[`topics/${t.id}.html`] || '', n = (html.match(/<article /g) || []).length;
+        if (n !== t.gens.length || /undefined|NaN|\[object Object\]/.test(html)) { fail(`topic page ${t.id}: ${n} of ${t.gens.length} examples, or junk`); break; }
+        if (html !== again[`topics/${t.id}.html`]) { fail(`topic page ${t.id}: differs between builds`); break; }
+        if (!files['topics/index.html'].includes(`href="${t.id}.html"`) || !files['sitemap.xml'].includes(`topics/${t.id}.html`)) fail(`topic page ${t.id}: not linked from the index or sitemap`);
+      }
     }
 
     // Build consistency: every script the page loads must be precached for offline use,

@@ -9,7 +9,7 @@
         <a class="card shortcut primary" href="#/review"><b>Mixed practice</b><span>Questions from every topic, weighted towards your weak spots</span></a>
         <a class="card shortcut" href="#/mistakes"><b>Mistakes to review <span class="badge" data-badge="mistakes" hidden></span></b><span>${QT.mistakes.all().length ? `${QT.mistakes.due().length} due now · ${QT.mistakes.all().length} saved` : 'Questions you get wrong come back here'}</span></a>
       </div>
-      <p class="small">Or pick a topic. Every question is freshly generated, and the bar shows your recent accuracy.</p>
+      <p class="small">Or pick a topic. Every question is freshly generated, and the bar shows your recent accuracy. To read rather than practise, see the <a href="topics/">topic guides</a>.</p>
       ${Object.entries(U.TRACKS).map(([k, label]) => `
         <h2>${label}</h2>
         <div class="grid">${QT.topics.filter((t) => t.track === k).map((t) => U.topicCard(t, QT.mastery(t.id))).join('')}</div>`).join('')}`;
