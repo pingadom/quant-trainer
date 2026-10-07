@@ -23,7 +23,7 @@
     plan: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
     topic: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice',
     iq: 'bank', mock: 'bank', talk: 'bank',
-    figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '',
+    figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',
   };
 
   const decode = (s) => {

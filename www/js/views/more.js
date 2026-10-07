@@ -8,6 +8,7 @@
     el.innerHTML = `
       <h1>More</h1>
       <p class="lede">Everything in the app, grouped the same way as the sidebar.</p>
+      <a class="card search-entry" href="#/search"><b>Search</b><span class="small">Find any interview question, topic, formula or trick</span></a>
       <h2 class="menu-head">My prep</h2>
       <div class="menu">
         <a class="card" href="#/plan"><b>Interview plan</b><span class="small">A daily checklist up to your interview, for the firm you're seeing</span></a>
@@ -20,7 +21,7 @@
       <div class="menu">
         <a class="card" href="#/practice"><b>Topics</b><span class="small">Formula sheets and endless questions in ${QT.topics.length} topics</span></a>
         <a class="card" href="#/flashcards"><b>Formula cards</b><span class="small">${QT.flashcards.CARDS.length} formulas to know cold, on a spaced schedule</span></a>
-        <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">20 guides to faster arithmetic, each with a drill</span></a>
+        <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">${QT.tricks.length} guides to faster arithmetic, each with a drill</span></a>
         <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
         <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
       </div>
