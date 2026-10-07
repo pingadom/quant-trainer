@@ -48,7 +48,7 @@
 | **Search** | One box across questions, topics, formula cards, speed tricks, case studies and screens; `/` opens it on a keyboard. |
 | **Coach** | Tracks 84 skills, diagnoses error types, ranks what to practise next with reasons, and offers a 15-question diagnostic and one-tap drills. |
 | **Practice** | 15 topics and 84 randomised question generators with worked solutions and a "check by simulation" button. Adaptive mixed practice. |
-| **Interview questions** | 43 questions: ones candidates report from Jane Street, SIG, Optiver, IMC, Citadel, Five Rings, Two Sigma, Flow Traders, Wincent, Akuna, Da Vinci and DRW (plus clearly labelled practice questions on the topics firms list), each sourced, with follow-ups and a timed mock-interview mode. |
+| **Interview questions** | 134 questions candidates report from 21 firms (Jane Street, SIG, Optiver, IMC, Citadel Securities, Five Rings, Two Sigma, Flow Traders, Wincent, Akuna, Da Vinci, DRW, Hudson River Trading, Jump, Maven, Eclipse, Old Mission, Belvedere, Squarepoint, Valkyrie and Virtu), plus clearly labelled practice questions on the topics firms list. Each is sourced, with follow-ups, and every numeric answer is re-derived independently in Python. Behavioural questions come with a structure to aim for. Timed mock-interview mode. |
 | **Mistakes to review** | Every wrong answer comes back after 1, 3, 7 and 21 days until mastered. |
 | **Daily challenge** | The same 5 questions for everyone each day (seeded from the date, no server), one attempt, with a shareable result and streak. |
 | **Think aloud** | Talk a reported question through out loud against the clock, record yourself (kept on the device), see pace and filler words, then score yourself against what interviewers listen for. |

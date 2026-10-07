@@ -1,5 +1,13 @@
 // Interview questions: browse by firm, answer a question, open-ended self-grading, mock interviews.
 (function () {
+  // A mock needs a few numeric questions; firms with fewer get the all-firms mock instead.
+  function mockLink(firm, F) {
+    const n = Math.min(5, QT.bank.filter((b) => b.parts && (!firm || b.firm === firm)).length);
+    return firm && n >= 3
+      ? `<a class="btn" href="#/mock/${firm}">Mock interview: ${F.name} (${n} questions)</a>`
+      : `<a class="btn" href="#/mock">Mock interview (5 questions${firm ? ' from all firms' : ''})</a>`;
+  }
+
   const U = QT.ui;
   const firmBadge = (b) => `<span class="tag firm">${QT.firms[b.firm].name}</span>`;
   const plain = (html) => html.replace(/<[^>]+>/g, '');
@@ -38,7 +46,7 @@
         <ul>${F.process.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: ${F.sources.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(' · ')}</p></details>` : ''}
       <div class="row" style="margin:14px 0">
-        <a class="btn" href="#/mock${firm ? '/' + firm : ''}">Mock interview${F ? `: ${F.name}` : ''} (5 questions)</a>
+        ${mockLink(firm, F)}
         <span class="small">${U.bankDone()}/${QT.bank.length} completed</span>
       </div>
       <div class="qlist">

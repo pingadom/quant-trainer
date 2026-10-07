@@ -12,6 +12,11 @@
   <h1>Theo checks</h1>
   <p>Serve the project root (<code>npm run serve</code>) and open <code>/tests/check.html</code>. The same suite runs in CI with <code>npm test</code>.</p>
   <pre id="out">Running…</pre>
+  <script>
+    // A script that fails to load or parse must fail the page, not quietly drop its checks.
+    window.loadErrors = [];
+    window.addEventListener('error', (e) => window.loadErrors.push(`${(e.filename || '').split('/').pop()}:${e.lineno} ${e.message}`));
+  </script>
 
   <script src="../www/js/core.js"></script>
   <script src="../www/js/gens-interview.js"></script>
@@ -20,6 +25,7 @@
   <script src="../www/js/topics.js"></script>
   <script src="../www/js/cases.js"></script>
   <script src="../www/js/bank.js"></script>
+  <script src="../www/js/bank-reports.js"></script>
   <script src="../www/js/review.js"></script>
   <script src="../www/js/coach.js"></script>
   <script src="../www/js/estimate.js"></script>
@@ -44,7 +50,9 @@
     (async () => {
       const text = (p) => fetch(p, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : undefined)).catch(() => undefined);
       const files = { index: await text('../www/index.html'), sw: await text('../www/sw.js'), pkg: await text('../package.json') };
-      const { lines, fails } = runChecks(QT, files);
+      const { lines, fails: checkFails } = runChecks(QT, files);
+      const fails = checkFails + window.loadErrors.length;
+      for (const e of window.loadErrors) lines.unshift(`FAIL script error: ${e}`);
       const el = document.getElementById('out');
       el.textContent = lines.join('\n');
       el.className = fails ? 'fail' : 'pass';
