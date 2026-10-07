@@ -1,9 +1,10 @@
-// Free firm guide pages: one static HTML page per firm (how it interviews, every question with
-// its worked solution) plus an index, so people searching before an interview can find them.
+// Free guide pages: one static HTML page per firm (how it interviews, every question with its
+// worked solution) and per topic (the formula sheet and a worked example of every question type),
+// plus indexes, so people searching before an interview can find them.
 // The app itself is one page with hash routes, which search engines treat as a single page.
 //
 // Generated at deploy time from the interview bank (www/js/bank.js), so they never drift:
-//   node tools/firm-pages.js            → writes www/firms/*.html and www/sitemap.xml
+//   node tools/firm-pages.js            → writes www/firms/*.html, www/topics/*.html and www/sitemap.xml
 // renderAll(QT) is pure and also runs in the browser (tests/check.html checks its output).
 (function (root) {
   const SITE = 'https://pingadom.github.io/theo/';
@@ -40,10 +41,26 @@ ${body}
 `;
   }
 
+  // Answers that are small fractions with recurring decimals read better as fractions:
+  // "1/3 ≈ 0.33333". Terminating ones (3.5, 8.15) and big numerators stay as decimals.
+  function answer(QT, a) {
+    const f = QT.fmtNum(a);
+    if (Number.isInteger(a) || !Number.isFinite(a)) return esc(f);
+    for (let q = 2; q <= 64; q++) {
+      const p = Math.round(a * q);
+      if (Math.abs(a - p / q) > 1e-9) continue;
+      let r = q;
+      while (r % 2 === 0) r /= 2;
+      while (r % 5 === 0) r /= 5;
+      return esc(r === 1 || Math.abs(p) > 999 ? f : `${p}/${q} ≈ ${f}`); // r = 1: the decimal terminates
+    }
+    return esc(f);
+  }
+
   const firmsWithQuestions = (QT) => Object.entries(QT.firms).filter(([id]) => QT.bank.some((b) => b.firm === id));
 
   function firmPage(QT, id) {
-    const F = QT.firms[id], qs = QT.bank.filter((b) => b.firm === id), f = QT.fmtNum;
+    const F = QT.firms[id], qs = QT.bank.filter((b) => b.firm === id);
     const name = id === 'common' ? 'Common trading-interview formats' : F.name;
     const reported = qs.filter((b) => b.kind === 'reported').length;
     const title = id === 'common' ? 'Common trading interview question formats, with solutions | Theo' : `${F.name} interview questions and process | Theo`;
@@ -51,8 +68,8 @@ ${body}
       ? `${qs.length} question formats used across trading-firm interviews (market making, options, quoting), with worked solutions. Free.`
       : `${reported} interview question${reported === 1 ? '' : 's'} candidates report from ${F.name}, with worked solutions and how the interview process runs. Free practice, no sign-up.`;
     const parts = (b) => (b.parts || []).map((p) => `
-          <li>${p.q}${p.ext ? ' <span class="small">(our follow-up)</span>' : ''}
-            <details><summary>Answer and worked solution</summary><p><b>Answer: ${esc(f(p.a))}</b></p><div class="solution">${p.sol}</div></details>
+          <li>${p.q}${p.ext && !/follow-up/i.test(p.q) ? ' <span class="small">(our follow-up)</span>' : ''}
+            <details><summary>Answer and worked solution</summary><p><b>Answer: ${answer(QT, p.a)}</b></p><div class="solution">${p.sol}</div></details>
           </li>`).join('');
     const items = qs.map((b) => `
       <article class="card static-q" id="${esc(b.id)}">
@@ -77,7 +94,8 @@ ${body}
     <p class="small">Try each one before opening the solution. Interviewers change the numbers, so learn the method.</p>
     ${items}
     <h2>Other firms</h2>
-    <p>${others}</p>`;
+    <p>${others}</p>
+    <p class="small">Practise by subject instead: <a href="../topics/">topic guides</a>.</p>`;
     return page({ title, description, canonical: `${SITE}firms/${id}.html`, body });
   }
 
@@ -90,13 +108,60 @@ ${body}
     <nav class="crumbs small"><a href="../">Theo</a> › Firm guides</nav>
     <h1>Trading firm interview guides</h1>
     <p class="lede">Free guides to quant and trading interviews at ${firmsWithQuestions(QT).length - 1} firms: how each process runs, and the questions candidates report, with worked solutions.</p>
-    <p><a class="btn" href="../">Open the free practice app</a></p>
+    <p><a class="btn" href="../">Open the free practice app</a> <a class="btn ghost" href="../topics/">Topic guides</a></p>
     <div class="grid">${rows}</div>`;
     return page({ title: 'Trading firm interview questions and guides | Theo', description: 'Free guides to quant trading interviews at Jane Street, Optiver, SIG, IMC, Wincent and more: the process and reported questions with worked solutions.', canonical: `${SITE}firms/`, body });
   }
 
+  // One worked example per question type. Seeded per topic and type, so the page only changes
+  // when the generator does (search engines see stable content).
+  function examples(QT, t) {
+    return t.gens.map((gen, i) => QT.daily.withSeed(QT.daily.hash(`page:${t.id}:${i}`), gen));
+  }
+
+  function topicPage(QT, t) {
+    const ex = examples(QT, t);
+    const items = ex.map((q, i) => `
+      <article class="card static-q" id="q${i + 1}">
+        <p class="small">${esc((t.skills && t.skills[i]) || t.name)}</p>
+        <p class="question">${q.q}</p>
+        <details><summary>Answer and worked solution</summary><p><b>Answer: ${answer(QT, q.a)}</b></p><div class="solution">${q.sol}</div></details>
+      </article>`).join('');
+    const others = QT.topics.filter((o) => o.id !== t.id).map((o) => `<a href="${o.id}.html">${esc(o.name)}</a>`).join(' · ');
+    const body = `
+    <nav class="crumbs small"><a href="../">Theo</a> › <a href="./">Topic guides</a> › ${esc(t.name)}</nav>
+    <h1>${esc(t.name)}: interview questions and key results</h1>
+    <p class="lede">${t.blurb} The results to know for quant trading interviews, then a worked example of each of the ${ex.length} question types. Free, no sign-up.</p>
+    <p><a class="btn" href="../#/topic/${t.id}">Practise endless questions like these</a></p>
+    ${t.notes ? `<h2>Key results</h2>
+    <div class="card">${t.notes}</div>` : ''}
+    <h2>Worked examples (${ex.length})</h2>
+    <p class="small">Try each one before opening the solution. In the app, every type generates fresh numbers each time.</p>
+    ${items}
+    <h2>Other topics</h2>
+    <p>${others}</p>
+    <p class="small">Preparing for a specific firm? See the <a href="../firms/">firm guides</a>.</p>`;
+    return page({
+      title: `${t.name} interview questions with worked solutions | Theo`,
+      description: `${plain(t.blurb)} Key results and ${ex.length} worked quant interview questions. Free practice, no sign-up.`,
+      canonical: `${SITE}topics/${t.id}.html`, body,
+    });
+  }
+
+  function topicIndex(QT) {
+    const rows = QT.topics.map((t) => `<a class="card topic-card" href="${t.id}.html"><h3>${esc(t.name)}</h3><div class="small">${plain(t.blurb)} · ${t.gens.length} question types</div></a>`).join('');
+    const body = `
+    <nav class="crumbs small"><a href="../">Theo</a> › Topic guides</nav>
+    <h1>Quant interview topics: key results and worked questions</h1>
+    <p class="lede">Free guides to the ${QT.topics.length} subjects quant trading interviews test: the results to know, and a worked example of every question type.</p>
+    <p><a class="btn" href="../">Open the free practice app</a> <a class="btn ghost" href="../firms/">Firm guides</a></p>
+    <div class="grid">${rows}</div>`;
+    return page({ title: 'Quant interview topics: probability, statistics and trading questions | Theo', description: `Free guides to ${QT.topics.length} quant interview topics, from dice and Bayes to Markov chains and options: key results and worked questions.`, canonical: `${SITE}topics/`, body });
+  }
+
   function sitemap(QT) {
-    const urls = [['', '1.0', 'weekly'], ['firms/', '0.9', 'weekly'], ...firmsWithQuestions(QT).map(([id]) => [`firms/${id}.html`, '0.8', 'weekly']), ['privacy.html', '0.3', 'yearly']];
+    const urls = [['', '1.0', 'weekly'], ['firms/', '0.9', 'weekly'], ...firmsWithQuestions(QT).map(([id]) => [`firms/${id}.html`, '0.8', 'weekly']),
+      ['topics/', '0.9', 'weekly'], ...QT.topics.map((t) => [`topics/${t.id}.html`, '0.8', 'monthly']), ['privacy.html', '0.3', 'yearly']];
     return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(([u, p, c]) => `  <url><loc>${SITE}${u}</loc><changefreq>${c}</changefreq><priority>${p}</priority></url>`).join('\n')}
@@ -106,8 +171,9 @@ ${urls.map(([u, p, c]) => `  <url><loc>${SITE}${u}</loc><changefreq>${c}</change
 
   // { relative path under www/: file contents }
   function renderAll(QT) {
-    const out = { 'firms/index.html': indexPage(QT), 'sitemap.xml': sitemap(QT) };
+    const out = { 'firms/index.html': indexPage(QT), 'topics/index.html': topicIndex(QT), 'sitemap.xml': sitemap(QT) };
     for (const [id] of firmsWithQuestions(QT)) out[`firms/${id}.html`] = firmPage(QT, id);
+    for (const t of QT.topics) out[`topics/${t.id}.html`] = topicPage(QT, t);
     return out;
   }
 

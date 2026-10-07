@@ -23,6 +23,7 @@
         <a class="card" href="#/flashcards"><b>Formula cards</b><span class="small">${QT.flashcards.CARDS.length} formulas to know cold, on a spaced schedule</span></a>
         <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">${QT.tricks.length} guides to faster arithmetic, each with a drill</span></a>
         <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
+        <a class="card" href="topics/"><b>Topic guides</b><span class="small">Key results and a worked example of every question type, as plain pages to read or share</span></a>
         <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
       </div>
       <h2 class="menu-head">Practise</h2>
