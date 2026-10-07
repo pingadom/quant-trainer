@@ -67,13 +67,13 @@
   }
 
   function find(query) {
-    const words = fold(query).split(/[^a-z0-9%.\-]+/).filter((w) => w.length > 1 || /\d/.test(w));
+    const words = fold(query).split(/[^a-z0-9%.-]+/).filter((w) => w.length > 1 || /\d/.test(w));
     if (!words.length) return [];
     const out = [];
     for (const it of index()) {
       let score = 0;
       for (const w of words) {
-        const re = new RegExp(`(^|[^a-z0-9])${w.replace(/[.\-]/g, '\\$&')}`);
+        const re = new RegExp(`(^|[^a-z0-9])${w.replace(/[.-]/g, '\\$&')}`);
         if (re.test(it.fTitle)) score += 3;
         else if (re.test(it.fText)) score += 1;
         else {
@@ -88,14 +88,14 @@
 
   // Wraps whole-word-start matches in <mark>, on the escaped text.
   function mark(text, query) {
-    const words = fold(query).split(/[^a-z0-9%.\-]+/).filter((w) => w.length > 1 || /\d/.test(w));
+    const words = fold(query).split(/[^a-z0-9%.-]+/).filter((w) => w.length > 1 || /\d/.test(w));
     let html = esc(text);
     if (!words.length) return html;
     const f = fold(text);
     if (f.length !== text.length) return html; // folding changed the length; skip highlighting
     const hits = [];
     for (const w of words) {
-      const re = new RegExp(`(^|[^a-z0-9])(${w.replace(/[.\-]/g, '\\$&')})`, 'g');
+      const re = new RegExp(`(^|[^a-z0-9])(${w.replace(/[.-]/g, '\\$&')})`, 'g');
       let m;
       while ((m = re.exec(f))) hits.push([m.index + m[1].length, m.index + m[1].length + w.length]);
     }
