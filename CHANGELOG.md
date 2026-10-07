@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.21.0
+
+- **91 more reported interview questions, from 8 more firms** (134 in all, 21 firms). Taken from a curated collection of public Glassdoor trader-interview reports, paraphrased, each linked to its report. New firms: Hudson River Trading, Jump, Eclipse, Old Mission, Belvedere, Squarepoint, Valkyrie and Virtu, each with how they interview (as reported) and a firm guide page.
+  - Every numeric answer is derived independently in Python (`research/verify_results.py`, now 167 values), and 74 questions also have a simulation check. Candidates' own answers were never used as the key.
+  - Where a report leaves something out (the amoeba's offspring rule, whether socks are replaced, how "doubles are cancelled"), the assumption is stated on the question, and where the reading changes the answer (the two-child problem, "one coin is heads") both readings are answered.
+  - Reports missing too much to answer (no numbers, missing game rules) were left out rather than guessed. So were questions already in the app, and one question whose source pointed at a forum post rather than the firm's report.
+  - **Behavioural questions** for 11 firms ("Why SIG?", "a time things didn't go as planned", "explain your trading mistake"), with a structure to aim for. They work in Think aloud.
+- **Mock interview button** now shows how many questions it will really ask, and offers the all-firms mock for firms with fewer than three numeric questions.
+- The browser checks page now fails if any script fails to load, instead of quietly skipping its checks.
+
 ## 0.20.0
 
 - **Free topic guides** (`/topics/`): a plain page for each of the 15 topics with its key results and a worked example of every question type (one per skill the coach tracks), plus an index. Like the firm guides, they're generated from the app's own content on every deploy, so they never drift, and search engines can index them. Examples use fixed seeds, so a page only changes when its generator does. Linked from the sidebar (Learn), More, the Practice page and the firm guides.
