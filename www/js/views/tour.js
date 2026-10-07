@@ -1,7 +1,8 @@
 // A one-minute tour of the app for new users, one step per screen (#/tour/1 … #/tour/7), each
 // with a "Try it" link. Offered on the welcome screen and from More.
 (function () {
-  const STEPS = [
+  // Built when shown, so the counts come from data that loads after this file.
+  const steps = () => [
     {
       title: 'Theo in a minute',
       body: 'Practice for quant trading interviews: probability and statistics, fast mental maths, trading games, and real questions candidates report from the firms.',
@@ -15,7 +16,7 @@
     },
     {
       title: 'Practice that comes back to you',
-      body: 'Fourteen topics with endless randomised questions and worked solutions you can check by simulation.',
+      body: `${QT.topics.length} topics with endless randomised questions and worked solutions you can check by simulation.`,
       points: ['Wrong answers return after 1, 3, 7 and 21 days until you have them.', 'Mixed practice picks questions for you.'],
       href: '#/review', cta: 'Try mixed practice',
     },
@@ -27,7 +28,7 @@
     },
     {
       title: 'Speed under pressure',
-      body: 'The 80-in-8 mental maths test, Zetamac (default settings or your own), and 20 guides to faster arithmetic.',
+      body: `The 80-in-8 mental maths test, Zetamac (default settings or your own), and ${QT.tricks.length} guides to faster arithmetic.`,
       points: ['After each run, slow questions come back with the fastest method for each one.', 'Slow question types return as short timed "speed reps".', 'Online tests: number sequences, digit span, running totals.'],
       href: '#/mental', cta: 'Mental maths',
     },
@@ -46,7 +47,7 @@
   ];
 
   function tour(el, stepArg) {
-    const i = Math.min(STEPS.length, Math.max(1, parseInt(stepArg, 10) || 1)) - 1, s = STEPS[i], last = i === STEPS.length - 1;
+    const STEPS = steps(), i = Math.min(STEPS.length, Math.max(1, parseInt(stepArg, 10) || 1)) - 1, s = STEPS[i], last = i === STEPS.length - 1;
     if (last) {
       try { localStorage.setItem('qt-tour', 'done'); } catch { /* storage blocked */ }
     }
@@ -67,5 +68,5 @@
   }
 
   QT.views = Object.assign(QT.views || {}, { tour });
-  QT.tour = { STEPS };
+  QT.tour = { steps };
 })();

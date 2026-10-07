@@ -756,3 +756,15 @@ main.static { margin: 0 auto; max-width: 860px; }
 .fc-back { font-size: 1.12rem; line-height: 1.5; padding-top: 16px; border-top: 1px dashed var(--line); }
 .fc-list dt { font-weight: 600; margin-top: 10px; }
 .fc-list dd { margin: 2px 0 0; color: var(--muted); }
+
+/* search */
+.nav-search { display: flex; justify-content: space-between; align-items: center; }
+.nav-search kbd { font: 0.75rem var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; color: var(--muted); }
+@media (pointer: coarse) { .nav-search kbd { display: none; } }
+.search-form input { width: 100%; font-size: 1.05rem; padding: 12px 14px; }
+.search-list { display: grid; gap: 8px; }
+.search-hit { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: var(--ink); }
+.search-hit:hover { border-color: var(--accent); }
+.search-back { color: var(--muted); }
+.search-entry { display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: var(--ink); margin-bottom: 8px; }
+mark { background: var(--accent-soft); color: inherit; border-radius: 2px; padding: 0 1px; }

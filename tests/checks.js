@@ -485,6 +485,17 @@
       }
     }
 
+    // Search: finds questions by firm and words, topics by name, and formula cards; needs every word.
+    if (QT.search) {
+      const ids = (q) => QT.search.find(q).map((h) => h.href);
+      if (!ids('ants').includes('#/iq/wc-ants')) fail('search: "ants" does not find wc-ants');
+      if (!ids('wincent').some((h) => h.startsWith('#/iq/wc-'))) fail('search: "wincent" finds no Wincent questions');
+      if (!ids('kelly').length || !QT.search.find('kelly').some((h) => h.type === 'card')) fail('search: "kelly" finds no formula card');
+      if (!ids('zetamac').includes('#/mental') || !ids('figgie').includes('#/figgie')) fail('search: pages (zetamac, figgie) not found');
+      if (ids('kelly zzzqqq').length) fail('search: a word that matches nothing should give no results');
+      if (QT.search.find('').length) fail('search: empty query should give no results');
+    }
+
     // Firm guide pages: every firm with questions gets a page listing all its questions with
     // answers, the index and sitemap link to them, and nothing renders as undefined/NaN.
     if (typeof firmPages !== 'undefined') {

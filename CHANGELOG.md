@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.0
+
+- **Search** (`#/search`, or press `/` on a keyboard): one box across interview questions (including their follow-ups), topics, formula cards (the formula shows in the result), speed tricks, case studies and the app's own screens, so "ants", "kelly" or "zetamac" goes straight there. Every word must match; title matches rank first. Results update as you type and the address is shareable (`#/search/kelly`). In the sidebar under Home and at the top of More on phones.
+- **Fixed stale counts:** the coach offered a "14-question diagnostic" and the tour said "Fourteen topics" when there are 15. These now count from the data, as does the number of speed-trick guides.
+
 ## 0.18.1
 
 - **Phone number pad fixed:** keys now run in phone order (1 2 3 on top, 0 at the bottom) instead of calculator order, and are bigger. Each screen shows only the keys its answers can need: Zetamac has just digits and delete (answers are accepted automatically, so no Enter); estimation and market making add a decimal point; practice questions keep minus, fraction and percent.

@@ -217,7 +217,7 @@
     const drill = (s) => ({ href: `#/drill/${s.topic.id}/${s.gi}`, label: 'Drill 5 questions' });
 
     if (totalAttempts < 10) {
-      recs.push({ pri: 100, kind: 'start', title: 'Take the 14-question diagnostic', why: 'One question from every topic, so I can find your gaps. It takes about 15 minutes.', href: '#/coach/diagnostic', label: 'Start diagnostic' });
+      recs.push({ pri: 100, kind: 'start', title: `Take the ${QT.topics.length}-question diagnostic`, why: 'One question from every topic, so I can find your gaps. It takes about 15 minutes.', href: '#/coach/diagnostic', label: 'Start diagnostic' });
     }
 
     const due = QT.mistakes ? QT.mistakes.due().length : 0;

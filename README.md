@@ -44,6 +44,7 @@
 | | |
 |---|---|
 | **Interview plan** | Pick the firm and date; get a daily checklist weighted to what that firm tests, with a countdown on the home screen. |
+| **Search** | One box across questions, topics, formula cards, speed tricks, case studies and screens; `/` opens it on a keyboard. |
 | **Coach** | Tracks 84 skills, diagnoses error types, ranks what to practise next with reasons, and offers a 15-question diagnostic and one-tap drills. |
 | **Practice** | 15 topics and 84 randomised question generators with worked solutions and a "check by simulation" button. Adaptive mixed practice. |
 | **Interview questions** | 43 questions: ones candidates report from Jane Street, SIG, Optiver, IMC, Citadel, Five Rings, Two Sigma, Flow Traders, Wincent, Akuna, Da Vinci and DRW (plus clearly labelled practice questions on the topics firms list), each sourced, with follow-ups and a timed mock-interview mode. |
