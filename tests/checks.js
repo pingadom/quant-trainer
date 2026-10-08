@@ -510,6 +510,30 @@
       QT.store.importJson(saved);
     }
 
+    // Imported HTML is rebuilt by a tokenizer: allowed tags survive, everything that could run
+    // is dropped, entities stay as they were. Same code in Node and the browser.
+    {
+      const saved = QT.store.exportJson();
+      const clean = (q) => {
+        const s = JSON.parse(saved);
+        s.mistakes = [{ key: 'k', tag: '<b>t</b>', p: { q, a: 1, sol: 's' }, box: 0, due: 0 }];
+        QT.store.importJson(JSON.stringify(s));
+        return QT.store.get().mistakes[0].p.q;
+      };
+      const cases = [
+        ['Q<img src=x onerror="go()"><sup class="x" onclick="y()">2</sup><script>alert(1)</script><a href="javascript:1">L</a>', 'Q<sup class="x">2</sup>alert(1)L'],
+        ['x < 5 &amp; y &lt; 3 & z', 'x &lt; 5 &amp; y &lt; 3 &amp; z'],
+        ['<b>bold</b><svg onload=go()></svg><!-- c --><SPAN CLASS="frac big">1</SPAN>', '<b>bold</b><span class="frac big">1</span>'],
+        ['<span class="x" onmouseover="y">z</span><span class="a;b">w</span>', '<span class="x">z</span><span>w</span>'],
+      ];
+      for (const [input, want] of cases) {
+        const got = clean(input);
+        if (got !== want) fail(`sanitise: ${JSON.stringify(input)} gave ${JSON.stringify(got)}`);
+      }
+      if (QT.store.get().mistakes[0].tag !== 't') fail('sanitise: plain-text field kept a tag');
+      QT.store.importJson(saved);
+    }
+
     // Search: finds questions by firm and words, topics by name, and formula cards; needs every word.
     if (QT.search) {
       const ids = (q) => QT.search.find(q).map((h) => h.href);

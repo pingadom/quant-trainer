@@ -7,7 +7,7 @@
   - 16 classic puzzles that prep books and interviewers draw on (Monty Hall, birthday problem, secretary problem, Buffon's needle, derangements, ballot theorem, 100 prisoners, Pólya's urn, Newton–Pepys, base rates, egg drop and more), written in our own words with our own solutions and a public reference for each. They're labelled as practice questions, not reports from a firm. Nothing is copied from the Green Book or any other book.
   - 4 reported questions that were named without rules, now answered with the standard rules stated: Virtu's clock-hands and hundred-doors puzzles, Tibra's pirate vote (5 and 7 pirates; Tibra is a new firm), and Akuna's St Petersburg lottery with a realistic payout cap.
   - Every answer is re-derived in Python (194 values now).
-- **Safer import cleaning:** imported progress files are now parsed in a separate, inert document (`DOMParser`) before cleaning. The old method was safe (nothing ran), but Chrome 156 started reporting security-policy warnings for it.
+- **Safer import cleaning:** formatted text in an imported progress file is now rebuilt by a small tokenizer instead of the browser's HTML parser, so untrusted markup never reaches a document at all. Allowed formatting (bold, superscripts, lists…) is kept; every other tag and attribute is dropped. The old method was already safe (nothing ran), but Chrome 156 started reporting security-policy warnings when it parsed handler attributes, even inertly. The same code now runs in the Node tests, which previously only saw plain text.
 - Ticked and flagged questions are marked with a coloured edge instead of being faded, which kept text below the contrast standard.
 
 ## 0.21.0
