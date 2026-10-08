@@ -775,7 +775,8 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .qmark { width: 40px; height: 40px; padding: 0; border-radius: 50%; font: 600 1.05rem var(--mono); background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
 .qmark.done[aria-pressed='true'] { background: var(--ok); border-color: var(--ok); color: var(--bg); }
 .qmark.unsure[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.qrow.s-done .qitem { opacity: 0.72; }
+.qrow.s-done .qitem { border-left: 3px solid var(--ok); }
+.qrow.s-unsure .qitem { border-left: 3px solid var(--accent); }
 .status-tag { font-size: 0.72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
 .status-tag.done { color: var(--ok); }
 .status-tag.unsure { color: var(--accent); }
