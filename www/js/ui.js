@@ -18,7 +18,28 @@
     const r = store.get().bank[b.id]?.results || [];
     return { answered: answered(r), right: r.filter(Boolean).length, total: b.parts ? b.parts.length : 1 };
   };
-  const bankDone = () => QT.bank.filter((b) => { const p = bankProgress(b); return p.answered === p.total; }).length;
+  // Status of an interview question: what you set, or else from your answers. Answering every
+  // part right ticks it off; getting a part wrong flags it unsure, so it comes back.
+  const bankStatus = (b) => {
+    const rec = store.get().bank[b.id];
+    if (rec?.mark) return rec.mark;
+    const p = bankProgress(b);
+    if (p.answered < p.total) return 'todo';
+    return p.right === p.total ? 'done' : 'unsure';
+  };
+  const setBankMark = (id, mark) => {
+    const rec = (store.get().bank[id] ||= { results: [] });
+    rec.mark = mark;
+    store.touchDay();
+    store.save();
+    updateBadges();
+  };
+  const bankCounts = (list = QT.bank) => {
+    const c = { done: 0, unsure: 0, todo: 0 };
+    for (const b of list) c[bankStatus(b)]++;
+    return c;
+  };
+  const bankDone = () => bankCounts().done;
   const recordBank = (id, i, ok) => {
     const rec = (store.get().bank[id] ||= { results: [] });
     rec.results[i] = ok;
@@ -27,11 +48,14 @@
   };
 
   function updateBadges() {
-    const n = QT.mistakes.due().length;
-    document.querySelectorAll('[data-badge="mistakes"]').forEach((b) => {
-      b.textContent = n;
-      b.hidden = !n;
-    });
+    if (typeof document === 'undefined') return;
+    const counts = { mistakes: QT.mistakes.due().length, unsure: bankCounts().unsure };
+    for (const [key, n] of Object.entries(counts)) {
+      document.querySelectorAll(`[data-badge="${key}"]`).forEach((b) => {
+        b.textContent = n;
+        b.hidden = !n;
+      });
+    }
   }
 
   // ---- cards ----
@@ -200,5 +224,5 @@
     next();
   }
 
-  QT.ui = { TRACKS, pctStr, esc, caseProgress, casesDone, bankProgress, bankDone, recordBank, updateBadges, STATUS, recCard, skillChip, topicCard, caseCard, questionCard };
+  QT.ui = { TRACKS, pctStr, esc, caseProgress, casesDone, bankProgress, bankDone, bankStatus, setBankMark, bankCounts, recordBank, updateBadges, STATUS, recCard, skillChip, topicCard, caseCard, questionCard };
 })();

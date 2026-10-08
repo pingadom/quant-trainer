@@ -485,6 +485,31 @@
       }
     }
 
+    // Question tracking: answers set the status unless you've set one; your mark survives export
+    // and import; anything else in an imported file is dropped.
+    if (QT.ui && QT.ui.bankStatus) {
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      const U = QT.ui, b = QT.bank.find((x) => x.parts && x.parts.length === 2), o = QT.bank.find((x) => x.open);
+      const st = () => U.bankStatus(b);
+      const steps = [st()];
+      U.recordBank(b.id, 0, true); steps.push(st());
+      U.recordBank(b.id, 1, true); steps.push(st());
+      U.recordBank(b.id, 1, false); steps.push(st());
+      U.setBankMark(b.id, 'done'); steps.push(st());
+      U.setBankMark(b.id, 'todo'); steps.push(st());
+      U.setBankMark(o.id, 'unsure');
+      if (steps.join() !== 'todo,todo,done,unsure,done,todo') fail(`tracking: status sequence ${steps.join()}`);
+      const c = U.bankCounts();
+      if (c.unsure !== 1 || c.done !== 0 || c.todo !== QT.bank.length - 1) fail(`tracking: counts ${JSON.stringify(c)}`);
+      if (!QT.coach.recommend().some((r) => r.kind === 'unsure' && r.href === '#/bank/all/unsure')) fail('tracking: unsure questions should be recommended');
+      const snap = JSON.parse(QT.store.exportJson());
+      snap.bank[b.id].mark = 'evil<script>';
+      QT.store.importJson(JSON.stringify(snap));
+      if (QT.store.get().bank[b.id].mark !== undefined || QT.store.get().bank[o.id].mark !== 'unsure') fail('tracking: marks not sanitised on import');
+      QT.store.importJson(saved);
+    }
+
     // Search: finds questions by firm and words, topics by name, and formula cards; needs every word.
     if (QT.search) {
       const ids = (q) => QT.search.find(q).map((h) => h.href);

@@ -768,3 +768,19 @@ main.static { margin: 0 auto; max-width: 860px; }
 .search-back { color: var(--muted); }
 .search-entry { display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: var(--ink); margin-bottom: 8px; }
 mark { background: var(--accent-soft); color: inherit; border-radius: 2px; padding: 0 1px; }
+
+/* interview question tracking */
+.qrow { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
+.qmarks { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
+.qmark { width: 40px; height: 40px; padding: 0; border-radius: 50%; font: 600 1.05rem var(--mono); background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+.qmark.done[aria-pressed='true'] { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+.qmark.unsure[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.qrow.s-done .qitem { opacity: 0.72; }
+.status-tag { font-size: 0.72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.status-tag.done { color: var(--ok); }
+.status-tag.unsure { color: var(--accent); }
+.qstatus { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.bank-progress { margin-bottom: 10px; }
+.bar.stack { display: flex; height: 8px; border-radius: 999px; background: var(--panel-2); overflow: hidden; margin-top: 8px; }
+.bar.stack i { display: block; height: 100%; background: var(--ok); }
+.bar.stack i.unsure { background: var(--accent); }

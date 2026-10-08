@@ -607,6 +607,80 @@ record("sq-biased-coin.0", lik_b / (lik_b + lik_f), "Bayes with binomial likelih
 record("val-two-fives.0", wait_pattern("55", Fr(1, 6), "5x"), "prefix chain linear solve")
 
 
+# ---------------------------------------------------------------- bank-classics.js
+# Clock: count overlaps by stepping through a day; angle directly.
+overlaps = sum(1 for k in range(0, 24 * 11 + 1) if Fr(12, 11) * k < 24)
+record("virtu-clock.0", overlaps, "overlaps every 12/11 h in [0, 24)")
+record("virtu-clock.1", abs((3 * 30 + 15 * 0.5) - 15 * 6), "hour hand 97.5, minute hand 90")
+doors = [False] * 101
+for p_ in range(1, 101):
+    for d_ in range(p_, 101, p_):
+        doors[d_] = not doors[d_]
+record("virtu-doors.0", sum(doors), "simulate the toggles")
+
+
+def pirate_split(n, coins=100):
+    """Backward induction by brute force over the cheapest-vote reasoning, checked by votes."""
+    alloc = (coins,)
+    for k in range(2, n + 1):
+        nxt = alloc  # what pirates 1..k-1 get if the proposer is thrown over
+        best = None
+        need = -(-k // 2)  # votes needed, ceil(k/2), including the proposer's
+        # Try every set of voters to buy (k <= 7, so this is small) and keep the cheapest.
+        for voters in itertools.combinations(range(1, k), need - 1):
+            cost = sum(nxt[i - 1] + 1 for i in voters)
+            if cost <= coins and (best is None or cost < best[0]):
+                best = (cost, voters)
+        split = [0] * k
+        for i in best[1]:
+            split[i] = nxt[i - 1] + 1
+        split[0] = coins - best[0]
+        alloc = tuple(split)
+    return alloc
+
+
+record("tib-pirates.0", pirate_split(5)[0], f"split {pirate_split(5)}")
+record("tib-pirates.1", pirate_split(7)[0], f"split {pirate_split(7)}")
+record("akuna-st-petersburg.0", sum(Fr(2 ** min(k, 20), 2 ** k) for k in range(1, 200)), "sum over k with the cap")
+record("akuna-st-petersburg.1", sum(Fr(2 ** min(k, 30), 2 ** k) for k in range(1, 300)), "sum over k with the cap")
+wins = sum(1 for car in range(3) for pick in range(3) if pick != car)
+record("cl-monty-hall.0", Fr(wins, 9), "enumerate car and pick")
+record("cl-monty-hall.1", Fr(99, 100), "first pick wrong")
+p_same = 1 - math.prod(Fr(365 - k, 365) for k in range(23))
+record("cl-birthday.0", next(n for n in range(1, 100) if 1 - math.prod(Fr(365 - k, 365) for k in range(n)) > Fr(1, 2)), "exact products")
+record("cl-birthday.1", p_same, "exact product")
+orders = list(itertools.permutations(range(3)))  # rank 2 = best
+def sec_win(o):
+    first = o[0]
+    for x in o[1:]:
+        if x > first:
+            return x == 2
+    return o[-1] == 2
+record("cl-secretary.0", Fr(sum(sec_win(o) for o in orders), len(orders)), "enumerate 6 orders")
+best_r = max(range(1, 10000), key=lambda r: (r / 10000) * math.log(10000 / r))
+assert abs(best_r / 10000 - 1 / math.e) < 1e-3
+record("cl-secretary.1", 1 / math.e, f"limit of max (r/n) ln(n/r); best r/n at n = 10000 is {best_r / 10000}")
+record("cl-buffon.0", quad(lambda t: math.sin(t), 0, math.pi / 2)[0] * 2 / math.pi, "integral over angle")
+perms4h = list(itertools.permutations(range(4)))
+record("cl-derangements.0", Fr(sum(all(p[i] != i for i in range(4)) for p in perms4h), 24), "enumerate 24")
+record("cl-derangements.1", Fr(sum(sum(p[i] == i for i in range(4)) for p in perms4h), 24), "enumerate 24")
+ballots = set(itertools.permutations([1] * 6 + [-1] * 4))
+ahead = sum(all(sum(b[:i + 1]) > 0 for i in range(10)) for b in ballots)
+record("cl-ballot.0", Fr(ahead, len(ballots)), "enumerate distinct counts")
+record("cl-100-prisoners.0", 1 - sum(Fr(1, k) for k in range(51, 101)), "no cycle longer than 50")
+record("cl-first-ace.0", sum(Fr(math.comb(52 - n, 3), math.comb(52, 4)) * n for n in range(1, 50)), "position of the first ace, exact")
+record("cl-semicircle.0", 1 - Fr(sum(math.comb(2, k) for k in range(2)), 2 ** 2), "Wendel: P(3 points in a semicircle) = (1 + 2)/4")
+record("cl-polya.0", math.comb(10, 5) * Fr(math.factorial(5) * math.factorial(5), math.factorial(11)), "sequence probability x C(n,k)")
+record("cl-newton-pepys.0", 1 - Fr(5, 6) ** 6, "binomial")
+record("cl-newton-pepys.1", 1 - sum(math.comb(12, k) * Fr(1, 6) ** k * Fr(5, 6) ** (12 - k) for k in range(2)), "binomial")
+record("cl-base-rate.0", Fr(99, 99 + 495), "count 10,000 people")
+record("cl-trailing-zeros.0", len(str(math.factorial(100))) - len(str(math.factorial(100)).rstrip("0")), "count the zeros")
+record("cl-uniform-sum.0", sum(1 / math.factorial(n) for n in range(30)), "sum of 1/n!")
+def drops(d):
+    return d * (d + 1) // 2
+record("cl-egg-drop.0", next(d for d in range(1, 100) if drops(d) >= 100), "smallest d with d(d+1)/2 >= 100")
+
+
 # ---------------------------------------------------------------- report
 def main():
     if hasattr(sys.stdout, "reconfigure"):

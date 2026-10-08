@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.21.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.22.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -188,6 +188,8 @@
   const text = (x, len = 300) => String(x ?? '').replace(/<[^>]*>/g, '').slice(0, len);
   const bits = (a, cap) => arr(a, cap).map((v) => (v ? 1 : 0));
   const results = (r) => ({ results: arr(obj(r).results, 50).map((v) => (v === null || v === undefined ? null : !!v)) });
+  // Interview questions also carry a status you set: done, unsure (come back later) or todo.
+  const bankRec = (r) => ({ ...results(r), ...(['done', 'unsure', 'todo'].includes(obj(r).mark) ? { mark: obj(r).mark } : {}) });
   const mapKeys = (o, fn, keyOk = () => true) => Object.fromEntries(Object.entries(obj(o)).filter(([k]) => keyOk(k)).slice(0, 500).map(([k, v]) => [text(k, 80), fn(v)]));
 
   function sanitizeState(raw) {
@@ -199,7 +201,7 @@
     s.market = { games: num(mk.games), total: num(mk.total), best: mk.best == null ? null : num(mk.best), history: arr(mk.history, 100).map((x) => ({ date: text(obj(x).date, 40), pnl: num(obj(x).pnl), midErr: num(obj(x).midErr) })) };
     s.roadmap = mapKeys(r.roadmap, (v) => !!v);
     s.cases = mapKeys(r.cases, results);
-    s.bank = mapKeys(r.bank, results);
+    s.bank = mapKeys(r.bank, bankRec);
     s.mistakes = arr(r.mistakes, 500).map((raw) => {
       const m = obj(raw), p = obj(m.p), tol = obj(p.tol);
       return {

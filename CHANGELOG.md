@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.22.0
+
+- **Tick off interview questions, or flag them unsure.** Every question now has a status: done, unsure or to do. Tick it (✓) or flag it (?) from the list or the question page; pressing the same button again clears it. Answering every part correctly ticks it for you and getting a part wrong flags it unsure, but your own choice always wins. The list has a progress bar (done and unsure), filters for To do / Unsure / Done, and done counts on each firm's chip. The sidebar shows how many are unsure, the question page links to the next unsure one, and the coach brings them up. Statuses are saved with your progress and survive export and import.
+- **20 more questions** (154 in all):
+  - 16 classic puzzles that prep books and interviewers draw on (Monty Hall, birthday problem, secretary problem, Buffon's needle, derangements, ballot theorem, 100 prisoners, Pólya's urn, Newton–Pepys, base rates, egg drop and more), written in our own words with our own solutions and a public reference for each. They're labelled as practice questions, not reports from a firm. Nothing is copied from the Green Book or any other book.
+  - 4 reported questions that were named without rules, now answered with the standard rules stated: Virtu's clock-hands and hundred-doors puzzles, Tibra's pirate vote (5 and 7 pirates; Tibra is a new firm), and Akuna's St Petersburg lottery with a realistic payout cap.
+  - Every answer is re-derived in Python (194 values now).
+
 ## 0.21.0
 
 - **91 more reported interview questions, from 8 more firms** (134 in all, 21 firms). Taken from a curated collection of public Glassdoor trader-interview reports, paraphrased, each linked to its report. New firms: Hudson River Trading, Jump, Eclipse, Old Mission, Belvedere, Squarepoint, Valkyrie and Virtu, each with how they interview (as reported) and a firm guide page.
