@@ -161,27 +161,28 @@
   // plain-text fields lose all tags, and HTML fields keep only a small inert allow-list.
   const ALLOWED = new Set(['B', 'I', 'EM', 'STRONG', 'SUP', 'SUB', 'P', 'BR', 'UL', 'OL', 'LI', 'SPAN']);
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  // A tokenizer, not the browser's parser: untrusted markup never reaches a DOM (Chrome 156+
+  // reports CSP violations for handler attributes as soon as it parses them, even inertly).
+  // Allowed tags are re-emitted bare (class kept if it's plain words); every other tag is
+  // dropped with all its attributes; comments go; text is escaped, keeping valid entities.
+  const TAG = /<!--[\s\S]*?(?:-->|$)|<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>|<![^>]*>/g;
+  const escapeText = (t) => t.replace(/&(?!(?:#\d{1,7}|#x[0-9a-fA-F]{1,6}|[a-zA-Z][a-zA-Z0-9]{1,31});)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   function sanitizeHtml(html) {
     html = String(html ?? '').slice(0, 20000);
-    if (typeof document === 'undefined') return escapeHtml(html.replace(/<[^>]*>/g, '')); // no DOM (tests): plain text
-    // Parse into a separate document with no browsing context: nothing in it runs, loads or is
-    // checked against this page's CSP. (Parsing into a <template> on this page is inert too, but
-    // newer Chrome reports CSP violations for handler attributes it sees there.)
-    const doc = new DOMParser().parseFromString(`<!doctype html><body>${html}`, 'text/html');
-    const clean = (node) => {
-      for (const child of [...node.childNodes]) {
-        if (child.nodeType === 3) continue;
-        if (child.nodeType !== 1 || !ALLOWED.has(child.tagName)) {
-          child.replaceWith(doc.createTextNode(child.nodeType === 1 ? child.textContent : ''));
-          continue;
-        }
-        for (const a of [...child.attributes]) if (!(a.name === 'class' && /^[\w -]*$/.test(a.value))) child.removeAttribute(a.name);
-        clean(child);
-      }
-    };
-    clean(doc.body);
-    return doc.body.innerHTML;
+    let out = '', at = 0, m;
+    TAG.lastIndex = 0;
+    while ((m = TAG.exec(html))) {
+      out += escapeText(html.slice(at, m.index));
+      at = TAG.lastIndex;
+      const [, close, name] = m;
+      if (!name || !ALLOWED.has(name.toUpperCase())) continue;
+      const cls = !close && /\bclass\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(m[3]);
+      const c = cls && (cls[1] ?? cls[2]);
+      out += `<${close}${name.toLowerCase()}${c && /^[\w -]*$/.test(c) ? ` class="${c}"` : ''}>`;
+    }
+    return out + escapeText(html.slice(at));
   }
+
   const num = (x, d = 0) => (x !== null && x !== '' && Number.isFinite(+x) ? +x : d);
   const obj = (x) => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
   const arr = (x, cap) => (Array.isArray(x) ? x.slice(-cap) : []);
