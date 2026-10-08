@@ -164,23 +164,23 @@
   function sanitizeHtml(html) {
     html = String(html ?? '').slice(0, 20000);
     if (typeof document === 'undefined') return escapeHtml(html.replace(/<[^>]*>/g, '')); // no DOM (tests): plain text
-    const tpl = document.createElement('template');
-    tpl.innerHTML = html; // template content is inert: nothing runs or loads while we clean it
+    // Parse into a separate document with no browsing context: nothing in it runs, loads or is
+    // checked against this page's CSP. (Parsing into a <template> on this page is inert too, but
+    // newer Chrome reports CSP violations for handler attributes it sees there.)
+    const doc = new DOMParser().parseFromString(`<!doctype html><body>${html}`, 'text/html');
     const clean = (node) => {
       for (const child of [...node.childNodes]) {
         if (child.nodeType === 3) continue;
         if (child.nodeType !== 1 || !ALLOWED.has(child.tagName)) {
-          child.replaceWith(document.createTextNode(child.nodeType === 1 ? child.textContent : ''));
+          child.replaceWith(doc.createTextNode(child.nodeType === 1 ? child.textContent : ''));
           continue;
         }
         for (const a of [...child.attributes]) if (!(a.name === 'class' && /^[\w -]*$/.test(a.value))) child.removeAttribute(a.name);
         clean(child);
       }
     };
-    clean(tpl.content);
-    const out = document.createElement('div');
-    out.appendChild(tpl.content);
-    return out.innerHTML;
+    clean(doc.body);
+    return doc.body.innerHTML;
   }
   const num = (x, d = 0) => (x !== null && x !== '' && Number.isFinite(+x) ? +x : d);
   const obj = (x) => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
