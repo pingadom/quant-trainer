@@ -31,32 +31,62 @@
   // An unknown firm in a link (typo, or a firm since removed) shows every question instead of nothing.
   const knownFirm = (firm) => (firm && Object.prototype.hasOwnProperty.call(QT.firms, firm) ? firm : undefined);
 
-  function bank(el, firmArg) {
+  const FILTERS = { all: 'All', todo: 'To do', unsure: 'Unsure', done: 'Done' };
+  const MARK_LABEL = { done: 'Done', unsure: 'Unsure', todo: 'To do' };
+
+  // Tick and flag buttons for one question. Pressing the current status clears it to "to do".
+  const markButtons = (b, s) => `
+    <button type="button" class="qmark done" data-mark="done" data-id="${b.id}" aria-pressed="${s === 'done'}" title="${s === 'done' ? 'Done: press to untick' : 'Tick off as done'}" aria-label="Done">✓</button>
+    <button type="button" class="qmark unsure" data-mark="unsure" data-id="${b.id}" aria-pressed="${s === 'unsure'}" title="${s === 'unsure' ? 'Unsure: press to clear' : 'Flag as unsure, to come back to'}" aria-label="Unsure">?</button>`;
+  const toggleMark = (id, mark) => U.setBankMark(id, U.bankStatus(QT.bankById(id)) === mark ? 'todo' : mark);
+
+  function bank(el, firmArg, filterArg) {
     const firm = knownFirm(firmArg);
-    const list = QT.bank.filter((b) => !firm || b.firm === firm);
+    const filter = Object.prototype.hasOwnProperty.call(FILTERS, filterArg) ? filterArg : 'all';
+    const scope = QT.bank.filter((b) => !firm || b.firm === firm);
+    const list = filter === 'all' ? scope : scope.filter((b) => U.bankStatus(b) === filter);
     const F = firm && QT.firms[firm];
+    const c = U.bankCounts(scope), base = `#/bank/${firm || 'all'}`;
+    const pct = (n) => (scope.length ? (100 * n) / scope.length : 0);
     el.innerHTML = `
       <h1>Interview questions</h1>
       <p class="lede">Questions candidates report being asked at trading firms, rewritten in our own words with worked solutions and a link to where each was reported. Treat attributions as candidate reports, not official material, and expect interviewers to change the numbers. Each firm also has a <a href="firms/">plain guide page</a> to read or share.</p>
       <div class="chips filter">
-        <a class="chip ${firm ? '' : 'on'}" href="#/bank">All (${QT.bank.length})</a>
-        ${Object.entries(QT.firms).map(([k, v]) => { const n = QT.bank.filter((b) => b.firm === k).length; return n ? `<a class="chip ${firm === k ? 'on' : ''}" href="#/bank/${k}">${v.name} (${n})</a>` : ''; }).join('')}
+        <a class="chip ${firm ? '' : 'on'}" href="#/bank/all/${filter}">All firms (${U.bankCounts().done}/${QT.bank.length})</a>
+        ${Object.entries(QT.firms).map(([k, v]) => { const qs = QT.bank.filter((b) => b.firm === k); return qs.length ? `<a class="chip ${firm === k ? 'on' : ''}" href="#/bank/${k}/${filter}">${v.name} (${U.bankCounts(qs).done}/${qs.length})</a>` : ''; }).join('')}
       </div>
       ${F ? `<details class="card intel" ${window.innerWidth > 760 ? 'open' : ''}><summary><b>How ${F.name} interviews</b> (as reported)</summary>
         <ul>${F.process.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: ${F.sources.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(' · ')}</p></details>` : ''}
-      <div class="row" style="margin:14px 0">
-        ${mockLink(firm, F)}
-        <span class="small">${U.bankDone()}/${QT.bank.length} completed</span>
+      <div class="row" style="margin:14px 0">${mockLink(firm, F)}</div>
+      <div class="bank-progress card">
+        <div class="row" style="justify-content:space-between"><b>${c.done} of ${scope.length} done${F ? ` at ${F.name}` : ''}</b><span class="small">${c.unsure ? `${c.unsure} unsure · ` : ''}${c.todo} to do</span></div>
+        <div class="bar stack" role="progressbar" aria-label="Questions done" aria-valuenow="${Math.round(pct(c.done))}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct(c.done)}%"></i><i class="unsure" style="width:${pct(c.unsure)}%"></i></div>
+        <p class="small" style="margin:6px 0 0">Tick a question off with ✓, or flag it ? to come back to. Getting every part right ticks it for you; a wrong part flags it unsure.</p>
       </div>
-      <div class="qlist">
-        ${list.map((b) => { const p = U.bankProgress(b); return `
-          <a class="card qitem" href="#/iq/${b.id}">
-            <div class="row" style="gap:6px">${firmBadge(b)}<span class="small">${b.role} · ${b.stage} · ${b.cat}</span>${b.kind === 'guide' ? '<span class="chip">prep-guide format</span>' : ''}</div>
-            <div class="qtext">${plain(b.q)}</div>
-            <div class="meta"><span>${b.open ? 'open-ended' : `${b.parts.length} part${b.parts.length > 1 ? 's' : ''}`}</span><span>${p.answered === p.total ? `✓ ${p.right}/${p.total}` : p.answered ? `${p.answered}/${p.total} done` : ''}</span></div>
-          </a>`; }).join('')}
+      <div class="chips filter" role="group" aria-label="Show">
+        ${Object.entries(FILTERS).map(([k, label]) => `<a class="chip ${filter === k ? 'on' : ''}" href="${base}/${k}">${label} (${k === 'all' ? scope.length : c[k]})</a>`).join('')}
+      </div>
+      <div class="qlist" id="qlist">
+        ${list.length ? list.map((b) => { const p = U.bankProgress(b), s = U.bankStatus(b); return `
+          <div class="qrow s-${s}">
+            <div class="qmarks">${markButtons(b, s)}</div>
+            <a class="card qitem" href="#/iq/${b.id}">
+              <div class="row" style="gap:6px">${firmBadge(b)}<span class="small">${b.role} · ${b.stage} · ${b.cat}</span>${b.kind === 'guide' ? '<span class="chip">practice question</span>' : ''}${s !== 'todo' ? `<span class="status-tag ${s}">${MARK_LABEL[s]}</span>` : ''}</div>
+              <div class="qtext">${plain(b.q)}</div>
+              <div class="meta"><span>${b.open ? 'open-ended' : `${b.parts.length} part${b.parts.length > 1 ? 's' : ''}`}</span><span>${p.answered ? `${p.right}/${p.total} right` : ''}</span></div>
+            </a>
+          </div>`; }).join('') : `<p class="small">${filter === 'unsure' ? 'Nothing flagged unsure.' : filter === 'done' ? 'Nothing ticked off yet.' : 'Nothing left to do here.'} <a href="${base}/all">Show all</a></p>`}
       </div>`;
+    el.querySelector('#qlist').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-mark]');
+      if (!btn) return;
+      toggleMark(btn.dataset.id, btn.dataset.mark);
+      const y = window.scrollY;
+      bank(el, firmArg, filterArg); // redraw the counts and the row
+      window.scrollTo(0, y);
+      el.querySelector(`[data-id="${btn.dataset.id}"][data-mark="${btn.dataset.mark}"]`)?.focus();
+    });
   }
 
   function question(el, id) {
@@ -67,14 +97,29 @@
       <a class="back" href="#/bank/${b.firm}">← ${QT.firms[b.firm].name} questions</a>
       <h1 class="q-title">${QT.firms[b.firm].name}: ${b.cat}</h1>
       <div class="row" style="gap:6px;margin-bottom:6px"><span class="small">${b.role} · ${b.stage}</span></div>
-      <p class="small">${b.kind === 'reported' ? 'Reported by a candidate' : 'Common format from prep guides (not verified as asked at one firm)'} · source: <a href="${b.src[1]}" target="_blank" rel="noopener">${b.src[0]}</a></p>
+      <p class="small">${b.kind === 'reported' ? 'Reported by a candidate' : 'Practice question in a common interview format (not reported from one firm)'} · source: <a href="${b.src[1]}" target="_blank" rel="noopener">${b.src[0]}</a></p>
+      <div class="qstatus" id="qstatus"></div>
       ${b.note ? `<div class="card note">${b.note}</div>` : ''}
       <div id="qbox"></div>
       ${b.followups?.length ? `<h2>Interviewers may push further</h2><ul class="followups">${b.followups.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}
       <div class="row" style="margin-top:18px"><a class="btn ghost" href="#/talk/${b.id}">Practise it out loud</a><a class="btn ghost" href="#/iq/${next.id}">Next ${QT.firms[b.firm].name} question →</a></div>`;
+    const statusBox = el.querySelector('#qstatus');
+    const drawStatus = () => {
+      const s = U.bankStatus(b), other = QT.bank.find((x) => x !== b && U.bankStatus(x) === 'unsure');
+      statusBox.innerHTML = `${markButtons(b, s)}<span class="small">${s === 'done' ? 'Done.' : s === 'unsure' ? 'Flagged unsure: it stays on your list to come back to.' : 'Tick it off when you can answer it cleanly, or flag it to come back to.'}</span>${other ? `<a class="small" href="#/iq/${other.id}">Next unsure question →</a>` : ''}`;
+    };
+    statusBox.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-mark]');
+      if (!btn) return;
+      toggleMark(b.id, btn.dataset.mark);
+      drawStatus();
+      statusBox.querySelector(`[data-mark="${btn.dataset.mark}"]`).focus();
+    });
+    drawStatus();
     const box = el.querySelector('#qbox');
-    if (b.open) return openCard(box, b);
+    if (b.open) return openCard(box, b, drawStatus);
     U.questionCard(box, bankSource([b]), (bx, r) => {
+      drawStatus();
       bx.innerHTML = `<div class="card"><h3>Done: ${r.right}/${r.solved} parts correct</h3>
         <p class="small">Now answer it again out loud as if to an interviewer: state your approach first, then the numbers, then sanity-check the result.</p>
         <div class="row"><a class="btn" href="#/talk/${b.id}">Practise it out loud</a><button class="ghost" id="redo">Try again</button></div></div>`;
@@ -83,7 +128,7 @@
   }
 
   // Open-ended questions: think, reveal a model answer, then self-grade.
-  function openCard(box, b) {
+  function openCard(box, b, onGraded = () => {}) {
     box.innerHTML = `
       <div class="card">
         <div class="question">${b.q}</div>
@@ -101,7 +146,8 @@
     });
     box.querySelectorAll('[data-ok]').forEach((btn) => btn.addEventListener('click', () => {
       U.recordBank(b.id, 0, btn.dataset.ok === '1');
-      btn.parentElement.innerHTML = `<span class="small">Saved. Try it again in a few days.</span>`;
+      btn.parentElement.innerHTML = `<span class="small">Saved. ${btn.dataset.ok === '1' ? 'Ticked off.' : 'Flagged unsure, so it comes back.'}</span>`;
+      onGraded();
     }));
   }
 

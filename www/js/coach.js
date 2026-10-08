@@ -264,6 +264,10 @@
       recs.push({ pri: 200, kind: 'plan', voice: ps.left === 0 ? `${name} today. Light review only, then go and get it.` : `${name} in ${ps.left} day${ps.left > 1 ? 's' : ''}. ${n} thing${n > 1 ? 's' : ''} left on today's list.`, title: `Today's ${name} prep: ${ps.done}/${ps.tasks.length} done`, why: `Next: ${ps.tasks.find((t) => !(t.auto && t.auto()) && !(ps.p.done[QT.dayKey(new Date())] || []).includes(t.id))?.label || 'see the plan'}.`, href: '#/plan', label: 'Open the plan' });
     }
 
+    // Interview questions flagged unsure (by you, or by a wrong answer).
+    const unsure = QT.ui ? QT.ui.bankCounts().unsure : 0;
+    if (unsure) recs.push({ pri: 43, kind: 'unsure', voice: `${unsure} interview question${unsure === 1 ? '' : 's'} you weren't sure about. Go back while they're fresh.`, title: `Unsure: ${unsure} interview question${unsure === 1 ? '' : 's'} to revisit`, why: 'You flagged these, or got a part wrong. Answer them cleanly, then tick them off.', href: '#/bank/all/unsure', label: 'Revisit' });
+
     // Formula cards that are due.
     const cardsDue = QT.flashcards ? QT.flashcards.dueIds().length : 0;
     if (cardsDue >= 5) recs.push({ pri: 44, kind: 'cards', voice: `${cardsDue} formulas you should know cold. Five minutes.`, title: `Formula cards: ${cardsDue} due`, why: 'Results like Var(aX + bY), the Kelly fraction and √252 come up constantly. Flip through the ones due today.', href: '#/flashcards', label: 'Review cards' });
