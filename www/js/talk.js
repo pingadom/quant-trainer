@@ -64,6 +64,9 @@
     });
   }
 
+  // Every part's hints in order, labelled by part when there are several.
+  const talkHints = (b) => (b.parts ? b.parts.flatMap((x, i) => (x.hints || []).map((h) => (b.parts.length > 1 ? [`Part ${i + 1}:`, h] : h))) : b.open?.hints || []);
+
   async function session(el, b) {
     const p = prefs(), F = QT.firms[b.firm];
     const start = Date.now();
@@ -77,10 +80,12 @@
         <div class="question">${b.q}</div>
         ${b.parts && b.parts.length > 1 ? `<ol>${b.parts.map((x) => `<li>${x.q}</li>`).join('')}</ol>` : b.parts && b.parts[0].q !== b.q ? `<p>${b.parts[0].q}</p>` : ''}
         <p class="small" id="tk-status" aria-live="polite">Talk it through out loud. Start by restating the question.</p>
+        <div id="tk-hints">${QT.ui.hintBox(talkHints(b))}</div>
         <div class="transcript" id="tk-live" hidden></div>
         <button id="tk-done" class="btn-lg">I'm done: show the answer</button>
       </div>`;
     const $ = (s) => el.querySelector(s);
+    QT.ui.wireHints($('#tk-hints'), talkHints(b));
     timer = setInterval(() => { $('#tk-clock').textContent = clock((Date.now() - start) / 1000); }, 500);
 
     const stopAll = () => {

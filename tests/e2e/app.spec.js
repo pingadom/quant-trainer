@@ -465,3 +465,18 @@ test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
     });
   }
 });
+
+test('hints come one at a time, and an answer found with hints stays flagged unsure', async ({ page }) => {
+  await page.goto('./#/iq/opt-increasing');
+  const hint = page.locator('.hint-btn');
+  await expect(hint).toHaveText(/Hint \(1 of \d+\)/);
+  await hint.click();
+  await expect(page.locator('.hint-list li')).toHaveCount(1);
+  await hint.click();
+  await expect(page.locator('.hint-list li')).toHaveCount(2);
+  await page.addStyleTag({ content: '.keypad { display: none !important }' }); // type directly, also on the phone project
+  await page.evaluate(() => { const i = document.querySelector('#p-in'); i.readOnly = false; i.value = '5/54'; });
+  await page.locator('#p-form').evaluate((f) => f.requestSubmit());
+  await expect(page.locator('.fb.ok')).toContainText('with 2 hints');
+  await expect(page.locator('#qstatus [data-mark="unsure"]')).toHaveAttribute('aria-pressed', 'true');
+});

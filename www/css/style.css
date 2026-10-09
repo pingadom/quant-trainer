@@ -785,3 +785,10 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .bar.stack { display: flex; height: 8px; border-radius: 999px; background: var(--panel-2); overflow: hidden; margin-top: 8px; }
 .bar.stack i { display: block; height: 100%; background: var(--ok); }
 .bar.stack i.unsure { background: var(--accent); }
+
+/* hints */
+.hints { margin: 6px 0 10px; }
+.hint-list { margin: 0 0 6px; padding-left: 1.4em; display: grid; gap: 4px; }
+.hint-list li { background: var(--accent-soft); border-radius: 6px; padding: 6px 10px; }
+.hint-list li::marker { color: var(--muted); }
+.hint-end { margin: 4px 0 0; }

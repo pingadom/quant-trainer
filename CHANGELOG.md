@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.0
+
+- **Hints for every interview question:** 726 hints across all 216 parts of the 154 questions (3–5 each), revealed one at a time with "Hint (1 of 4)". They build from a nudge (what to look at) to the method and the set-up, but never the answer: a test checks that no hint contains its part's answer, that every part has at least three, and that every hint belongs to a real question. They're on the question page, on open-ended and behavioural questions, in mock interviews and in Think aloud (labelled by part).
+- **Answers found with hints count, but stay unsure:** the result says "with 2 hints", and the question stays flagged unsure until you get it right unaided (or tick it off yourself).
+
 ## 0.22.0
 
 - **Tick off interview questions, or flag them unsure.** Every question now has a status: done, unsure or to do. Tick it (✓) or flag it (?) from the list or the question page; pressing the same button again clears it. Answering every part correctly ticks it for you and getting a part wrong flags it unsure, but your own choice always wins. The list has a progress bar (done and unsure), filters for To do / Unsure / Done, and done counts on each firm's chip. The sidebar shows how many are unsure, the question page links to the next unsure one, and the coach brings them up. Statuses are saved with your progress and survive export and import.

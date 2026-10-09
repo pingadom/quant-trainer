@@ -25,7 +25,8 @@
     if (rec?.mark) return rec.mark;
     const p = bankProgress(b);
     if (p.answered < p.total) return 'todo';
-    return p.right === p.total ? 'done' : 'unsure';
+    // Right with hints isn't done yet: it stays unsure until you can do it unaided.
+    return p.right === p.total && !(rec?.hinted || []).some(Boolean) ? 'done' : 'unsure';
   };
   const setBankMark = (id, mark) => {
     const rec = (store.get().bank[id] ||= { results: [] });
@@ -40,12 +41,37 @@
     return c;
   };
   const bankDone = () => bankCounts().done;
-  const recordBank = (id, i, ok) => {
+  const recordBank = (id, i, ok, hints = 0) => {
     const rec = (store.get().bank[id] ||= { results: [] });
     rec.results[i] = ok;
+    if (hints || rec.hinted) (rec.hinted ||= [])[i] = hints;
     store.touchDay();
     store.save();
   };
+
+  // Hints revealed one at a time. `list` is [html, …] or [[label, html], …]; onUse(n) runs after
+  // each reveal with the number shown so far.
+  const hintBox = (list) => (list && list.length ? `
+    <div class="hints">
+      <ol class="hint-list" hidden></ol>
+      <button type="button" class="link hint-btn">Hint (1 of ${list.length})</button>
+    </div>` : '');
+  function wireHints(root, list, onUse = () => {}) {
+    const btn = root.querySelector('.hint-btn'), ol = root.querySelector('.hint-list');
+    if (!btn) return () => 0;
+    let shown = 0;
+    btn.addEventListener('click', () => {
+      const h = list[shown++];
+      ol.hidden = false;
+      ol.insertAdjacentHTML('beforeend', Array.isArray(h) ? `<li><b>${h[0]}</b> ${h[1]}</li>` : `<li>${h}</li>`);
+      if (shown >= list.length) {
+        btn.hidden = true;
+        ol.insertAdjacentHTML('afterend', '<p class="small hint-end">That was the last hint. The next step is the answer.</p>');
+      } else btn.textContent = `Hint (${shown + 1} of ${list.length})`;
+      onUse(shown);
+    });
+    return () => shown;
+  }
 
   function updateBadges() {
     if (typeof document === 'undefined') return;
@@ -113,6 +139,7 @@
       <div class="card qcard" id="qcard">
         <div class="q-top"><span class="tag" id="p-tag"></span><span class="q-score" id="s-count"></span></div>
         <div class="question" id="p-q"></div>
+        <div id="p-hints"></div>
         <form class="answer-row" id="p-form">
           <input type="text" id="p-in" inputmode="decimal" autocomplete="off" placeholder="Your answer" aria-label="Your answer" aria-describedby="p-hint">
           <button id="p-btn">Check</button>
@@ -140,6 +167,7 @@
       $hint.classList.toggle('nudge', nudge);
     };
 
+    let hintsUsed = () => 0;
     function next() {
       item = source();
       if (!item) return onDone && onDone(box, { solved, right });
@@ -147,6 +175,8 @@
       simToken++;
       $('#p-tag').textContent = item.tag;
       $('#p-q').innerHTML = item.p.q;
+      $('#p-hints').innerHTML = hintBox(item.p.hints);
+      hintsUsed = wireHints($('#p-hints'), item.p.hints || []);
       $fb.innerHTML = '';
       $in.value = '';
       $in.disabled = false;
@@ -165,7 +195,9 @@
       solved++;
       if (ok) right++;
       run = ok ? run + 1 : 0;
-      const fate = item.record(ok);
+      const nHints = hintsUsed();
+      $('#p-hints').querySelector('.hint-btn')?.setAttribute('hidden', '');
+      const fate = item.record(ok, nHints);
       if (item.skill) QT.coach.observe(item.skill, ok, Date.now() - shownAt);
       // practiceOnly items (arithmetic drills) don't feed the mistakes deck or the coach's habits,
       // which are about probability and statistics; they still get the diagnosis tip below.
@@ -178,7 +210,8 @@
       $actions.hidden = true;
       if (kp) kp.pad.hidden = true; // nothing to type now; keeps the result on screen
       $('#s-count').textContent = `${right}/${solved} correct`;
-      const note = item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok && !item.practiceOnly ? ' · saved to review later' : '';
+      const hintNote = nHints ? ` · with ${nHints} hint${nHints > 1 ? 's' : ''}` : '';
+      const note = hintNote + (item.isReview ? (fate === 'mastered' ? ' · mastered, removed from your deck' : ok ? ` · ${fate}` : ' · back to tomorrow') : !ok && !item.practiceOnly ? ' · saved to review later' : '');
       // Ink stamps for milestones: a run of correct answers, or a mistake card mastered.
       const mark = fate === 'mastered' ? QT.flair.milestone('Mastered') : ok && (run === 3 || (run >= 5 && run % 5 === 0)) ? QT.flair.stamp(`${run} in a row`) : '';
       const head = ok
@@ -224,5 +257,5 @@
     next();
   }
 
-  QT.ui = { TRACKS, pctStr, esc, caseProgress, casesDone, bankProgress, bankDone, bankStatus, setBankMark, bankCounts, recordBank, updateBadges, STATUS, recCard, skillChip, topicCard, caseCard, questionCard };
+  QT.ui = { TRACKS, pctStr, esc, caseProgress, casesDone, bankProgress, bankDone, bankStatus, setBankMark, bankCounts, recordBank, hintBox, wireHints, updateBadges, STATUS, recCard, skillChip, topicCard, caseCard, questionCard };
 })();

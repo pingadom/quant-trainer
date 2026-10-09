@@ -23,7 +23,7 @@
       return {
         tag: `${label ? label(qi) + ' · ' : ''}${QT.firms[b.firm].name}${b.parts.length > 1 ? ` · part ${pi + 1} of ${b.parts.length}` : ''}${part.ext ? ' · our follow-up' : ''}`,
         p: { ...part, q: `<p class="stem">${b.q}</p><p>${part.q}</p>` },
-        record: (ok) => U.recordBank(b.id, pi, ok),
+        record: (ok, hints) => U.recordBank(b.id, pi, ok, hints),
       };
     };
   }
@@ -62,7 +62,7 @@
       <div class="bank-progress card">
         <div class="row" style="justify-content:space-between"><b>${c.done} of ${scope.length} done${F ? ` at ${F.name}` : ''}</b><span class="small">${c.unsure ? `${c.unsure} unsure · ` : ''}${c.todo} to do</span></div>
         <div class="bar stack" role="progressbar" aria-label="Questions done" aria-valuenow="${Math.round(pct(c.done))}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct(c.done)}%"></i><i class="unsure" style="width:${pct(c.unsure)}%"></i></div>
-        <p class="small" style="margin:6px 0 0">Tick a question off with ✓, or flag it ? to come back to. Getting every part right ticks it for you; a wrong part flags it unsure.</p>
+        <p class="small" style="margin:6px 0 0">Tick a question off with ✓, or flag it ? to come back to. Getting every part right without hints ticks it for you; a wrong part, or using hints, flags it unsure.</p>
       </div>
       <div class="chips filter" role="group" aria-label="Show">
         ${Object.entries(FILTERS).map(([k, label]) => `<a class="chip ${filter === k ? 'on' : ''}" href="${base}/${k}">${label} (${k === 'all' ? scope.length : c[k]})</a>`).join('')}
@@ -133,6 +133,7 @@
       <div class="card">
         <div class="question">${b.q}</div>
         <p class="small">Take 2–3 minutes and talk it through out loud (or jot bullet points), then compare.</p>
+        ${U.hintBox(b.open.hints)}
         <button id="reveal">Reveal model answer</button>
         <div id="model" hidden>
           <div class="solution">${b.open.model}</div>
@@ -140,12 +141,14 @@
             <button class="ghost" data-ok="1">Covered the key points</button><button class="ghost" data-ok="0">Missed some</button></div>
         </div>
       </div>`;
+    const hintsUsed = U.wireHints(box, b.open.hints || []);
     box.querySelector('#reveal').addEventListener('click', (e) => {
+      box.querySelector('.hint-btn')?.setAttribute('hidden', '');
       e.target.hidden = true;
       box.querySelector('#model').hidden = false;
     });
     box.querySelectorAll('[data-ok]').forEach((btn) => btn.addEventListener('click', () => {
-      U.recordBank(b.id, 0, btn.dataset.ok === '1');
+      U.recordBank(b.id, 0, btn.dataset.ok === '1', hintsUsed());
       btn.parentElement.innerHTML = `<span class="small">Saved. ${btn.dataset.ok === '1' ? 'Ticked off.' : 'Flagged unsure, so it comes back.'}</span>`;
       onGraded();
     }));
