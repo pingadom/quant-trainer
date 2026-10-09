@@ -4,6 +4,7 @@
 
 - **Hints for every interview question:** 726 hints across all 216 parts of the 154 questions (3–5 each), revealed one at a time with "Hint (1 of 4)". They build from a nudge (what to look at) to the method and the set-up, but never the answer: a test checks that no hint contains its part's answer, that every part has at least three, and that every hint belongs to a real question. They're on the question page, on open-ended and behavioural questions, in mock interviews and in Think aloud (labelled by part).
 - **Answers found with hints count, but stay unsure:** the result says "with 2 hints", and the question stays flagged unsure until you get it right unaided (or tick it off yourself).
+- A question's status now updates the moment you answer, not after you press "Next question".
 
 ## 0.22.0
 
