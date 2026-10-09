@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.22.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.23.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -190,7 +190,10 @@
   const bits = (a, cap) => arr(a, cap).map((v) => (v ? 1 : 0));
   const results = (r) => ({ results: arr(obj(r).results, 50).map((v) => (v === null || v === undefined ? null : !!v)) });
   // Interview questions also carry a status you set: done, unsure (come back later) or todo.
-  const bankRec = (r) => ({ ...results(r), ...(['done', 'unsure', 'todo'].includes(obj(r).mark) ? { mark: obj(r).mark } : {}) });
+  const bankRec = (r) => {
+    const hinted = arr(obj(r).hinted, 50).map((v) => Math.max(0, Math.min(20, Math.floor(num(v)))));
+    return { ...results(r), ...(hinted.some(Boolean) ? { hinted } : {}), ...(['done', 'unsure', 'todo'].includes(obj(r).mark) ? { mark: obj(r).mark } : {}) };
+  };
   const mapKeys = (o, fn, keyOk = () => true) => Object.fromEntries(Object.entries(obj(o)).filter(([k]) => keyOk(k)).slice(0, 500).map(([k, v]) => [text(k, 80), fn(v)]));
 
   function sanitizeState(raw) {

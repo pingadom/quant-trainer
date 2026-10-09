@@ -485,6 +485,32 @@
       }
     }
 
+    // Hints: every part of every interview question has at least two, every hint list belongs to a
+    // real question part, and no hint gives away the answer.
+    if (QT.bankHints) {
+      const plainText = (h) => String(h).replace(/<[^>]+>/g, '');
+      let parts = 0, hints = 0;
+      for (const b of QT.bank) {
+        const lists = b.parts ? b.parts.map((x) => x.hints) : [b.open.hints];
+        lists.forEach((list, i) => {
+          parts++;
+          hints += (list || []).length;
+          if (!list || list.length < 2 || list.some((h) => !plainText(h).trim())) fail(`hints: ${b.id} part ${i} has ${list ? list.length : 0}`);
+          const a = b.parts && b.parts[i].a;
+          if (Number.isFinite(a) && (Math.abs(a) >= 10 || !Number.isInteger(a))) {
+            const shown = [QT.fmtNum(a), a.toFixed(2), String(a)].filter((t) => t.replace(/\D/g, '').length >= 2);
+            const leak = list.find((h) => shown.some((t) => new RegExp(`(^|[^0-9.])${t.replace(/[.\-]/g, '\$&')}([^0-9]|$)`).test(plainText(h))));
+            if (leak) fail(`hints: ${b.id} part ${i} gives away ${a}: "${plainText(leak)}"`);
+          }
+        });
+      }
+      for (const [id, lists] of Object.entries(QT.bankHints)) {
+        const b = QT.bankById(id);
+        if (!b || lists.length !== (b.parts ? b.parts.length : 1)) fail(`hints: ${id} doesn't match a question's parts`);
+      }
+      if (hints / parts < 3) fail(`hints: only ${(hints / parts).toFixed(1)} per part on average`);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {
@@ -498,10 +524,12 @@
       U.recordBank(b.id, 1, false); steps.push(st());
       U.setBankMark(b.id, 'done'); steps.push(st());
       U.setBankMark(b.id, 'todo'); steps.push(st());
+      U.setBankMark(b.id, null); U.recordBank(b.id, 1, true, 2); steps.push(st()); // right, but with hints
+      U.recordBank(b.id, 1, true, 0); steps.push(st()); // later, unaided
       U.setBankMark(o.id, 'unsure');
-      if (steps.join() !== 'todo,todo,done,unsure,done,todo') fail(`tracking: status sequence ${steps.join()}`);
+      if (steps.join() !== 'todo,todo,done,unsure,done,todo,unsure,done') fail(`tracking: status sequence ${steps.join()}`);
       const c = U.bankCounts();
-      if (c.unsure !== 1 || c.done !== 0 || c.todo !== QT.bank.length - 1) fail(`tracking: counts ${JSON.stringify(c)}`);
+      if (c.unsure !== 1 || c.done !== 1 || c.todo !== QT.bank.length - 2) fail(`tracking: counts ${JSON.stringify(c)}`);
       if (!QT.coach.recommend().some((r) => r.kind === 'unsure' && r.href === '#/bank/all/unsure')) fail('tracking: unsure questions should be recommended');
       const snap = JSON.parse(QT.store.exportJson());
       snap.bank[b.id].mark = 'evil<script>';
