@@ -13,7 +13,7 @@
   const plain = (html) => html.replace(/<[^>]+>/g, '');
 
   // Parts of one or more bank questions, fed to the question card in order.
-  function bankSource(items, label) {
+  function bankSource(items, label, onRecord = () => {}) {
     const queue = [];
     items.forEach((b, qi) => (b.parts || []).forEach((part, pi) => queue.push({ b, part, pi, qi })));
     let k = 0;
@@ -23,7 +23,10 @@
       return {
         tag: `${label ? label(qi) + ' · ' : ''}${QT.firms[b.firm].name}${b.parts.length > 1 ? ` · part ${pi + 1} of ${b.parts.length}` : ''}${part.ext ? ' · our follow-up' : ''}`,
         p: { ...part, q: `<p class="stem">${b.q}</p><p>${part.q}</p>` },
-        record: (ok, hints) => U.recordBank(b.id, pi, ok, hints),
+        record: (ok, hints) => {
+          U.recordBank(b.id, pi, ok, hints);
+          onRecord();
+        },
       };
     };
   }
@@ -118,7 +121,7 @@
     drawStatus();
     const box = el.querySelector('#qbox');
     if (b.open) return openCard(box, b, drawStatus);
-    U.questionCard(box, bankSource([b]), (bx, r) => {
+    U.questionCard(box, bankSource([b], null, drawStatus), (bx, r) => {
       drawStatus();
       bx.innerHTML = `<div class="card"><h3>Done: ${r.right}/${r.solved} parts correct</h3>
         <p class="small">Now answer it again out loud as if to an interviewer: state your approach first, then the numbers, then sanity-check the result.</p>

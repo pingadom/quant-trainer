@@ -499,7 +499,7 @@
           const a = b.parts && b.parts[i].a;
           if (Number.isFinite(a) && (Math.abs(a) >= 10 || !Number.isInteger(a))) {
             const shown = [QT.fmtNum(a), a.toFixed(2), String(a)].filter((t) => t.replace(/\D/g, '').length >= 2);
-            const leak = list.find((h) => shown.some((t) => new RegExp(`(^|[^0-9.])${t.replace(/[.\-]/g, '\$&')}([^0-9]|$)`).test(plainText(h))));
+            const leak = list.find((h) => shown.some((t) => new RegExp(`(^|[^0-9.])${t.replace(/[.-]/g, '\\$&')}([^0-9]|$)`).test(plainText(h))));
             if (leak) fail(`hints: ${b.id} part ${i} gives away ${a}: "${plainText(leak)}"`);
           }
         });
