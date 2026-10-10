@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.0
+
+- **Rewritten worked solutions for every numeric interview question** (197 parts). Each now has the same shape: the **key idea** in one sentence, **numbered steps** ending with the answer in bold, a quick **check** you can say out loud (a limiting case, a second method, a sanity bound), and the common **trap** (the wrong answer people give, and why), where there is one. They appear everywhere a solution does: the question page, firm guide pages, the mistakes deck, mock interviews and Think aloud.
+- A new check makes sure every solution states its part's answer, so a solution can't silently disagree with the answer the app marks against. Writing the solutions turned up one: the vega question's solution said the call "loses $0.40" while its answer is −0.40; it now says so with the sign.
+
 ## 0.23.0
 
 - **Hints for every interview question:** 726 hints across all 216 parts of the 154 questions (3–5 each), revealed one at a time with "Hint (1 of 4)". They build from a nudge (what to look at) to the method and the set-up, but never the answer: a test checks that no hint contains its part's answer, that every part has at least three, and that every hint belongs to a real question. They're on the question page, on open-ended and behavioural questions, in mock interviews and in Think aloud (labelled by part).

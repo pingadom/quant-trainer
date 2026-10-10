@@ -511,6 +511,25 @@
       if (hints / parts < 3) fail(`hints: only ${(hints / parts).toFixed(1)} per part on average`);
     }
 
+    // Worked solutions: every numeric part has a structured one (key idea, at least two steps),
+    // nothing is keyed to a part that doesn't exist, and each solution states its part's answer.
+    if (QT.bankSolutions) {
+      const numbersIn = (html) => String(html).replace(/<[^>]+>/g, ' ').replace(/\u2212/g, '-').replace(/\$/g, '').replace(/(?<=\d),(?=\d{3})/g, '').replace(/½/g, '1/2').replace(/¼/g, '1/4').replace(/¾/g, '3/4')
+        .match(/-?\d+(?:\.\d+)?(?:\/\d+)?/g)?.map((t) => (t.includes('/') ? t.split('/').reduce((a, b) => a / b) : +t)) || [];
+      for (const b of QT.bank) {
+        (b.parts || []).forEach((p, i) => {
+          const s = QT.bankSolutions[b.id]?.[i];
+          if (!s || !s[0] || !Array.isArray(s[1]) || s[1].length < 1) return fail(`solutions: ${b.id} part ${i} has no structured solution`);
+          const close = Math.max(Math.abs(p.a) * 0.006, (p.tol && p.tol.abs) || 0, 5e-4);
+          if (!numbersIn(p.sol).some((x) => Math.abs(x - p.a) <= close)) fail(`solutions: ${b.id} part ${i} never states its answer ${p.a}`);
+        });
+      }
+      for (const [id, list] of Object.entries(QT.bankSolutions)) {
+        const b = QT.bankById(id);
+        if (!b || !b.parts || list.length !== b.parts.length) fail(`solutions: ${id} doesn't match a question's parts`);
+      }
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {
