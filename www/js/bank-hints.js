@@ -401,6 +401,76 @@
     'cl-two-envelopes': [
       [`The argument treats "the other envelope is double" and "half" as equally likely, whatever you see. Can that be true for every amount?`, `Try writing down a prior over amounts that would make it true. What goes wrong?`, `Before opening, call the amounts A and 2A, rather than X and 2X-or-X/2.`, `Switching then gains A or loses A with equal chance.`],
     ],
+    // ---------------------------------------------------------------- bank-web.js
+    'jump-red-card': [[`Try a few strategies: stop immediately, or wait until more black cards than red have gone.`, `Whatever you do, imagine the very last card of the deck instead of the next one. Is it any different?`, `At any moment, the next card and the last card are equally likely to be red, given what you've seen.`, `So every strategy has the same chance as "always bet on the last card". What's that chance?`]],
+    'jump-bubble-pass': [
+      [`One pass moves the largest number all the way to the end. What else does it do?`, `Each element can move left by at most one place in a single pass.`, `So the list ends up sorted only if no number started more than one place to the right of where it belongs. Count such orderings for 4 numbers.`, `They're built by choosing, for each of the first n − 1 positions, one of two options. Divide by 4!.`],
+      [`Use the same count as (a) with 5 numbers.`, `The number of orderings one pass can fix is 2<sup>n − 1</sup>.`, `Divide by 5!.`],
+    ],
+    'jump-corr-sum': [[`Write the sum as one covariance: assume unit variances and let S = x₁ + x₂ + x₃.`, `Then Σ corr(xᵢ, x₄) = Cov(S, x₄) for a unit-variance x₄.`, `Cauchy–Schwarz: Cov(S, x₄) ≤ sd(S) × sd(x₄). When is it equal?`, `Var(S) = 3 + 2 × (sum of the three correlations).`]],
+    'jump-exp-rate': [[`Write the likelihood of the two gaps you saw.`, `The gaps are 3 and 5 minutes. For an exponential, each has density λe<sup>−λt</sup>.`, `Likelihood = λ² e<sup>−λ(3 + 5)</sup>. Take logs and differentiate.`, `The MLE is (number of events) / (total time).`]],
+    'hrt-edge-distance': [[`Let the point be (x, y). Its distance to the nearest edge is min(x, 1 − x, y, 1 − y).`, `Find P(distance > t): the point must lie in the inner square of side 1 − 2t.`, `So P(D > t) = (1 − 2t)² for t between 0 and ½.`, `E[D] = ∫ P(D > t) dt over [0, ½].`]],
+    'drw-rook': [[`Group squares by their relation to the target corner: on its row or column, or neither.`, `From "neither", 2 of the 14 moves land in line with the target (one along the row, one along the column).`, `From "in line" (say same column), 1 move hits the target, 6 stay in that column, and the 7 row moves leave it.`, `Write N = 1 + (1/7)A + (6/7)N and A = 1 + (6/14)A + (7/14)N, and solve.`]],
+    'drw-chords': [[`Use linearity: count pairs of chords that cross.`, `There are C(10, 2) pairs. What's the chance two random chords cross?`, `Two chords use 4 random points. Of the 3 ways to pair 4 points into 2 chords, exactly one crosses.`]],
+    'drw-mental': [[`The numbers are close together: use the square of their midpoint.`, `73 × 74 = 73.5² − 0.5².`, `Or 73 × 74 = 73² + 73. And 73² = 5329.`]],
+    'om-chess': [[`Track the current streak: who holds it and how long it is (1 or 2). A draw resets it.`, `Per game: I win 1/3, you win 1/6, draw 1/2.`, `Let P₀ be my chance from no streak, M₁, M₂ with my streak of 1 or 2, Y₁, Y₂ with yours. Write one equation for each.`, `E.g. M₂ = 1/3 + (1/6)Y₁ + (1/2)P₀ and Y₂ = (1/3)M₁ + (1/2)P₀. Solve the linear system for P₀.`]],
+    'om-sphere-tetra': [[`Start with the 2D version: three points on a circle contain the centre with probability 1/4.`, `For each point, use the pair {point, its antipode}. Choosing which of each pair you actually have gives 2⁴ = 16 equally likely configurations.`, `Among those 16 tetrahedra, the ones containing the centre come in mirror pairs (T and −T, every point swapped to its antipode).`, `For points in general position there is exactly one such pair. Divide by 16.`]],
+    'om-intern-quickfire': [
+      [`For a uniform on [a, b], Var = (b − a)²/12.`, `Here b − a = 10.`],
+      [`A reroll costs $1, so it's worth 3.5 − 1 = 2.5.`, `Keep any roll above 2.5; reroll the rest.`, `Value = (sum of kept faces)/6 + P(reroll) × 2.5.`],
+      [`Stars and bars: put 10 stars in a row and choose where to cut it into 3 non-empty groups.`, `There are 9 gaps between the stars; choose 2 of them.`, `C(9, 2).`],
+    ],
+    'om-cards': [
+      [`Count the hands: choose the rank of the four, then the fifth card.`, `13 ranks for the four; the fifth card is any of the other 48 cards.`, `Divide by C(52, 5) = 2,598,960.`],
+      [`56 × 67 = 56 × 70 − 56 × 3.`, `56 × 70 = 3920; 56 × 3 = 168.`],
+      [`First card black: 26/52. Then red: 26 of the 51 left.`, `Multiply. For the double deck: 52/104 then 52/103. Which is bigger?`],
+    ],
+    'bel-dice': [[`List all 9 pairs of faces (red, green) and count red's wins.`, `Red 2 beats only green's 1. Red 6 and 7 each beat 1 and 5.`, `Add them up and divide by 9. Then check the other pairs: you'll find a cycle.`]],
+    'bel-drunk-passenger': [[`Focus on two seats: the first passenger's and the last passenger's.`, `Whenever someone is displaced, they pick at random, and the moment someone picks either of those two seats, the outcome is decided.`, `By symmetry, which of the two is taken first?`]],
+    'bel-mental': [
+      [`1/32 = 0.03125.`, `Multiply by 3.`],
+      [`Both are 2 away from 40.`, `(40 − 2)(40 + 2) = 40² − 2².`],
+      [`Split one factor: 62 × 74 = 62 × 70 + 62 × 4.`, `62 × 70 = 4340; 62 × 4 = 248.`],
+    ],
+    'virtu-quick': [
+      [`Track progress: no heads (E₀) or one head (E₁).`, `E₁ = 1 + ½·0 + ½E₀ and E₀ = 1 + ½E₁ + ½E₀.`, `Solve. (Shortcut: 2 + 2².)`],
+      [`Volume = edge³.`, `Double the edge: (2a)³ = ? × a³.`],
+    ],
+    'virtu-uncorrelated': [[`Correlation only measures linear relationships.`, `Look for Y = f(X) where the relationship isn't linear.`, `Try a symmetric X and an even function f, like squaring.`]],
+    'dv-running-sum': [
+      [`Let p(n) = P(the running total ever equals n). Condition on the last roll before reaching n.`, `p(n) = (1/6)(p(n − 1) + … + p(n − 6)), with p(0) = 1 and p(negative) = 0.`, `p(1) = 1/6, p(2) = 7/36. Compute p(3).`],
+      [`Continue the recursion: p(3) = 49/216.`, `p(4) = (p(0) + p(1) + p(2) + p(3))/6.`, `Notice the pattern (7/6)<sup>n − 1</sup>/6 for small n.`],
+      [`For n ≤ 6 every earlier total, including 0, feeds p(n), so p grows.`, `For n = 7, the start (p(0) = 1) drops out of the sum.`, `Compare p(6) with p(7) and later values.`],
+    ],
+    'dv-vol-delta': [[`Delta of a call = N(d₁) in Black–Scholes.`, `At the money, d₁ = (r/σ + σ/2)√T. What happens as σ grows?`, `d₁ → ∞, and N(∞) = ?`, `Intuition: with huge volatility, the call behaves like owning the stock (its value tends to S).`]],
+    'dv-quick-division': [[`13 × 3 = 39, so it's 3 and 8/13.`, `8/13 ≈ 0.615 (13 × 0.6 = 7.8).`]],
+    'mav-mississippi': [[`Count arrangements of 11 letters, then divide out the repeats.`, `Letters: M ×1, I ×4, S ×4, P ×2.`, `11! / (4! × 4! × 2!).`]],
+    'mav-40-factorial': [[`Compare log₁₀ of each side.`, `log₁₀ 40! ≈ 47.9 (Stirling), so 40! is far bigger. Now find where n! crosses 10<sup>40</sup>.`, `Useful anchor: 30! ≈ 2.65 × 10³². Each further step multiplies by a little over 30.`, `Multiply up from 30!: 31!, 32!, … until you pass 10<sup>40</sup>.`]],
+    'sq-sd-unbiased': [[`Unbiasedness is about expectations. Is E[√V] equal to √E[V]?`, `The square root is concave.`, `Jensen's inequality for a concave function: E[f(V)] ≤ f(E[V]).`]],
+    'akuna-risk-ten': [[`First find P(total = 10).`, `10 can be made as (4,6), (5,5), (6,4): 3 of 36.`, `A fair bet risks stake s against $100 with s × P(lose) = 100 × P(win).`]],
+    'imc-alex-blake': [[`Let A and B be the flips each needs: independent geometric with p = ½.`, `P(A = k and B > k) = (½)<sup>k</sup> × (½)<sup>k</sup> = (¼)<sup>k</sup>.`, `P(A < B) = Σ (¼)<sup>k</sup>. Then E[A | A < B] = Σ k(¼)<sup>k</sup> / P(A < B).`, `Σ k xᵏ = x/(1 − x)² with x = ¼.`]],
+    'imc-spaghetti': [[`Tie one strand at a time: pick any free end and tie it to a random other free end.`, `With n strands left (2n ends), you close a loop only if you pick that strand's own other end.`, `That happens with probability 1/(2n − 1). Use linearity over n = 100, 99, …, 1.`]],
+    'tower-corr-range': [
+      [`The 3 × 3 correlation matrix must be positive semi-definite.`, `With a = corr(X, Y), b = corr(Y, Z), the possible c = corr(X, Z) satisfy c ∈ ab ± √((1 − a²)(1 − b²)).`, `Here ab = 0.1, 1 − a² = 0.96 and 1 − b² = 0.75.`],
+      [`Same interval as (a): take the lower end.`, `ab − √((1 − a²)(1 − b²)).`, `It can be negative even though both given correlations are positive.`],
+    ],
+    'tower-stairs': [[`Think about the last step: it was a 1 or a 2.`, `ways(n) = ways(n − 1) + ways(n − 2), with ways(1) = 1 and ways(2) = 2.`, `That's the Fibonacci sequence. Count up to n = 10.`]],
+    'deshaw-biased-coin': [
+      [`HT and TH each have probability (1/3)(2/3), so they're fair.`, `A pair decides with probability 2 × (1/3)(2/3) = 4/9.`, `Pairs needed: geometric with mean 9/4. Flips: twice that.`],
+      [`Information theory: each biased flip carries at most H(p) bits of randomness.`, `H(p) = −p log₂ p − (1 − p) log₂(1 − p).`, `A fair flip is exactly 1 bit. Evaluate H(1/3). (Clever schemes that reuse discarded flips approach this.)`],
+    ],
+    'fr-max-normals': [[`max(X, Y) = (X + Y)/2 + |X − Y|/2.`, `E[(X + Y)/2] = 0. X − Y is normal with variance 2.`, `For Z normal with standard deviation σ, E|Z| = σ√(2/π).`]],
+    'fr-arc-length': [[`Arc length = ∫ √(1 + (dy/dx)²) dx.`, `dy/dx = 2x, so ∫₀⁹ √(1 + 4x²) dx.`, `Quick estimate: for large x, √(1 + 4x²) ≈ 2x, so the length is just over ∫ 2x dx = 81.`, `Exact: [x√(1 + 4x²)/2 + asinh(2x)/4] from 0 to 9.`]],
+    'fr-quick-estimates': [
+      [`3<sup>3.4</sup> = 3³ × 3<sup>0.4</sup>.`, `3<sup>0.4</sup> = e<sup>0.4 ln 3</sup> ≈ e<sup>0.44</sup>.`, `e<sup>0.44</sup> ≈ 1.55.`],
+      [`Points near the edge are more common: area grows with radius.`, `P(distance ≤ r) = r², so the density is 2r.`, `E = ∫₀¹ r × 2r dr.`],
+    ],
+    'mako-mental': [
+      [`76 × 49 = 76 × 50 − 76.`, `76 × 50 = 3800.`],
+      [`Subtract in two steps: 5302 − 1400, then − 34.`, `5302 − 1400 = 3902.`],
+    ],
+    'mako-calendar-straddle': [[`Compare front and back months option by option: which has more gamma, more vega, more theta?`, `Near-dated options have more gamma and theta; longer-dated ones more vega.`, `You're long the front and short the back. Combine the signs.`, `For the rally: how does gamma change as the stock moves away from the strike, and which month loses it faster?`]],
+    'js-meet-20': [[`Draw arrival times as a point in the unit square (hours).`, `They meet if the times differ by at most 1/3 of an hour.`, `The miss region is two corner triangles with legs 2/3. Subtract their area from 1.`]],
   };
 
   for (const b of QT.bank) {

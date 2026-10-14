@@ -681,6 +681,135 @@ def drops(d):
 record("cl-egg-drop.0", next(d for d in range(1, 100) if drops(d) >= 100), "smallest d with d(d+1)/2 >= 100")
 
 
+# ---------------------------------------------------------------- bank-web.js (Wall Street Oasis reports)
+# Red card: exact optimal value by dynamic programming over (reds left, blacks left).
+from functools import lru_cache
+
+
+@lru_cache(None)
+def red_game(r, b):
+    if r + b == 0:
+        return Fr(0)
+    stop = Fr(r, r + b)
+    if r + b == 1:
+        return stop
+    cont = (Fr(r, r + b) * red_game(r - 1, b) if r else 0) + (Fr(b, r + b) * red_game(r, b - 1) if b else 0)
+    return max(stop, cont)
+
+
+record("jump-red-card.0", red_game(26, 26), "dynamic programming over remaining cards")
+
+
+def one_bubble_pass_sorts(p):
+    p = list(p)
+    for i in range(len(p) - 1):
+        if p[i] > p[i + 1]:
+            p[i], p[i + 1] = p[i + 1], p[i]
+    return p == sorted(p)
+
+
+for n_, part in ((4, 0), (5, 1)):
+    perms_n = list(itertools.permutations(range(n_)))
+    record(f"jump-bubble-pass.{part}", Fr(sum(one_bubble_pass_sorts(p) for p in perms_n), len(perms_n)), f"simulate a pass on all {n_}! orders")
+Cm = np.array([[1, .5, .3], [.5, 1, -.3], [.3, -.3, 1]])
+assert min(np.linalg.eigvalsh(Cm)) > 0
+record("jump-corr-sum.0", math.sqrt(np.ones(3) @ Cm @ np.ones(3)), "sqrt(1' C 1), Cauchy-Schwarz")
+record("jump-exp-rate.0", brentq(lambda lam: 2 / lam - 8, 0.01, 10), "root of the score equation")
+record("hrt-edge-distance.0", quad(lambda t: (1 - 2 * t) ** 2, 0, 0.5)[0], "tail integral")
+squares = [(r_, c_) for r_ in range(8) for c_ in range(8)]
+pos = {s_: i for i, s_ in enumerate(squares)}
+Mr = np.eye(64)
+br = np.ones(64)
+for (r_, c_) in squares:
+    i = pos[(r_, c_)]
+    if (r_, c_) == (7, 7):
+        br[i] = 0
+        continue
+    for m in [(r_, cc) for cc in range(8) if cc != c_] + [(rr, c_) for rr in range(8) if rr != r_]:
+        if m != (7, 7):
+            Mr[i, pos[m]] -= 1 / 14
+record("drw-rook.0", np.linalg.solve(Mr, br)[pos[(0, 0)]], "64-state absorbing chain")
+four = list(itertools.permutations(range(4)))
+cross = Fr(sum(1 for p in four if (min(p[0], p[1]) < p[2] < max(p[0], p[1])) != (min(p[0], p[1]) < p[3] < max(p[0], p[1]))), len(four))
+record("drw-chords.0", math.comb(10, 2) * cross, f"pairs x P(cross) = {cross}")
+record("drw-mental.0", 73 * 74, "arithmetic")
+pm_, py_, pd_ = Fr(1, 3), Fr(1, 6), Fr(1, 2)
+Mc = np.zeros((5, 5))
+bc = np.zeros(5)
+# states: 0 neutral, 1 me x1, 2 me x2, 3 you x1, 4 you x2
+for s_, (mn, yn) in enumerate([(1, 3), (2, 3), (None, 3), (1, 4), (1, None)]):
+    Mc[s_, s_] += 1
+    Mc[s_, 0] -= float(pd_)
+    if mn is None:
+        bc[s_] += float(pm_)
+    else:
+        Mc[s_, mn] -= float(pm_)
+    if yn is not None:
+        Mc[s_, yn] -= float(py_)
+record("om-chess.0", np.linalg.solve(Mc, bc)[0], "5-state Markov chain")
+# Sphere: Monte Carlo is too noisy for 1e-9; use Wendel's theorem (n points, d dims): 2^-(n-1) sum_{k<d} C(n-1, k).
+record("om-sphere-tetra.0", 1 - Fr(sum(math.comb(3, k) for k in range(3)), 2 ** 3), "Wendel's theorem, n = 4, d = 3")
+record("om-intern-quickfire.0", quad(lambda x: (x - 5) ** 2 / 10, 0, 10)[0], "integrate the variance")
+record("om-intern-quickfire.1", Fr(sum(max(x, Fr(5, 2)) for x in DIE), 6), "keep if above the reroll value 2.5")
+record("om-intern-quickfire.2", sum(1 for a_ in range(1, 10) for b_ in range(1, 10) if 0 < 10 - a_ - b_), "enumerate")
+record("om-cards.0", Fr(13 * 48, math.comb(52, 5)), "count hands")
+record("om-cards.1", 56 * 67, "arithmetic")
+record("om-cards.2", Fr(26, 52) * Fr(26, 51), "sequential draws")
+red_d, green_d = (2, 6, 7), (1, 5, 12)
+record("bel-dice.0", Fr(sum(x > y for x in red_d for y in green_d), 9), "enumerate face pairs")
+
+
+def plane(n):
+    """Exact P(last passenger gets own seat) by recursion over who is displaced."""
+    @lru_cache(None)
+    def f(k):  # k seats among the contested chain remain; P(last gets own seat)
+        if k == 1:
+            return Fr(1)
+        if k == 2:
+            return Fr(1, 2)
+        # displaced passenger picks: first's seat (good), last's (bad), or one of k-2 others (recurse)
+        return Fr(1, k) + Fr(k - 2, k) * f(k - 1)
+    return f(n)
+
+
+record("bel-drunk-passenger.0", plane(100), "recursion over displaced passengers")
+record("bel-mental.0", Fr(3, 32), "exact")
+record("bel-mental.1", 38 * 42, "arithmetic")
+record("bel-mental.2", 62 * 74, "arithmetic")
+record("virtu-quick.0", wait_pattern("HH", 0.5, "HT"), "prefix chain linear solve")
+record("virtu-quick.1", 2 ** 3, "volume scales as length cubed")
+hit = [Fr(1)]
+for n_ in range(1, 30):
+    hit.append(sum(hit[n_ - k] for k in range(1, 7) if n_ - k >= 0) / 6)
+record("dv-running-sum.0", hit[3], "recursion")
+record("dv-running-sum.1", hit[4], "recursion")
+record("dv-running-sum.2", max(range(1, 30), key=lambda n_: hit[n_]), "argmax of the recursion")
+from scipy.stats import norm
+record("dv-vol-delta.0", norm.cdf((0.02 / 50 + 50 / 2) * 1), "N(d1) at sigma = 5000%")
+record("dv-quick-division.0", 47 / 13, "exact")
+record("mav-mississippi.0", math.factorial(11) // (math.factorial(4) ** 2 * 2), "multinomial coefficient")
+record("mav-40-factorial.0", next(n_ for n_ in range(1, 60) if math.factorial(n_) > 10 ** 40), "search")
+record("akuna-risk-ten.0", 100 * Fr(sum(a + b == 10 for a, b in pairs), 36) / (1 - Fr(sum(a + b == 10 for a, b in pairs), 36)), "fair stake")
+record("imc-alex-blake.0", sum(k * Fr(1, 4) ** k for k in range(1, 300)) / sum(Fr(1, 4) ** k for k in range(1, 300)), "series")
+record("imc-spaghetti.0", sum(Fr(1, 2 * k - 1) for k in range(1, 101)), "linearity over ties")
+record("tower-corr-range.0", 0.1 + math.sqrt(0.96 * 0.75), "PSD boundary: det = 0")
+record("tower-corr-range.1", 0.1 - math.sqrt(0.96 * 0.75), "PSD boundary: det = 0")
+assert abs(np.linalg.det(np.array([[1, .2, R["tower-corr-range.0"][0]], [.2, 1, .5], [R["tower-corr-range.0"][0], .5, 1]]))) < 1e-9
+ways = [1, 1]
+for _ in range(2, 11):
+    ways.append(ways[-1] + ways[-2])
+record("tower-stairs.0", ways[10], "dynamic programming")
+record("deshaw-biased-coin.0", 2 / (2 * (1 / 3) * (2 / 3)), "pairs until HT or TH")
+record("deshaw-biased-coin.1", -(1 / 3 * math.log2(1 / 3) + 2 / 3 * math.log2(2 / 3)), "binary entropy")
+record("fr-max-normals.0", quad(lambda x: x * 2 * norm.pdf(x) * norm.cdf(x), -12, 12)[0], "integrate the density of the max")
+record("fr-arc-length.0", quad(lambda x: math.sqrt(1 + 4 * x * x), 0, 9)[0], "numerical integral")
+record("fr-quick-estimates.0", 3 ** 3.4, "exact")
+record("fr-quick-estimates.1", quad(lambda r: r * 2 * r, 0, 1)[0], "integral of r x 2r")
+record("mako-mental.0", 76 * 49, "arithmetic")
+record("mako-mental.1", 5302 - 1434, "arithmetic")
+record("js-meet-20.0", 1 - Fr(2, 3) ** 2, "unit-square geometry")
+
+
 # ---------------------------------------------------------------- report
 def main():
     if hasattr(sys.stdout, "reconfigure"):

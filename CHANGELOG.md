@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.27.0
+
+- **35 more reported interview questions** (189 in all, 25 firms), from candidate reports on Wall Street Oasis for Jump, HRT, DRW, Old Mission, Belvedere, Virtu, Da Vinci, Maven, Squarepoint, Akuna, IMC, Five Rings, Jane Street and three firms new to Theo: **Tower Research, D. E. Shaw and Mako**. Highlights: Jump's red-card stopping game and one-pass bubble sort, DRW's random rook (70 moves) and chord crossings, Old Mission's three-in-a-row chess match (86/99) and the tetrahedron containing the centre of a sphere (1/8), Belvedere's non-transitive dice and the drunk passenger, Tower's correlation bounds, IMC's tied spaghetti, and D. E. Shaw's biased coin down to its entropy limit.
+  - Every one has 3+ hints, a structured worked solution, and an answer derived independently in Python (240 values now cross-checked). Writing the checks caught one bug in the checking code itself (a chord-crossing count that assumed sorted endpoints), not in the app.
+  - Where a report gives no numbers or leaves a rule out, the numbers and assumptions are ours and the question says so.
+- Searched also: Glassdoor (already covered by your collection), Reddit and Blind (not readable here; search snippets only, nothing specific and new), and prep sites, which mostly label their questions as unverified. Those weren't used as sources.
+
 ## 0.26.0
 
 - **Auto-backup to a file** (Chrome and Edge on a computer): More → Your data → Keep your progress safe → Choose a backup file. Pick a location once (Documents, OneDrive…) and Theo rewrites that file a few seconds after every change. Clearing browser data, a clean-on-exit setting or a cleaner app can't touch it; restore with Import. If the browser asks for permission again after a restart, a Resume button appears.
