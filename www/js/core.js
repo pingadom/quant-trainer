@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.24.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.25.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -124,14 +124,35 @@
     figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {} });
   let state;
 
+  // Each save records the app version that wrote it. An older copy of the app (a tab left open
+  // across an update, or a cached install) doesn't know about newer fields and would drop them
+  // when it saves, so when it sees data from a newer version it stops saving and asks for a
+  // reload instead. QT.onNewerData shows that prompt.
+  const BACKUP_KEY = 'theo-backups';
+  const newer = (v) => {
+    const a = String(v || '0').split('.').map(Number), b = QT.VERSION.split('.').map(Number);
+    for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+    return false;
+  };
+  let readOnly = false;
+  const goReadOnly = () => {
+    readOnly = true;
+    if (QT.onNewerData) QT.onNewerData();
+  };
+
   // Saved data goes through the same schema as imports, so a corrupted or hand-edited value
-  // (or data from an older version) can't break a screen.
+  // (or data from an older version) can't break a screen. If the saved data can't be read at
+  // all, nothing is saved over it until it has been backed up.
   function load() {
+    let raw = null;
     try {
-      const raw = localStorage.getItem(KEY);
-      state = raw ? sanitizeState(JSON.parse(raw)) : blank();
+      raw = localStorage.getItem(KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      state = parsed ? sanitizeState(parsed) : blank();
+      if (parsed && newer(parsed.writer)) readOnly = true; // prompt shown once the app is up
     } catch {
       state = blank();
+      if (raw) backup('unreadable saved data', raw); // keep the original before anything overwrites it
     }
   }
 
@@ -141,12 +162,53 @@
     window.addEventListener('storage', (e) => {
       if (e.key !== KEY || e.newValue == null) return;
       try {
-        state = sanitizeState(JSON.parse(e.newValue));
+        const parsed = JSON.parse(e.newValue);
+        if (newer(parsed.writer)) return goReadOnly(); // a newer version is open: don't touch its data
+        state = sanitizeState(parsed);
         if (QT.onExternalChange) QT.onExternalChange();
       } catch { /* ignore a malformed write */ }
     });
   }
+  // ---- Automatic backups, kept on this device: one a day, and one before anything that replaces
+  // your progress (reset, import, sample data). The answer log is left out to save space.
+  const BACKUPS_KEPT = 10;
+  function readBackups() {
+    try {
+      const list = JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
+      return Array.isArray(list) ? list.filter((b) => b && typeof b.json === 'string' && b.t) : [];
+    } catch {
+      return [];
+    }
+  }
+  function backup(reason, json) {
+    if (!json) {
+      if (isEmpty()) return; // nothing worth keeping
+      const { log, ...rest } = state;
+      json = JSON.stringify(rest);
+    }
+    let list = readBackups();
+    if (list[0] && list[0].json === json) return; // unchanged since the last backup
+    list.unshift({ t: Date.now(), reason, json });
+    list = list.slice(0, BACKUPS_KEPT);
+    while (list.length) {
+      try {
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(list));
+        return;
+      } catch {
+        list.pop(); // over the storage quota: drop the oldest and try again
+      }
+    }
+  }
+  let backedUpToday = null;
+
   function save() {
+    if (readOnly) return;
+    const today = dayKey(new Date());
+    if (backedUpToday !== today) {
+      backedUpToday = today;
+      if (!readBackups().some((b) => dayKey(new Date(b.t)) === today)) backup('daily');
+    }
+    state.writer = QT.VERSION;
     const json = JSON.stringify(state);
     try {
       localStorage.setItem(KEY, json);
@@ -245,6 +307,7 @@
     // Formula flashcards: spaced-repetition box (0–4) and due time per card id.
     s.flash = mapKeys(r.flash, (x) => ({ box: Math.min(4, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-z0-9-]{1,30}$/.test(k));
     s.demo = !!r.demo;
+    if (r.writer) s.writer = text(r.writer, 20);
     s.tricks = mapKeys(r.tricks, (t) => ({ best: Math.min(10, Math.max(0, num(obj(t).best))), runs: num(obj(t).runs) }), (k) => /^[a-z0-9-]+$/.test(k));
     if (r.elo) {
       const e = obj(r.elo), skillKey = (k) => /^[a-z]+\.\d+$/.test(k);
@@ -257,7 +320,9 @@
   QT.sanitizeHtml = sanitizeHtml;
 
   // True when nothing has been recorded yet (used to decide whether to restore a native backup).
-  const isEmpty = () => !state.days.length && !Object.keys(state.topics).length && !Object.keys(state.bank).length && !Object.keys(state.cases).length && !state.market.games;
+  const isEmpty = () => !state.days.length && !state.log.length && !state.plan && !state.market.games
+    && ['topics', 'bank', 'cases', 'mental', 'flash', 'speed', 'speedReview', 'daily', 'oa', 'tricks', 'roadmap'].every((k) => !Object.keys(state[k] || {}).length)
+    && !state.mistakes.length && !state.talk.sessions && !state.figgie.games && !state.kelly.games && !state.quote.rounds && !state.estimate.rounds;
   const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   QT.dayKey = dayKey;
@@ -299,13 +364,31 @@
     exportJson: () => JSON.stringify(state, null, 2),
     // Imported files are untrusted: rebuild the state from known fields only (see sanitizeState).
     importJson(text) {
-      state = sanitizeState(JSON.parse(text));
+      const next = sanitizeState(JSON.parse(text));
+      backup('before import');
+      state = next;
       save();
     },
-    reset() {
+    reset(reason = 'before reset') {
+      backup(reason);
       state = blank();
       save();
     },
+    backups: () => readBackups().map(({ t, reason, json }) => {
+      let s = {};
+      try { s = JSON.parse(json); } catch { /* listed, but can't be summarised */ }
+      return { t, reason, days: (s.days || []).length, bank: Object.keys(s.bank || {}).length, topics: Object.keys(s.topics || {}).length };
+    }),
+    restoreBackup(t) {
+      const b = readBackups().find((x) => x.t === t);
+      if (!b) return false;
+      const next = sanitizeState(JSON.parse(b.json));
+      backup('before restoring a backup');
+      state = next;
+      save();
+      return true;
+    },
+    isReadOnly: () => readOnly,
   };
 
   // Mastery = recent accuracy, discounted until you've done ~20 problems.

@@ -9,7 +9,7 @@
   const ERR_MIX = [['method', 5], ['complement', 4], ['precision', 3], ['scale', 3], ['factor2', 2], ['square', 1]];
 
   function load() {
-    store.reset();
+    store.reset('before sample data');
     let seed = 20261001; // Park–Miller LCG: same demo every time (and in screenshots)
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const pickErr = () => {

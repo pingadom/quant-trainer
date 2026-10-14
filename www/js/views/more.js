@@ -71,6 +71,10 @@
         <button class="ghost" id="rst">Reset</button>
       </div>
       <p class="small" id="exp-msg"></p>
+      <details class="card backups"><summary><b>Automatic backups</b> <span class="small">(${store.backups().length} on this device)</span></summary>
+        <p class="small">Theo keeps a copy of your progress each day you use it, and before anything replaces it (reset, import, sample data). The last 10 are kept, on this device only.</p>
+        <div id="backup-list"></div>
+      </details>
       <p class="small version">Theo ${QT.VERSION} · running as ${QT.platform.mode()}</p>`;
 
     // "Install as an app" card: only on the website, and only where installing is possible.
@@ -112,8 +116,22 @@
         el.querySelector('#exp-msg').textContent = 'That file could not be read as a progress export.';
       }
     });
+    const fmtWhen = (t) => new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    const drawBackups = () => {
+      const list = store.backups(), box = el.querySelector('#backup-list');
+      box.innerHTML = list.length ? `<ul class="backup-list">${list.map((b) => `
+        <li><span><b>${fmtWhen(b.t)}</b> · ${QT.ui.esc(b.reason)}<br><span class="small">${b.days} day${b.days === 1 ? '' : 's'} practised · ${b.bank} interview question${b.bank === 1 ? '' : 's'} · ${b.topics} topic${b.topics === 1 ? '' : 's'}</span></span>
+        <button type="button" class="ghost" data-restore="${b.t}">Restore</button></li>`).join('')}</ul>` : '<p class="small">No backups yet. The first is made the next time you practise.</p>';
+    };
+    drawBackups();
+    el.querySelector('#backup-list').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-restore]');
+      if (!btn) return;
+      if (!confirm('Replace your current progress with this backup? Your current progress is backed up first, so you can undo this.')) return;
+      if (store.restoreBackup(Number(btn.dataset.restore))) location.hash = '#/';
+    });
     el.querySelector('#rst').addEventListener('click', () => {
-      if (confirm('Erase all progress? This cannot be undone.')) {
+      if (confirm('Erase all progress? A backup is kept under Automatic backups, so you can restore it.')) {
         store.reset();
         location.hash = '#/';
       }

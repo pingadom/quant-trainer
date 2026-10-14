@@ -530,6 +530,26 @@
       }
     }
 
+    // Automatic backups: anything that replaces progress keeps a copy that can be restored.
+    // (Needs real storage, so it runs in the browser checks page, not the Node stub.)
+    const persists = (() => { try { localStorage.setItem('theo-probe', '1'); const ok = localStorage.getItem('theo-probe') === '1'; localStorage.removeItem('theo-probe'); return ok; } catch { return false; } })();
+    if (persists && QT.store.backups) {
+      const saved = QT.store.exportJson(), savedBackups = localStorage.getItem('theo-backups');
+      QT.store.reset();
+      QT.store.recordAttempt('dice', true);
+      QT.store.reset('test reset');
+      const top = QT.store.backups()[0];
+      if (!top || top.reason !== 'test reset' || top.topics !== 1) fail(`backups: reset did not keep a copy (${JSON.stringify(top)})`);
+      else {
+        QT.store.recordAttempt('cards', false); // something to lose, so restoring backs it up first
+        QT.store.restoreBackup(top.t);
+        if (!QT.store.get().topics.dice) fail('backups: restoring did not bring progress back');
+        if (QT.store.backups()[0].reason !== 'before restoring a backup') fail('backups: restoring should back up first');
+      }
+      QT.store.importJson(saved);
+      if (savedBackups === null) localStorage.removeItem('theo-backups'); else localStorage.setItem('theo-backups', savedBackups);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {

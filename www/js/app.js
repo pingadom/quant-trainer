@@ -51,7 +51,7 @@
       // Sample data must never be mistaken for real progress.
       main.insertAdjacentHTML('afterbegin', `<div class="demo-banner" role="status"><span><b>Sample data.</b> You're exploring a demo profile.</span><button type="button" class="link" id="demo-off">Start my own →</button></div>`);
       main.querySelector('#demo-off').addEventListener('click', () => {
-        store.reset();
+        store.reset('sample data (left)');
         location.hash = '#/';
         route();
       });
@@ -72,6 +72,15 @@
 
   // Another tab saved progress (core.js adopted it). Re-render overview screens so they show
   // the latest numbers; leave anything mid-question alone and just refresh the badges.
+  // Another tab (or the stored data) is from a newer version: this copy stops saving so it can't
+  // drop fields it doesn't know. Reloading picks up the new version.
+  QT.onNewerData = () => {
+    if (document.getElementById('newer-banner')) return;
+    document.body.insertAdjacentHTML('afterbegin', `<div class="demo-banner newer-banner" id="newer-banner" role="alert"><span><b>A newer version of Theo is open.</b> This tab has stopped saving so it can't overwrite your progress.</span><button type="button" class="link" id="newer-reload">Reload</button></div>`);
+    document.getElementById('newer-reload').addEventListener('click', () => location.reload());
+  };
+  if (store.isReadOnly()) QT.onNewerData();
+
   QT.onExternalChange = () => {
     const parts = location.hash.replace(/^#\/?/, '').split('/');
     const overview = ['', 'coach', 'practice', 'bank', 'cases', 'more', 'roadmap', 'progress', 'plan'].includes(parts[0]) && parts.length === 1;

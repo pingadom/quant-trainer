@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.25.0
+
+- **Progress can no longer be overwritten by an older copy of the app.** A tab left open across an update (or a cached install) runs the old code, which doesn't know about newer fields, such as the ✓/? marks added in 0.22, and dropped them when it saved. Two open tabs share progress, so that could wipe marks made in the new version. Every save now records the version that wrote it; an older copy that sees newer data stops saving and shows "A newer version of Theo is open. Reload." (Copies from before this release can't be fixed retroactively, so reload any old tabs once.)
+- **Automatic backups** (More → Your data → Automatic backups): a copy of your progress each day you use Theo, and before anything that replaces it (reset, import, sample data, restoring). The last 10 are kept on the device; each shows its date, days practised and interview questions, with a one-tap Restore. Restoring backs up the current progress first, so it can be undone. If saved progress is ever unreadable, it's backed up before anything is saved over it.
+- **"See it with sample data"** is only offered when there's no progress of any kind (before, progress only in mental maths, formula cards or games didn't count), and it backs up first anyway.
+- Reset now says a backup is kept, rather than "this cannot be undone".
+
 ## 0.24.0
 
 - **Rewritten worked solutions for every numeric interview question** (197 parts). Each now has the same shape: the **key idea** in one sentence, **numbered steps** ending with the answer in bold, a quick **check** you can say out loud (a limiting case, a second method, a sanity bound), and the common **trap** (the wrong answer people give, and why), where there is one. They appear everywhere a solution does: the question page, firm guide pages, the mistakes deck, mock interviews and Think aloud.

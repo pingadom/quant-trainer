@@ -480,3 +480,26 @@ test('hints come one at a time, and an answer found with hints stays flagged uns
   await expect(page.locator('.fb.ok')).toContainText('with 2 hints');
   await expect(page.locator('#qstatus [data-mark="unsure"]')).toHaveAttribute('aria-pressed', 'true');
 });
+
+test('progress saved by a newer version is never overwritten by an older copy', async ({ page }) => {
+  const newer = JSON.stringify({ writer: '99.0.0', days: ['2026-01-01'], bank: { 'js-reroll': { results: [true], mark: 'done', futureField: 1 } } });
+  await page.addInitScript((v) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('quant-trainer:v1', v); sessionStorage.setItem('seeded', '1'); } }, newer);
+  await page.goto('./#/bank');
+  await expect(page.locator('#newer-banner')).toContainText('newer version');
+  await page.locator('.qmark.done').first().click(); // would normally save
+  expect(await page.evaluate(() => localStorage.getItem('quant-trainer:v1'))).toBe(newer);
+});
+
+test('reset keeps a backup that can be restored', async ({ page }) => {
+  await page.goto('./#/iq/opt-increasing');
+  await page.locator('#qstatus [data-mark="done"]').click();
+  await page.goto('./#/more');
+  page.once('dialog', (d) => d.accept());
+  await page.locator('#rst').click();
+  await page.goto('./#/more');
+  await page.locator('.backups summary').click();
+  page.once('dialog', (d) => d.accept());
+  await page.locator('#backup-list [data-restore]').first().click();
+  await page.goto('./#/bank/all/done');
+  await expect(page.locator('.qrow')).toHaveCount(1);
+});

@@ -54,7 +54,9 @@
     (async () => {
       const text = (p) => fetch(p, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : undefined)).catch(() => undefined);
       const files = { index: await text('../www/index.html'), sw: await text('../www/sw.js'), pkg: await text('../package.json') };
+      const keepBackups = localStorage.getItem('theo-backups'); // the checks import test data; don't leave it in the backup list
       const { lines, fails: checkFails } = runChecks(QT, files);
+      if (keepBackups === null) localStorage.removeItem('theo-backups'); else localStorage.setItem('theo-backups', keepBackups);
       const fails = checkFails + window.loadErrors.length;
       for (const e of window.loadErrors) lines.unshift(`FAIL script error: ${e}`);
       const el = document.getElementById('out');
