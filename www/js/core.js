@@ -183,8 +183,7 @@
   function backup(reason, json) {
     if (!json) {
       if (isEmpty()) return; // nothing worth keeping
-      const { log, ...rest } = state;
-      json = JSON.stringify(rest);
+      json = JSON.stringify({ ...state, log: [] });
     }
     let list = readBackups();
     if (list[0] && list[0].json === json) return; // unchanged since the last backup
