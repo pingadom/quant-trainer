@@ -264,6 +264,12 @@
       recs.push({ pri: 200, kind: 'plan', voice: ps.left === 0 ? `${name} today. Light review only, then go and get it.` : `${name} in ${ps.left} day${ps.left > 1 ? 's' : ''}. ${n} thing${n > 1 ? 's' : ''} left on today's list.`, title: `Today's ${name} prep: ${ps.done}/${ps.tasks.length} done`, why: `Next: ${ps.tasks.find((t) => !(t.auto && t.auto()) && !(ps.p.done[QT.dayKey(new Date())] || []).includes(t.id))?.label || 'see the plan'}.`, href: '#/plan', label: 'Open the plan' });
     }
 
+    // Progress lives in this browser only. With real progress and no copy outside it, suggest one.
+    const BF = QT.backupFile, safeFile = BF && BF.status() === 'on', lastExport = st.lastExport || 0;
+    if (!safeFile && (st.days || []).length >= 3 && Date.now() - lastExport > 7 * 864e5) {
+      recs.push({ pri: 41, kind: 'backup', voice: "Your progress only lives in this browser. Let's keep a copy somewhere safe.", title: lastExport ? 'Back up your progress: last copy over a week ago' : 'Back up your progress', why: BF && BF.supported ? 'Clearing browser data would erase it. Choose a backup file once and Theo keeps it updated.' : 'Clearing browser data would erase it. Export a copy now and then.', href: '#/more', label: 'Back up' });
+    }
+
     // Interview questions flagged unsure (by you, or by a wrong answer).
     const unsure = QT.ui ? QT.ui.bankCounts().unsure : 0;
     if (unsure) recs.push({ pri: 43, kind: 'unsure', voice: `${unsure} interview question${unsure === 1 ? '' : 's'} you weren't sure about. Go back while they're fresh.`, title: `Unsure: ${unsure} interview question${unsure === 1 ? '' : 's'} to revisit`, why: 'You flagged these, or got a part wrong. Answer them cleanly, then tick them off.', href: '#/bank/all/unsure', label: 'Revisit' });

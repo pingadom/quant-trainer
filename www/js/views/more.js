@@ -71,6 +71,7 @@
         <button class="ghost" id="rst">Reset</button>
       </div>
       <p class="small" id="exp-msg"></p>
+      <div class="card protect" id="protect"></div>
       <details class="card backups"><summary><b>Automatic backups</b> <span class="small">(${store.backups().length} on this device)</span></summary>
         <p class="small">Theo keeps a copy of your progress each day you use it, and before anything replaces it (reset, import, sample data). The last 10 are kept, on this device only.</p>
         <div id="backup-list"></div>
@@ -101,6 +102,7 @@
       const msg = el.querySelector('#exp-msg');
       try {
         const how = await QT.platform.exportFile(`theo-progress-${new Date().toISOString().slice(0, 10)}.json`, store.exportJson());
+        if (how) store.markExported();
         msg.textContent = how === 'copied' ? 'Progress copied to the clipboard. Paste it somewhere safe.' : how === 'downloaded' ? 'Progress file downloaded.' : '';
       } catch {
         msg.textContent = 'Export failed. Try again.';
@@ -116,6 +118,30 @@
         el.querySelector('#exp-msg').textContent = 'That file could not be read as a progress export.';
       }
     });
+    // Keeping progress safe outside the browser: browser data can be cleared, so offer a file.
+    const BF = QT.backupFile;
+    const drawProtect = async () => {
+      const box = el.querySelector('#protect');
+      if (!box) return;
+      const persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted().catch(() => false) : false;
+      const last = store.get().lastExport;
+      const fileLine = !BF || !BF.supported
+        ? `<p class="small">Auto-backup to a file works in Chrome and Edge on a computer. In this browser, use <b>Export progress</b> now and then${last ? ` (last export ${new Date(last).toLocaleDateString()})` : ' (no export yet)'}.</p>`
+        : BF.status() === 'on'
+          ? `<p class="small">✓ Saving a copy to <b>${QT.ui.esc(BF.fileName() || 'your file')}</b> after every change${BF.lastWritten() ? `, last at ${new Date(BF.lastWritten()).toLocaleTimeString()}` : ''}. If your browser data is ever cleared, import that file.</p><button type="button" class="ghost" id="bf-stop">Stop</button>`
+          : BF.status() === 'paused'
+            ? `<p class="small">Auto-backup to <b>${QT.ui.esc(BF.fileName() || 'your file')}</b> is paused: the browser needs your permission again.</p><button type="button" id="bf-resume">Resume auto-backup</button>`
+            : `<p class="small">Keep a copy of your progress in a file you choose (e.g. in Documents or OneDrive), updated automatically. It survives clearing your browser data.</p><button type="button" id="bf-choose">Choose a backup file</button>`;
+      box.innerHTML = `<b>Keep your progress safe</b>
+        <p class="small">${persisted ? '✓ This browser has agreed not to clear Theo\'s data to free up space.' : 'This browser may clear Theo\'s data to free up space, or when you clear browsing data. Installing Theo or bookmarking it helps.'}</p>
+        ${fileLine}`;
+      box.querySelector('#bf-choose')?.addEventListener('click', () => BF.choose().catch(() => {}).then(drawProtect));
+      box.querySelector('#bf-resume')?.addEventListener('click', () => BF.resume().then(drawProtect));
+      box.querySelector('#bf-stop')?.addEventListener('click', () => BF.stop().then(drawProtect));
+    };
+    drawProtect();
+    if (BF) BF.onChange(drawProtect);
+
     const fmtWhen = (t) => new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
     const drawBackups = () => {
       const list = store.backups(), box = el.querySelector('#backup-list');

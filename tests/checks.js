@@ -550,6 +550,19 @@
       if (savedBackups === null) localStorage.removeItem('theo-backups'); else localStorage.setItem('theo-backups', savedBackups);
     }
 
+    // Backup reminder: with a few days of progress and no copy outside the browser, the coach
+    // suggests one; exporting clears it for a week.
+    {
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      QT.store.get().days.push('2026-01-01', '2026-01-02', '2026-01-03');
+      const has = () => QT.coach.recommend().some((r) => r.kind === 'backup' && r.href === '#/more');
+      if (QT.backupFile?.status() !== 'on' && !has()) fail('backup reminder: not shown with 3 days of progress and no export');
+      QT.store.markExported();
+      if (has()) fail('backup reminder: still shown right after an export');
+      QT.store.importJson(saved);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {

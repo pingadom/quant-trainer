@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.0
+
+- **Auto-backup to a file** (Chrome and Edge on a computer): More → Your data → Keep your progress safe → Choose a backup file. Pick a location once (Documents, OneDrive…) and Theo rewrites that file a few seconds after every change. Clearing browser data, a clean-on-exit setting or a cleaner app can't touch it; restore with Import. If the browser asks for permission again after a restart, a Resume button appears.
+- **Your progress's safety, shown:** whether the browser has agreed not to clear Theo's data, and when you last exported.
+- **Backup reminder:** with three or more days of progress and no copy outside the browser for a week, the coach suggests making one. Exporting counts.
+
 ## 0.25.0
 
 - **Progress can no longer be overwritten by an older copy of the app.** A tab left open across an update (or a cached install) runs the old code, which doesn't know about newer fields, such as the ✓/? marks added in 0.22, and dropped them when it saved. Two open tabs share progress, so that could wipe marks made in the new version. Every save now records the version that wrote it; an older copy that sees newer data stops saving and shows "A newer version of Theo is open. Reload." (Copies from before this release can't be fixed retroactively, so reload any old tabs once.)

@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.25.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.26.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -199,6 +199,7 @@
     }
   }
   let backedUpToday = null;
+  const saveHooks = [];
 
   function save() {
     if (readOnly) return;
@@ -215,6 +216,9 @@
       /* storage unavailable: progress lives for this tab only */
     }
     if (QT.platform) QT.platform.persist(KEY, json); // native: mirror to durable storage
+    for (const fn of saveHooks) {
+      try { fn(); } catch { /* a hook must never stop saving */ }
+    }
   }
   // ---- Untrusted input: imported progress files ----
   // Saved problems contain HTML (sup/sub/b…), so an imported file could smuggle in markup
@@ -307,6 +311,7 @@
     s.flash = mapKeys(r.flash, (x) => ({ box: Math.min(4, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-z0-9-]{1,30}$/.test(k));
     s.demo = !!r.demo;
     if (r.writer) s.writer = text(r.writer, 20);
+    if (r.lastExport) s.lastExport = num(r.lastExport);
     s.tricks = mapKeys(r.tricks, (t) => ({ best: Math.min(10, Math.max(0, num(obj(t).best))), runs: num(obj(t).runs) }), (k) => /^[a-z0-9-]+$/.test(k));
     if (r.elo) {
       const e = obj(r.elo), skillKey = (k) => /^[a-z]+\.\d+$/.test(k);
@@ -388,6 +393,11 @@
       return true;
     },
     isReadOnly: () => readOnly,
+    onSave: (fn) => saveHooks.push(fn),
+    markExported() {
+      state.lastExport = Date.now();
+      save();
+    },
   };
 
   // Mastery = recent accuracy, discounted until you've done ~20 problems.
