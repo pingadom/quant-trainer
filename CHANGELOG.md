@@ -1,7 +1,8 @@
 # Changelog
 
-## 0.27.1
+## 0.28.0
 
+- **One-operation Zetamac** for targeted practice: "+ only", "− only", "× only" and "÷ only" buttons on the Zetamac card. Each is a normal 2-minute game on Zetamac's default ranges, restricted to one operation, with its own personal best shown on its button. Slow questions still come back as speed reps, and the interview plan counts these games as Zetamac practice.
 - **Zetamac flashes green when an answer is accepted.** The next question appears instantly, so it was easy to wonder whether the last answer counted. The answer box (and the score) now flash green for a moment on every correct answer, in every theme. With "less motion" on, it's a brief static highlight instead of a fade.
 
 ## 0.27.0

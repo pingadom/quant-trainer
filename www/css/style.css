@@ -810,3 +810,6 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 #mm-card #mm-in { transition: background-color 0.25s ease-out, border-color 0.25s ease-out, box-shadow 0.25s ease-out; }
 #mm-card.zm-ok #mm-in { background-color: var(--ok-soft); border-color: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); transition: none; }
 #mm-card.zm-ok #mm-score { color: var(--ok); }
+
+.zm-only { flex-wrap: wrap; gap: 8px; }
+.zm-only button { min-width: 92px; }

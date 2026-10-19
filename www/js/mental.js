@@ -87,6 +87,7 @@
     }));
     el.querySelector('[data-mode="full"]').addEventListener('click', () => run(el, 'full', savedStyle()));
     el.querySelector('[data-mode="zetamac"]').addEventListener('click', () => zetamac(el));
+    el.querySelectorAll('[data-zm-only]').forEach((b) => b.addEventListener('click', () => zetamac(el, { only: b.dataset.zmOnly })));
     wireZetamac(el, () => render(el));
   }
 
@@ -246,6 +247,10 @@
     return !!s && ['add', 'sub', 'mul', 'div'].some((k) => s[k] === true) && range(s.addA) && range(s.addB) && range(s.mulA) && range(s.mulB) && s.mulA[0] >= 1 && ZM_SECS.includes(s.secs);
   }
   const zmIsDefault = (s) => JSON.stringify(s) === JSON.stringify(ZM_DEFAULT);
+  // Single-operation games for targeted practice: default ranges and 2 minutes, one operation,
+  // with their own personal bests.
+  const ZM_ONLY = { add: ['zmAdd', '+', 'addition'], sub: ['zmSub', '−', 'subtraction'], mul: ['zmMul', '×', 'multiplication'], div: ['zmDiv', '÷', 'division'] };
+  const zmOnlySettings = (op) => ({ ...ZM_DEFAULT, add: op === 'add', sub: op === 'sub', mul: op === 'mul', div: op === 'div' });
   const zmSummary = (s) => [s.add && `+ (${s.addA.join('–')}) + (${s.addB.join('–')})`, s.sub && '− in reverse', s.mul && `× (${s.mulA.join('–')}) × (${s.mulB.join('–')})`, s.div && '÷ in reverse'].filter(Boolean).join(' · ') + ` · ${s.secs} s`;
 
   // One question. `only` restricts to one operation (used by speed reps and drills).
@@ -281,6 +286,8 @@
         <p class="small"><b>${def ? 'Zetamac default settings' : 'Custom settings'}:</b> ${zmSummary(s)}</p>
         <p class="small">Best: <b>${bestD ?? '–'}</b> (default settings)${bestC != null ? ` · <b>${bestC}</b> (custom)` : ''}</p>
         <button data-mode="zetamac">Start</button>
+        <p class="small" style="margin:12px 0 6px"><b>Practise one operation</b> (default ranges, 2 minutes, separate bests):</p>
+        <div class="row zm-only">${Object.entries(ZM_ONLY).map(([op, [k, sym, name]]) => `<button type="button" class="ghost" data-zm-only="${op}" aria-label="${name} only">${sym} only${st[k]?.best != null ? ` <span class="small">best ${st[k].best}</span>` : ''}</button>`).join('')}</div>
         <details class="zm-settings"${def ? '' : ' open'}><summary>Settings</summary>
           <form id="zm-form">
             <label class="check"><input type="checkbox" id="zm-add" ${s.add ? 'checked' : ''}> Addition: (${num('zm-a1', s.addA[0], 'Addition, first number from')} to ${num('zm-a2', s.addA[1], 'Addition, first number to')}) + (${num('zm-b1', s.addB[0], 'Addition, second number from')} to ${num('zm-b2', s.addB[1], 'Addition, second number to')})</label>
@@ -335,13 +342,16 @@
   }
 
   function zetamac(el, opts = {}) {
-    const s = opts.force ? { ...ZM_DEFAULT } : zmSettings(), def = zmIsDefault(s), key = def ? 'zetamac' : 'zetamacCustom', end = Date.now() + s.secs * 1000;
+    const only = ZM_ONLY[opts.only] ? opts.only : null;
+    const s = opts.force ? { ...ZM_DEFAULT } : only ? zmOnlySettings(only) : zmSettings(), def = !only && zmIsDefault(s), end = Date.now() + s.secs * 1000;
+    const key = only ? ZM_ONLY[only][0] : def ? 'zetamac' : 'zetamacCustom';
+    const modeLabel = only ? `${ZM_ONLY[only][2]} only` : def ? 'default settings' : 'custom';
     const seed = def ? opts.seed || newSeed() : null, list = seed ? seededList(seed, s) : null;
     let qi = 0;
     const answered = [];
     let cur = null, shownAt = 0, done = false;
     el.innerHTML = `
-      <h1>Zetamac <span class="small">${def ? 'default settings' : 'custom'}</span></h1>
+      <h1>Zetamac <span class="small">${modeLabel}</span></h1>
       <div class="card" id="mm-card">
         <div class="mm-top"><span id="mm-time"></span><span id="mm-score">Score: 0</span></div>
         <div class="mm-q" id="mm-q" aria-live="polite"></div>
@@ -408,7 +418,7 @@
       el.innerHTML = `
         <div class="title-row"><h1>Zetamac: done</h1>${prev === null || score > prev ? QT.flair.milestone('New best') : ''}</div>
         <div class="tiles">
-          <div class="tile"><div class="v">${score}</div><div class="k">score (${def ? 'default settings' : 'custom'})</div></div>
+          <div class="tile"><div class="v">${score}</div><div class="k">score (${modeLabel})</div></div>
           <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best</div></div>
           <div class="tile"><div class="v">${avg}</div><div class="k">seconds per answer</div></div>
         </div>
@@ -420,7 +430,7 @@
         ${review(answered, slowSecs())}
         ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}.</p>` : ''}
         <div class="row" style="margin-top:18px"><button id="again">Play again</button><a class="btn ghost" href="#/mental">Back</a></div>`;
-      el.querySelector('#again').addEventListener('click', () => zetamac(el));
+      el.querySelector('#again').addEventListener('click', () => zetamac(el, only ? { only } : {}));
       wireReview(el);
       const share = el.querySelector('#zm-share');
       if (share) share.addEventListener('click', async () => {

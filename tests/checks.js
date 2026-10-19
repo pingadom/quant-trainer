@@ -563,6 +563,17 @@
       QT.store.importJson(saved);
     }
 
+    // Single-operation Zetamac: its bests survive a save and reload (the schema keeps them).
+    {
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      snap.mental = { ...(snap.mental || {}), zmMul: { best: 31, runs: [{ date: '2026-10-19', correct: 31, wrong: 0 }] }, zmBogus: { best: 9, runs: [] } };
+      QT.store.importJson(JSON.stringify(snap));
+      const m = QT.store.get().mental;
+      if (m.zmMul?.best !== 31) fail('zetamac one-op: best not kept after reload');
+      if (m.zmBogus) fail('zetamac one-op: unknown keys should still be dropped');
+      QT.store.importJson(saved);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {
