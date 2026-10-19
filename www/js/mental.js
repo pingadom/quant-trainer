@@ -250,7 +250,9 @@
   // Single-operation games for targeted practice: default ranges and 2 minutes, one operation,
   // with their own personal bests.
   const ZM_ONLY = { add: ['zmAdd', '+', 'addition'], sub: ['zmSub', '−', 'subtraction'], mul: ['zmMul', '×', 'multiplication'], div: ['zmDiv', '÷', 'division'] };
-  const zmOnlySettings = (op) => ({ ...ZM_DEFAULT, add: op === 'add', sub: op === 'sub', mul: op === 'mul', div: op === 'div' });
+  // Uses your Settings ranges and duration; only the operation is fixed.
+  const zmOnlySettings = (op) => ({ ...zmSettings(), add: op === 'add', sub: op === 'sub', mul: op === 'mul', div: op === 'div' });
+  const zmOnlyIsDefault = (s) => ['addA', 'addB', 'mulA', 'mulB', 'secs'].every((k) => JSON.stringify(s[k]) === JSON.stringify(ZM_DEFAULT[k]));
   const zmSummary = (s) => [s.add && `+ (${s.addA.join('–')}) + (${s.addB.join('–')})`, s.sub && '− in reverse', s.mul && `× (${s.mulA.join('–')}) × (${s.mulB.join('–')})`, s.div && '÷ in reverse'].filter(Boolean).join(' · ') + ` · ${s.secs} s`;
 
   // One question. `only` restricts to one operation (used by speed reps and drills).
@@ -286,7 +288,7 @@
         <p class="small"><b>${def ? 'Zetamac default settings' : 'Custom settings'}:</b> ${zmSummary(s)}</p>
         <p class="small">Best: <b>${bestD ?? '–'}</b> (default settings)${bestC != null ? ` · <b>${bestC}</b> (custom)` : ''}</p>
         <button data-mode="zetamac">Start</button>
-        <p class="small" style="margin:12px 0 6px"><b>Practise one operation</b> (default ranges, 2 minutes, separate bests):</p>
+        <p class="small" style="margin:12px 0 6px"><b>Practise one operation</b>, using the ranges and duration in Settings below${zmOnlyIsDefault(s) ? ' (each has its own best on default settings)' : ' (custom: scores count as custom games)'}:</p>
         <div class="row zm-only">${Object.entries(ZM_ONLY).map(([op, [k, sym, name]]) => `<button type="button" class="ghost" data-zm-only="${op}" aria-label="${name} only">${sym} only${st[k]?.best != null ? ` <span class="small">best ${st[k].best}</span>` : ''}</button>`).join('')}</div>
         <details class="zm-settings"${def ? '' : ' open'}><summary>Settings</summary>
           <form id="zm-form">
@@ -344,8 +346,9 @@
   function zetamac(el, opts = {}) {
     const only = ZM_ONLY[opts.only] ? opts.only : null;
     const s = opts.force ? { ...ZM_DEFAULT } : only ? zmOnlySettings(only) : zmSettings(), def = !only && zmIsDefault(s), end = Date.now() + s.secs * 1000;
-    const key = only ? ZM_ONLY[only][0] : def ? 'zetamac' : 'zetamacCustom';
-    const modeLabel = only ? `${ZM_ONLY[only][2]} only` : def ? 'default settings' : 'custom';
+    const onlyDef = only && zmOnlyIsDefault(s); // one-op bests count only on default ranges and duration
+    const key = only ? (onlyDef ? ZM_ONLY[only][0] : 'zetamacCustom') : def ? 'zetamac' : 'zetamacCustom';
+    const modeLabel = only ? `${ZM_ONLY[only][2]} only${onlyDef ? '' : ', custom'}` : def ? 'default settings' : 'custom';
     const seed = def ? opts.seed || newSeed() : null, list = seed ? seededList(seed, s) : null;
     let qi = 0;
     const answered = [];

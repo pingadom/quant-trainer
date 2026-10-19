@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.1
+
+- **One-operation Zetamac is adjustable:** the "+ only", "− only", "× only" and "÷ only" games use the ranges and duration from Zetamac's Settings. On default ranges each keeps its own best; with custom settings they count as custom games, so bests stay comparable.
+
 ## 0.28.0
 
 - **One-operation Zetamac** for targeted practice: "+ only", "− only", "× only" and "÷ only" buttons on the Zetamac card. Each is a normal 2-minute game on Zetamac's default ranges, restricted to one operation, with its own personal best shown on its button. Slow questions still come back as speed reps, and the interview plan counts these games as Zetamac practice.
