@@ -805,3 +805,8 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .backup-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
 .backup-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
 .newer-banner { position: sticky; top: 0; z-index: 50; }
+
+/* Zetamac: flash the answer box green when an answer is accepted (a static cue with less motion) */
+#mm-card #mm-in { transition: background-color 0.25s ease-out, border-color 0.25s ease-out, box-shadow 0.25s ease-out; }
+#mm-card.zm-ok #mm-in { background-color: var(--ok-soft); border-color: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); transition: none; }
+#mm-card.zm-ok #mm-score { color: var(--ok); }

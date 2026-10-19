@@ -359,12 +359,24 @@
       $in.value = '';
       shownAt = Date.now();
     }
+    // A brief green flash on the answer box confirms each accepted answer, since the next
+    // question appears instantly and it's easy to wonder whether the last one counted.
+    let flashTimer = null;
+    const flash = () => {
+      const card = $('#mm-card');
+      card.classList.remove('zm-ok');
+      void card.offsetWidth; // restart the fade if answers come quickly
+      card.classList.add('zm-ok');
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => card.classList.remove('zm-ok'), 220);
+    };
     $in.addEventListener('input', () => {
       if (done) return;
       const v = QT.parseAnswer($in.value);
       if (v === cur.a) {
         answered.push({ ...cur, ok: true, you: String(v), ms: Date.now() - shownAt });
         $s.textContent = `Score: ${answered.length}`;
+        flash();
         next();
       }
     });

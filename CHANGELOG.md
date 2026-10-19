@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.1
+
+- **Zetamac flashes green when an answer is accepted.** The next question appears instantly, so it was easy to wonder whether the last answer counted. The answer box (and the score) now flash green for a moment on every correct answer, in every theme. With "less motion" on, it's a brief static highlight instead of a fade.
+
 ## 0.27.0
 
 - **35 more reported interview questions** (189 in all, 25 firms), from candidate reports on Wall Street Oasis for Jump, HRT, DRW, Old Mission, Belvedere, Virtu, Da Vinci, Maven, Squarepoint, Akuna, IMC, Five Rings, Jane Street and three firms new to Theo: **Tower Research, D. E. Shaw and Mako**. Highlights: Jump's red-card stopping game and one-pass bubble sort, DRW's random rook (70 moves) and chord crossings, Old Mission's three-in-a-row chess match (86/99) and the tetrahedron containing the centre of a sphere (1/8), Belvedere's non-transitive dice and the drunk passenger, Tower's correlation bounds, IMC's tied spaghetti, and D. E. Shaw's biased coin down to its entropy limit.
