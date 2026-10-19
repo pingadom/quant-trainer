@@ -84,7 +84,6 @@
     'wc-threes': [
       [`It's one die, so the expected score is just the average of what each face is worth.`, `Threes count as zero, so the faces are worth 1, 2, 0, 4, 5, 6.`, `Average those six values.`],
       [`You must keep at least one die: always keep the lower one.`, `Then decide on the other: keep it, or re-roll it (worth your answer to (a))?`, `Keep the second die only if it shows less than 3, i.e. a three (0), 1 or 2.`, `Average min(d₁, d₂) + min(max(d₁, d₂), 3) over all 36 rolls (using 0 for a three).`],
-      [`Build up from fewer dice: E₁ = 3, E₂ = answer (b).`, `With n dice: keep the lowest, then decide how many more of the next-lowest to keep by comparing their sum with the value of re-rolling the rest.`, `Compute E₃ and E₄ the same way before E₅. This one really needs a careful table or a computer.`],
     ],
     'wc-hat': [
       [`If you say stop now, what do you expect to get?`, `It's the average of the bills still in the hat.`, `How does that average change, on average, after one bill is drawn and seen?`, `It's a martingale: the expected average after a draw equals the average now. So waiting can't help on average.`],
@@ -258,9 +257,9 @@
     'cit-coin-ranges': [[`Work out each range in standard deviations from the mean.`, `100 flips: mean 50, σ = 5. So 40–60 is ±2σ.`, `About 95% of a normal is within ±2σ; including the endpoints pushes it a little higher.`, `1000 flips: σ ≈ 15.8, so 400–600 is about ±6σ. Which is more likely?`]],
     'cit-local-min': [[`Use linearity: find the probability that one position is a local minimum, then multiply by 5.`, `A number and its two neighbours are three different values in random order.`, `What's the chance the middle one is the smallest of three?`]],
     'cit-sqrt-30': [[`Find a nearby perfect square: 5.5² = 30.25.`, `Refine with one Newton step: x − (x² − 30)/(2x).`, `5.5 − 0.25/11.`]],
-    'drw-bottom-card': [[`Watch the original bottom card. How does it move up?`, `It rises only when a card is inserted below it. Count the cards below it.`, `With k cards below, a moved card lands below it with probability (k + 1)/52, which takes 52/(k + 1) moves on average.`, `It reaches the top when 51 cards are below it. Add the expected waits for k = 0, …, 50.`]],
+    'drw-bottom-card': [[`Watch the original bottom card. How does it move up?`, `It rises only when a card is inserted below it. Count the cards below it.`, `With k cards below, a moved card lands below it with probability (k + 1)/52, which takes 52/(k + 1) moves on average.`, `Add the waits for k = 0, …, 50: that's 52 times a harmonic number. Approximate H<sub>n</sub> ≈ ln n + 0.577.`]],
     'drw-cube-colours': [[`Count colourings first, then divide by the symmetries.`, `There are 6! ways to paint the faces.`, `How many rotations does a cube have? (6 faces could be on top × 4 ways to turn it.)`, `Or directly: put colour 1 on the bottom, choose the top, then arrange the four sides around a circle.`]],
-    'hrt-three-before-six': [[`Let N be the number of rolls until the first 6, and A the event that a 3 came first.`, `By symmetry between 3 and 6, P(A) = ½.`, `Given N = n, the n − 1 earlier rolls are uniform on 1–5, so P(no 3 | N = n) = (4/5)<sup>n − 1</sup>.`, `E[N | A] = (E[N] − E[N; not A]) / P(A). Compute E[N; not A] = Σ n(5/6)<sup>n − 1</sup>(1/6)(4/5)<sup>n − 1</sup>.`]],
+    'hrt-three-before-six': [[`Look at the first roll that is either a 3 or a 6.`, `How long does that take on average? Does knowing it was a 3 change when it happened?`, `Each roll is a 3 or a 6 with probability 1/3. After that first 3, what's left of the game?`, `After the 3 you still need a 6, starting completely fresh.`]],
     'fr-ten-second-estimates': [
       [`Take logs: log₁₀ of the answer is 0.1.`, `log₁₀ 2 ≈ 0.301, so 10<sup>0.1</sup> is close to the cube root of 2.`, `Find the number between 1.2 and 1.3 whose cube is 2: try cubing a couple of candidates.`],
       [`log<sub>1.2</sub> 3 = ln 3 / ln 1.2.`, `ln 3 ≈ 1.099 and ln 1.2 ≈ 0.182.`, `Check by repeated squaring: 1.2² = 1.44, 1.2⁴ ≈ 2.07.`],
@@ -449,7 +448,7 @@
     'sq-sd-unbiased': [[`Unbiasedness is about expectations. Is E[√V] equal to √E[V]?`, `The square root is concave.`, `Jensen's inequality for a concave function: E[f(V)] ≤ f(E[V]).`]],
     'akuna-risk-ten': [[`First find P(total = 10).`, `10 can be made as (4,6), (5,5), (6,4): 3 of 36.`, `A fair bet risks stake s against $100 with s × P(lose) = 100 × P(win).`]],
     'imc-alex-blake': [[`Let A and B be the flips each needs: independent geometric with p = ½.`, `P(A = k and B > k) = (½)<sup>k</sup> × (½)<sup>k</sup> = (¼)<sup>k</sup>.`, `P(A < B) = Σ (¼)<sup>k</sup>. Then E[A | A < B] = Σ k(¼)<sup>k</sup> / P(A < B).`, `Σ k xᵏ = x/(1 − x)² with x = ¼.`]],
-    'imc-spaghetti': [[`Tie one strand at a time: pick any free end and tie it to a random other free end.`, `With n strands left (2n ends), you close a loop only if you pick that strand's own other end.`, `That happens with probability 1/(2n − 1). Use linearity over n = 100, 99, …, 1.`]],
+    'imc-spaghetti': [[`Tie one strand at a time: pick any free end and tie it to a random other free end.`, `With n strands left (2n ends), you close a loop only if you pick that strand's own other end.`, `That happens with probability 1/(2n − 1). Use linearity over n = 100, 99, …, 1.`, `Approximate the sum of 1/(odd numbers) with logs: H₂ₙ − ½Hₙ, and H<sub>n</sub> ≈ ln n + 0.577.`]],
     'tower-corr-range': [
       [`The 3 × 3 correlation matrix must be positive semi-definite.`, `With a = corr(X, Y), b = corr(Y, Z), the possible c = corr(X, Z) satisfy c ∈ ab ± √((1 − a²)(1 − b²)).`, `Here ab = 0.1, 1 − a² = 0.96 and 1 − b² = 0.75.`],
       [`Same interval as (a): take the lower end.`, `ab − √((1 − a²)(1 − b²)).`, `It can be negative even though both given correlations are positive.`],
@@ -460,7 +459,7 @@
       [`Information theory: each biased flip carries at most H(p) bits of randomness.`, `H(p) = −p log₂ p − (1 − p) log₂(1 − p).`, `A fair flip is exactly 1 bit. Evaluate H(1/3). (Clever schemes that reuse discarded flips approach this.)`],
     ],
     'fr-max-normals': [[`max(X, Y) = (X + Y)/2 + |X − Y|/2.`, `E[(X + Y)/2] = 0. X − Y is normal with variance 2.`, `For Z normal with standard deviation σ, E|Z| = σ√(2/π).`]],
-    'fr-arc-length': [[`Arc length = ∫ √(1 + (dy/dx)²) dx.`, `dy/dx = 2x, so ∫₀⁹ √(1 + 4x²) dx.`, `Quick estimate: for large x, √(1 + 4x²) ≈ 2x, so the length is just over ∫ 2x dx = 81.`, `Exact: [x√(1 + 4x²)/2 + asinh(2x)/4] from 0 to 9.`]],
+    'fr-arc-length': [[`Arc length = ∫ √(1 + (dy/dx)²) dx, and dy/dx = 2x.`, `For large x, √(1 + 4x²) is just over 2x. What does ∫₀⁹ 2x dx give?`, `Correct for the difference: √(1 + 4x²) ≈ 2x + 1/(4x) when x is large; treat 0 ≤ x ≤ 1 separately.`, `On 0–1, Simpson's rule with x = 0, ½, 1 is quick.`]],
     'fr-quick-estimates': [
       [`3<sup>3.4</sup> = 3³ × 3<sup>0.4</sup>.`, `3<sup>0.4</sup> = e<sup>0.4 ln 3</sup> ≈ e<sup>0.44</sup>.`, `e<sup>0.44</sup> ≈ 1.55.`],
       [`Points near the edge are more common: area grows with radius.`, `P(distance ≤ r) = r², so the density is 2r.`, `E = ∫₀¹ r × 2r dr.`],

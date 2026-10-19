@@ -490,7 +490,7 @@
       id: 'cit-coin-ranges', firm: 'citadel', role: 'Quant Trader Intern', stage: 'Interview', cat: 'Statistics', kind: 'reported',
       src: ['Glassdoor', GD('Which-is-higher-probability-100-coin-flips-having-between-40-60-heads-or-1000-coin-flips-having-between-400-600-heads-QTN_9100922.htm')],
       q: `Which is more likely: 40 to 60 heads in 100 fair flips, or 400 to 600 heads in 1000?`,
-      parts: [{ q: `What is the probability of 40–60 heads in 100 flips (to two decimal places)?`, a: 0.9647997997822951, tol: { abs: 0.01, rel: 0 },
+      parts: [{ q: `What is the probability of 40–60 heads in 100 flips (to two decimal places)?`, a: 0.9647997997822951, tol: { abs: 0.02, rel: 0 },
         sol: `The standard deviation is 5, so 40–60 is ±2σ: about 0.95, and 0.965 exactly (the endpoints count). For 1000 flips the standard deviation is about 15.8, so ±100 is more than 6σ: essentially certain. The 1000-flip range is far more likely: the same ±10% window is many more standard deviations wide.` }],
     },
     {
@@ -515,7 +515,7 @@
       src: ['Glassdoor', GD('1-a-deck-of-52-cards-every-time-you-take-out-the-card-on-the-top-and-insert-it-back-to-the-deck-randomly-Whats-the-expec-QTN_6497379.htm')],
       note: `We assume the top card goes back into one of the 52 possible positions (including the top) uniformly at random.`,
       q: `Repeatedly take the top card of a 52-card deck and put it back at a uniformly random position.`,
-      parts: [{ q: `What is the expected number of moves until the card that started at the bottom reaches the top?`, a: 52 * [...Array(51)].reduce((s, _, k) => s + 1 / (k + 1), 0), tol: { abs: 0.5, rel: 0 },
+      parts: [{ q: `What is the expected number of moves until the card that started at the bottom reaches the top?`, a: 52 * [...Array(51)].reduce((s, _, k) => s + 1 / (k + 1), 0), tol: { abs: 3, rel: 0 },
         sol: `Watch the cards below the original bottom card. When k cards are below it, a moved card lands below it with probability (k + 1)/52, which takes about 52/(k + 1) moves. It reaches the top when 51 cards are below it: E = Σ<sub>k=0</sub><sup>50</sup> 52/(k + 1) = 52 × H<sub>51</sub> ≈ 52 × 4.519 ≈ 235.` }],
       followups: ['After one more move from there, why is the deck perfectly shuffled?'],
     },

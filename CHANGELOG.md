@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.29.0
+
+- **Answers audited for interview-sized working.** Every one of the 243 parts was checked against "could you get this at a whiteboard in a few minutes, and does the solution show how?". Most could. Changes:
+  - **Removed as a scored part:** Wincent's Threes (c), the full five-dice expected score, which needs a computer. It's now an "interviewers may push further" follow-up asking for the strategy instead.
+  - **Shorter routes in the worked solutions:** HRT's "3 before 6" (the first 3-or-6 takes 3 rolls, then a fresh 6 takes 6: 9, instead of summing a series); DRW's bottom card (H₅₁ ≈ ln 51 + 0.577); IMC's spaghetti (½ ln n + ln 2 + γ/2 instead of adding 100 fractions); Five Rings' arc length (81 plus two small corrections instead of asinh); the birthday problem (1 − e<sup>−253/365</sup>); Jane Street's d30 v d20 (closed-form sums); the Kelly log-growth (ln(1 + x) ≈ x − x²/2); the d12 follow-up ((13/12)⁵ ≈ e<sup>0.4</sup>).
+  - **Approximations now marked right:** the rule of 4 for poker outs, ±2σ ≈ 95% for the coin ranges, the birthday and bottom-card approximations, and the arc-length estimate. A new test checks that each solution's quick method is accepted.
+
 ## 0.28.1
 
 - **One-operation Zetamac is adjustable:** the "+ only", "− only", "× only" and "÷ only" games use the ranges and duration from Zetamac's Settings. On default ranges each keeps its own best; with custom settings they count as custom games, so bests stay comparable.

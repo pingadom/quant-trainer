@@ -99,7 +99,7 @@
       parts: [
         { q: `(a) What is the smallest group in which the chance of a shared birthday exceeds 1/2?`, a: 23, tol: EXACT,
           sol: `P(all different) = (365/365)(364/365)…((365 − n + 1)/365). It first drops below 1/2 at n = 23. Quick check: there are C(23, 2) = 253 pairs, each matching with probability 1/365, so roughly 1 − e<sup>−253/365</sup> ≈ 0.50.` },
-        { q: `(b) What is the probability for a group of 23?`, a: 0.5072972343239854, tol: { abs: 0.005, rel: 0 },
+        { q: `(b) What is the probability for a group of 23?`, a: 0.5072972343239854, tol: { abs: 0.01, rel: 0 },
           sol: `1 − Π<sub>k=0</sub><sup>22</sup>(365 − k)/365 ≈ 0.507.`,
           sim: () => { const seen = new Set(); for (let i = 0; i < 23; i++) { const d = R.int(1, 365); if (seen.has(d)) return 1; seen.add(d); } return 0; } },
       ],

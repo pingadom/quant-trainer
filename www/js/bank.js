@@ -378,7 +378,7 @@
       src: ['Glassdoor', 'https://www.glassdoor.com.au/Interview/Flow-Traders-Interview-Questions-E258344.htm'],
       q: `Reported: "what is the probability of winning a Texas Hold'em hand post-flop?" Here is a concrete version you should be able to do in your head.`,
       parts: [
-        { q: `Practice (ours): after the flop you hold a flush draw (9 outs among 47 unseen cards). What is the probability of completing it by the river (two more cards)?`, a: 1 - (38 / 47) * (37 / 46), ext: true,
+        { q: `Practice (ours): after the flop you hold a flush draw (9 outs among 47 unseen cards). What is the probability of completing it by the river (two more cards)?`, a: 1 - (38 / 47) * (37 / 46), tol: { abs: 0.015, rel: 0 }, ext: true,
           sol: `P(miss both) = (38/47)(37/46) ≈ 0.650, so P(hit) ≈ <b>0.35</b>. The "rule of 4" (outs × 4 ≈ 36%) gets you there instantly, and interviewers like seeing a quick approximation checked against the exact answer.`,
           sim: () => { const a = R.int(0, 46); let b; do { b = R.int(0, 46); } while (b === a); return a < 9 || b < 9 ? 1 : 0; } },
       ],
@@ -410,10 +410,8 @@
           sol: `(1 + 2 + 0 + 4 + 5 + 6)/6 = 18/6 = <b>3</b>.` },
         { q: `(b) With two dice left, what is your expected score under optimal play?`, a: 79 / 18,
           sol: `You must keep the lower die. Keep the other one too if it beats re-rolling, whose expected value is 3: keep it if it shows 0 (a three), 1 or 2. Averaging min + min(other, 3) over all 36 rolls gives 158/36 = <b>79/18 ≈ 4.389</b>.` },
-        { q: `(c) Follow-up (from Conroy's solution): the expected score of the full five-dice game under optimal play?`, a: 504205555 / 80621568, tol: { abs: 0.005, rel: 0 }, ext: true,
-          sol: `Work backwards: E₁ = 3, E₂ = 79/18 ≈ 4.389, E₃ ≈ 5.234, E₄ ≈ 5.834. With n dice, keep the lowest and then choose how many more of the next-lowest to keep by comparing their sum with the value of re-rolling the rest. This gives E₅ ≈ <b>6.254</b>. Note the surprise in the three-dice strategy: a 2 is worth keeping next to another 2, but not next to a 4.` },
       ],
-      followups: ['Why must the optimal strategy keep the lowest dice first?', 'How does the answer change if you may keep zero dice on a roll (but still at most five rolls)?'],
+      followups: ['With all five dice, what is the expected score under optimal play? (It needs a computer: about 6.25. In an interview, explain the strategy instead: keep the lowest die, then keep further low dice only while they beat re-rolling the rest.)', 'Why must the optimal strategy keep the lowest dice first?', 'How does the answer change if you may keep zero dice on a roll (but still at most five rolls)?'],
     },
     {
       id: 'wc-hat', firm: 'wincent', role: 'Quant trader', stage: 'Interview', cat: 'Optimal stopping', kind: 'reported',

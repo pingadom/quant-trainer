@@ -212,7 +212,6 @@ def threes(n):
 
 record("wc-threes.0", threes(1), "exact mean of a Threes die")
 record("wc-threes.1", threes(2), f"exact enumeration = {threes(2)}")
-record("wc-threes.2", threes(5), f"exact dynamic programme = {threes(5)}")
 
 # Random walk on a cube: hitting time of the opposite corner from the full 8-state chain.
 P = np.zeros((8, 8))

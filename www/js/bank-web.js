@@ -268,7 +268,7 @@
     {
       id: 'fr-arc-length', firm: 'fiverings', role: 'Quant intern', stage: 'Interview', cat: 'Mental maths', kind: 'reported', src: WSO('five-rings-capital-llc', 'Five Rings'),
       q: `Find the length of the curve y = x² from x = 0 to x = 9.`,
-      parts: [{ q: `Its length (to the nearest whole number, or better)?`, a: (9 * Math.sqrt(325)) / 2 + Math.asinh(18) / 4, tol: { abs: 0.6, rel: 0 } }],
+      parts: [{ q: `Its length (to the nearest whole number, or better)?`, a: (9 * Math.sqrt(325)) / 2 + Math.asinh(18) / 4, tol: { abs: 1, rel: 0 } }],
     },
     {
       id: 'fr-quick-estimates', firm: 'fiverings', role: 'Quant Trader', stage: 'Interview', cat: 'Mental maths', kind: 'reported', src: WSO('five-rings-capital-llc', 'Five Rings'),

@@ -22,8 +22,8 @@
         `Using the threshold 3.5 on the first roll. Your threshold rises as you have more chances left.`],
     ],
     'js-d30-d20': [
-      [`Split the game into what you win and what you pay, and condition on your roll.`,
-        [`There are 30 × 20 = 600 equally likely (x, y) pairs.`, `You win when x > y. For x ≤ 20 that's x − 1 of their faces (ties go to them); for x > 20 it's all 20. Each win pays you x.`, `E[winnings] = Σ x·min(x − 1, 20)/600 = 7760/600 ≈ 12.93.`, `You lose when y ≥ x. For a given y that happens for x = 1…y, i.e. y times, and you pay y: E[payments] = Σ y²/600 over y = 1…20 = 2870/600 ≈ 4.78.`, `EV = 12.93 − 4.78 ≈ <b>8.15</b>.`],
+      [`Split the game into what you win and what you pay, and use closed-form sums instead of adding term by term.`,
+        [`There are 600 equally likely (x, y) pairs. You win when x > y and are paid x; you lose when y ≥ x and pay y.`, `Winnings: for x ≤ 20 you beat x − 1 faces, giving Σ x(x − 1) = Σx² − Σx = 2870 − 210 = 2660 (Σx² = n(n + 1)(2n + 1)/6 with n = 20). For x = 21…30 you beat all 20: 20 × (21 + … + 30) = 20 × 255 = 5100. Total 7760.`, `Payments: for each y you lose on x = 1…y, so y times, paying y each time: Σ y² = 2870.`, `EV = (7760 − 2870)/600 = 4890/600 ≈ <b>8.15</b>.`],
         `Your die is much bigger, so you should win most games and the EV should be clearly positive.`,
         `A figure of 10.2 circulates online. It comes from misreading the rules (e.g. ties). Always confirm the rules before computing.`],
     ],
@@ -167,10 +167,6 @@
       [`You must keep the lower die. Keep the other too only if it beats re-rolling, which is worth 3.`,
         [`Keep the higher die only if it shows 0 (a three), 1 or 2; otherwise re-roll it for an expected 3.`, `Your score is min + min(other, 3), with threes counted as 0.`, `Averaging over all 36 rolls gives 158/36.`, `= <b>79/18 ≈ 4.39</b>.`],
         `Always keeping both would average 6; the re-roll option saves a lot.`, ``],
-      [`Backward induction: the value with n dice uses the values with fewer dice.`,
-        [`E₁ = 3, E₂ = 79/18 ≈ 4.389.`, `With n dice: keep the lowest, then keep the next-lowest dice only while their total beats the value of re-rolling the rest.`, `This gives E₃ ≈ 5.234 and E₄ ≈ 5.834.`, `And E₅ ≈ <b>6.254</b>.`],
-        `Each extra die adds less and less, because you only keep cheap dice.`,
-        `Keeping every 2. With three dice, a 2 is worth keeping next to another 2 but not next to a 4.`],
     ],
     'wc-hat': [
       [`The amount you'd win by stopping now is the average of the bills left. That average is a martingale.`,
@@ -228,7 +224,7 @@
         [`Even money: b = 1.`, `f* = 0.6 − 0.4 = <b>0.2</b> (20% of your bankroll).`],
         `Equivalently: f* = edge/odds = 0.2/1.`, ``],
       [`Each bet multiplies your bankroll by 1 + f or 1 − f.`,
-        [`Expected log-growth = 0.6 ln(1.2) + 0.4 ln(0.8).`, `= 0.6 × 0.1823 − 0.4 × 0.2231 = 0.1094 − 0.0893.`, `≈ <b>0.0201</b> per bet, about 2%.`],
+        [`Expected log-growth = 0.6 ln(1.2) + 0.4 ln(0.8).`, `No log tables needed: ln(1 + x) ≈ x − x²/2 gives ln 1.2 ≈ 0.18 and ln 0.8 ≈ −0.22.`, `0.6 × 0.18 − 0.4 × 0.22 = 0.108 − 0.088 ≈ <b>0.020</b> per bet (exactly 0.0201), about 2%.`],
         `Bet 40% (twice Kelly) and growth becomes slightly negative (−0.0024): a favourable bet that still shrinks your bankroll.`, ``],
     ],
     'opt-all-faces': [
@@ -397,7 +393,7 @@
         `Simulate it: the game ends on 11 about 12.4% of the time, and 1, 3, … 9 less often.`,
         `Answering 1 (the most likely single first roll). Every first roll is equally likely; it's the paths through even totals that add up.`],
       [`Add up the paths into 11: P(11) = (1/12)(f(0) + f(2) + … + f(10)).`,
-        [`f(0) = 1; f(2) = 1/12; f(4) = 13/144; in general f(2k) = (13/12)<sup>k − 1</sup>/12.`, `Sum of f(0) … f(10) = 1 + (1/12)(1 + 13/12 + … + (13/12)⁴) = (13/12)⁵.`, `P(11) = (13/12)⁵/12 = 13⁵/12⁶ ≈ <b>0.124</b>.`],
+        [`Each new f(t) is the sum of the earlier ones divided by 12, so each step multiplies the running sum by 13/12: f(0) + … + f(10) = (13/12)⁵.`, `(13/12)⁵ ≈ e<sup>5 × 0.08</sup> = e<sup>0.4</sup> ≈ 1.49.`, `P(11) ≈ 1.49/12 ≈ <b>0.124</b> (exactly 13⁵/12⁶).`],
         ``, ``],
     ],
     'js-cheap-rerolls': [
@@ -590,7 +586,7 @@
     ],
     'drw-bottom-card': [
       [`Track the number of cards below the original bottom card: it only ever goes up.`,
-        [`With k cards below it, a moved card lands below it with probability (k + 1)/52.`, `So that step takes 52/(k + 1) moves on average.`, `It reaches the top when 51 cards are below it: Σ<sub>k=0</sub><sup>50</sup> 52/(k + 1) = 52 × H₅₁.`, `H₅₁ ≈ 4.519, so ≈ <b>235</b> moves.`],
+        [`With k cards below it, a moved card lands below it with probability (k + 1)/52, which takes 52/(k + 1) moves on average.`, `It reaches the top when 51 cards are below it: 52 × (1 + ½ + … + 1/51) = 52 × H₅₁.`, `In an interview, approximate: H₅₁ ≈ ln 51 + 0.577 ≈ 3.93 + 0.58 = 4.51.`, `52 × 4.51 ≈ <b>235</b> moves (exactly 234.98).`],
         `One more move after that, and the deck is perfectly shuffled.`, ``],
     ],
     'drw-cube-colours': [
@@ -599,10 +595,10 @@
         `Directly: colour 1 on the bottom, 5 choices for the top, then (4 − 1)! = 6 circular orders: 5 × 6 = 30.`, ``],
     ],
     'hrt-three-before-six': [
-      [`E[N | A] = E[N; A]/P(A), where N is the rolls until the first 6 and A is "a 3 came first".`,
-        [`P(A) = ½ by symmetry between 3 and 6.`, `Given N = n, the earlier n − 1 rolls are uniform on 1–5, so P(not A | N = n) = (4/5)<sup>n−1</sup>.`, `E[N; not A] = Σ n (5/6)<sup>n−1</sup>(1/6)(4/5)<sup>n−1</sup> = (1/6) Σ n (2/3)<sup>n−1</sup> = (1/6) × 9 = 1.5.`, `E[N; A] = 6 − 1.5 = 4.5, so E[N | A] = 4.5/0.5 = <b>9</b>.`],
-        `Longer than the unconditional 6: games long enough to include a 3 tend to be longer.`,
-        `Answering 6 + something small, or arguing the 3 "doesn't matter".`],
+      [`Split the game at the first roll that is a 3 or a 6. When it happens doesn't depend on which of the two it is.`,
+        [`Each roll is a 3 or a 6 with probability 1/3, so the first such roll comes after 3 rolls on average. It's a 3 or a 6 with probability ½ each, independently of when it happens.`, `Given that it was a 3, no 6 has appeared yet, and you start a fresh wait for a 6: 6 more rolls on average.`, `E[rolls | a 3 came first] = 3 + 6 = <b>9</b>.`],
+        `Unconditionally it's 6. Knowing a 3 came first means the game didn't end at that point, so it has to be longer.`,
+        `Answering 6, or arguing that the 3 "doesn't matter". Or summing a series: it works (it gives 9) but takes far longer.`],
     ],
     'fr-ten-second-estimates': [
       [`Use logs.`,
@@ -827,9 +823,9 @@
       [`Complement: everyone has a different birthday.`,
         [`P(all different, n people) = Π<sub>k=0</sub><sup>n−1</sup> (365 − k)/365.`, `Approximation: there are C(n, 2) pairs, each matching with probability 1/365: P(no match) ≈ e<sup>−n(n−1)/730</sup>.`, `This drops below ½ when n(n − 1)/730 > ln 2 ≈ 0.693, i.e. n(n − 1) > 506.`, `n = <b>23</b> (23 × 22 = 506).`],
         `It feels too small because there are 253 pairs among 23 people, not 23.`, ``],
-      [`Evaluate the product exactly.`,
-        [`1 − Π<sub>k=0</sub><sup>22</sup> (365 − k)/365.`, `≈ <b>0.507</b>.`],
-        `The approximation 1 − e<sup>−253/365</sup> ≈ 0.500 is very close.`, ``],
+      [`Approximate with pairs: 253 pairs, each matching with probability 1/365.`,
+        [`P(no match) ≈ e<sup>−253/365</sup> = e<sup>−0.693</sup> ≈ 0.50.`, `So P(shared birthday) ≈ 0.50, and the exact product 1 − Π (365 − k)/365 gives <b>0.507</b>.`],
+        `The approximation is good to within 1%: easily enough for an interview.`, ``],
     ],
     'cl-secretary': [
       [`Try "reject the first, then take the first one better than everyone so far".`,
@@ -1052,8 +1048,8 @@
     ],
     'imc-spaghetti': [
       [`Tie one end at a time and use linearity.`,
-        [`With n strands left there are 2n free ends. Pick any end and tie it to a random other end.`, `It closes a loop only if it's tied to its own other end: probability 1/(2n − 1).`, `E[loops] = Σ<sub>n=1</sub><sup>100</sup> 1/(2n − 1) = 1 + 1/3 + 1/5 + … + 1/199.`, `≈ <b>3.28</b>.`],
-        `Grows like ½ ln n: very slowly.`, ``],
+        [`With n strands left there are 2n free ends. Pick any end and tie it to a random other end.`, `It closes a loop only if it's tied to its own other end: probability 1/(2n − 1). So E[loops] = 1 + 1/3 + 1/5 + … + 1/199.`, `Don't add 100 terms: that sum is H₂₀₀ − ½H₁₀₀ ≈ ½ ln 100 + ln 2 + γ/2 ≈ 2.30 + 0.69 + 0.29.`, `≈ <b>3.28</b>.`],
+        `The answer grows like ½ ln n: doubling the spaghetti adds only about 0.35 loops.`, ``],
     ],
     'tower-corr-range': [
       [`The correlation matrix must be positive semi-definite, which gives c ∈ ab ± √((1 − a²)(1 − b²)).`,
@@ -1082,9 +1078,9 @@
         `Positive, and less than 1: the larger of two standard normals is usually around half a standard deviation up.`, ``],
     ],
     'fr-arc-length': [
-      [`Arc length ∫√(1 + y′²) dx, with y′ = 2x.`,
-        [`L = ∫₀⁹ √(1 + 4x²) dx = [x√(1 + 4x²)/2 + asinh(2x)/4]₀⁹.`, `= 9√325/2 + asinh(18)/4 ≈ 81.12 + 0.90.`, `≈ <b>82.0</b>.`],
-        `Quick bound: the curve rises 81 while moving 9 across, so its length is a bit more than √(81² + 9²) ≈ 81.5.`, ``],
+      [`For large x, √(1 + 4x²) is just over 2x, so the length is 81 plus small corrections.`,
+        [`Length = ∫₀⁹ √(1 + 4x²) dx. The main part is ∫₀⁹ 2x dx = 81.`, `For x ≥ 1, √(1 + 4x²) ≈ 2x + 1/(4x), adding ∫₁⁹ dx/(4x) = (ln 9)/4 ≈ 0.55.`, `On 0–1, Simpson's rule gives ∫ √(1 + 4x²) ≈ (1 + 4√2 + √5)/6 ≈ 1.48, which is 0.48 more than ∫ 2x = 1.`, `Total ≈ 81 + 0.55 + 0.48 ≈ <b>82.0</b> (exactly 9√325/2 + asinh(18)/4 ≈ 82.02).`],
+        `Lower bound: the curve is at least as long as the straight line from (0, 0) to (9, 81), √(81² + 9²) ≈ 81.5.`, ``],
     ],
     'fr-quick-estimates': [
       [`Split the exponent.`,

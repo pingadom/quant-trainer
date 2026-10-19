@@ -574,6 +574,18 @@
       QT.store.importJson(saved);
     }
 
+    // Interview-sized answers: the quick method each worked solution teaches must be marked right.
+    {
+      const accepts = [['flow-poker', 0, 0.36, 'rule of 4'], ['cit-coin-ranges', 0, 0.95, '±2σ'], ['cl-birthday', 1, 0.5, 'e^(−253/365)'],
+        ['drw-bottom-card', 0, 52 * (Math.log(51) + 0.577), 'H ≈ ln n + γ'], ['fr-arc-length', 0, 82, '81 + corrections'],
+        ['imc-spaghetti', 0, 0.5 * Math.log(100) + Math.log(2) + 0.2886, 'log approximation'], ['wc-kelly-coin', 1, 0.6 * 0.18 - 0.4 * 0.22, 'ln(1 + x) ≈ x − x²/2'],
+        ['js-odd-sum-d12', 1, Math.exp(0.4) / 12, '(13/12)^5 ≈ e^0.4'], ['cl-100-prisoners', 0, 1 - Math.log(2), '1 − ln 2'], ['dv-ten-cards', 1, Math.sqrt(140) * Math.sqrt(2 / Math.PI), 'normal approximation']];
+      for (const [id, i, v, how] of accepts) {
+        const p = QT.bankById(id)?.parts?.[i];
+        if (!p || !QT.isCorrect(v, p.a, p.tol)) fail(`interview answer: ${id} part ${i} rejects the ${how} answer ${v}`);
+      }
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {
