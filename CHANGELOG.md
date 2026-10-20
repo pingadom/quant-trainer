@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.31.0
+
+- **Handbook Part 2: Interview probability** is written. It has seven chapters on the techniques behind most interview puzzles:
+  1. The distributions you need (binomial, geometric, Poisson, normal)
+  2. Symmetry and clever counting (indicators, linearity, equal gaps)
+  3. First-step analysis (turn-taking games, coin patterns, deuce)
+  4. Markov chains (long-run shares, expected time to absorb)
+  5. Random walks and martingales (gambler's ruin, expected duration, biased walks)
+  6. Optimal stopping and dynamic programming (rerolls, costly tries, the secretary problem)
+  7. Continuous probability and geometry (probability as area, order statistics, broken sticks)
+- **32 new "check yourself" questions** with hints and worked solutions. Every answer is re-derived in Python.
+- **Six new interactive tools:**
+  - a distribution explorer
+  - a coin-pattern race (simulated against the exact wait)
+  - a two-state Markov chain
+  - a gambler's-ruin simulator with sample paths
+  - a reroll-game solver
+  - random points in the unit square for probability as area
+- The tools' starting values never give away a check's answer.
+
 ## 0.30.0
 
 - **The Handbook** (Learn → Handbook): a course from the basics up to everything quant trading interviews test, to work through chapter by chapter. Five parts and 21 chapters are planned; **Part 1 (Foundations) is written**:

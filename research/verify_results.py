@@ -836,6 +836,22 @@ for ch_, vals in hb.items():
         record(f"hb.{ch_}.{i}", v, "handbook check")
 
 
+hb2 = {
+    "distributions": [Fr(math.comb(10, 3), 2 ** 10), math.sqrt(400 * 0.25), 1 / Fr(2, 6), math.exp(-2), 10, round(1 - norm.cdf(2), 5)],
+    "symmetry": [Fr(1, 2), (1 - Fr(math.comb(4, 2), 16)) / 2, 1 + 9 * Fr(1, 2), 10 * Fr(9, 10) ** 10, Fr(53, 14)],
+    "recursion": [Fr(1, 6) / (1 - Fr(25, 36)), wait_pattern("HT", 0.5, "HT"), wait_pattern("HHH", 0.5, "HT"), Fr(4, 9) / (Fr(4, 9) + Fr(1, 9))],
+    "markov": [Fr(2, 10) / (Fr(2, 10) + Fr(4, 10)), 1 / (1 - Fr(1, 3)), 9],
+    "walks": [Fr(3, 10), 3 * 7, (1 - Fr(2, 3) ** 2) / (1 - Fr(2, 3) ** 4), 5 / 0.2],
+    "stopping": [reroll_value(1), reroll_value(2), reroll_value(1) - Fr(7, 2), max(Fr(13 - k, 2) - (Fr(6, k) - 1) for k in range(1, 7)), round(100 / math.e)],
+    "continuous": [1 - Fr(1, 8), 1 - Fr(5, 6) ** 2, Fr(3, 4), quad(lambda t: (1 - 3 * t) ** 2, 0, 1 / 3)[0], quad(lambda x: abs(x - 0.5), 0, 1)[0]],
+}
+Mh = np.array([[1.0, -1, 0, 0], [-0.5, 1, -0.5, 0], [0, -0.5, 1, -0.5], [0, 0, 0, 1]])
+assert abs(np.linalg.solve(Mh, np.array([1.0, 1, 1, 0]))[0] - 9) < 1e-9
+for ch_, vals in hb2.items():
+    for i, v in enumerate(vals):
+        record(f"hb.{ch_}.{i}", v, "handbook check")
+
+
 # ---------------------------------------------------------------- report
 def main():
     if hasattr(sys.stdout, "reconfigure"):

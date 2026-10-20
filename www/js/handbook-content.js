@@ -164,13 +164,143 @@
     },
 
     // ---------------------------------------------------------------- planned (outline for now)
-    distributions: { planned: true, title: 'The distributions you need', blurb: 'Bernoulli, binomial, geometric, Poisson, uniform, exponential and normal: what each models, its mean and variance, and how to spot it.', practice: [['Distributions topic', '#/topic/dist'], ['Formula cards', '#/flashcards']] },
-    symmetry: { planned: true, title: 'Symmetry and clever counting', blurb: 'The tricks that turn hard puzzles into one-liners: symmetry, linearity with indicators, and looking at the right random variable.', practice: [['Puzzles topic', '#/topic/puzzles'], ['Classic puzzles', '#/bank/common']] },
-    recursion: { planned: true, title: 'First-step analysis', blurb: 'Condition on what happens first and write an equation for the answer: waiting times, patterns like HTH, and win probabilities.', practice: [['Expected value topic', '#/topic/ev'], ['HTH question', '#/iq/sig-hth']] },
-    markov: { planned: true, title: 'Markov chains', blurb: 'States, transition probabilities, hitting times and stationary distributions, with the cube walk and the rook.', practice: [['Markov chains topic', '#/topic/markov'], ['Cube walk', '#/iq/wc-cube-walk']] },
-    walks: { planned: true, title: 'Random walks and martingales', blurb: 'Gambler\'s ruin, the martingale trick, and expected times between barriers.', practice: [['Random walks topic', '#/topic/walks'], ['Gambler\'s ruin', '#/iq/fr-ruin-6-4']] },
-    stopping: { planned: true, title: 'Optimal stopping and dynamic programming', blurb: 'When to stop: reroll games, paid rerolls, the secretary problem and backward induction.', practice: [['Reroll game', '#/iq/js-reroll'], ['Paid rerolls', '#/iq/js-d100-pay']] },
-    continuous: { planned: true, title: 'Continuous probability and geometry', blurb: 'Uniform points, order statistics and probability as area: the stick, the meeting problem and the semicircle.', practice: [['Broken stick', '#/iq/wc-stick-triangle'], ['Meeting problem', '#/iq/sq-meeting']] },
+    // ---------------------------------------------------------------- Part 2
+    distributions: {
+      title: 'The distributions you need', minutes: 30,
+      goals: ['Recognise the binomial, geometric, Poisson, exponential and normal from a description', 'Know each one\'s mean and variance without looking them up', 'Use the normal\'s 68–95–99.7 rule for quick probabilities'],
+      sections: [
+        { h: 'Binomial: counting successes', html: `<p>n independent trials, each a success with probability p. The number of successes X is <b>binomial</b>: P(X = k) = C(n, k) p<sup>k</sup>(1 − p)<sup>n − k</sup>, with mean np and variance np(1 − p). It's a sum of n independent 0/1 variables, which is where the mean and variance come from.</p>`, widget: 'dist',
+          checks: [
+            { q: 'A fair coin is flipped 10 times. What is the probability of exactly 3 heads?', a: 120 / 1024, tol: { abs: 0.001 }, hint: 'C(10, 3) ways, each with probability (½)¹⁰.', sol: 'C(10, 3)/2¹⁰ = 120/1024 ≈ <b>0.117</b>.' },
+            { q: 'What is the standard deviation of the number of heads in 400 fair flips?', a: 10, hint: '√(np(1 − p)).', sol: '√(400 × ¼) = √100 = <b>10</b>.' },
+          ] },
+        { h: 'Geometric: waiting for the first success', html: `<p>Repeat independent trials until the first success. The number of trials is <b>geometric</b>: P(first success on trial k) = (1 − p)<sup>k − 1</sup>p, with mean 1/p and variance (1 − p)/p². "On average you wait 1/p tries" answers a surprising number of interview questions.</p>`,
+          checks: [{ q: 'You roll a die until it shows a 1 or a 2. What is the expected number of rolls?', a: 3, hint: 'Each roll succeeds with probability 2/6.', sol: 'p = 1/3, so 1/p = <b>3</b>.' }] },
+        { h: 'Poisson: counting rare events', html: `<p>When events happen independently at a steady average rate λ per unit of time (trades, arrivals, typos), the count in one unit is <b>Poisson</b>: P(X = k) = e<sup>−λ</sup> λ<sup>k</sup>/k!. Mean and variance are both λ. It's also the limit of a binomial with many trials and a small p, with λ = np.</p>`,
+          checks: [{ q: 'Trades arrive at an average of 2 a minute, independently. What is the probability of no trades in a given minute?', a: Math.exp(-2), tol: { abs: 0.002 }, hint: 'P(X = 0) = e<sup>−λ</sup>.', sol: 'e<sup>−2</sup> ≈ <b>0.135</b>.' }] },
+        { h: 'Exponential: waiting times with no memory', html: `<p>The time between Poisson events is <b>exponential</b> with rate λ: mean 1/λ. It's <b>memoryless</b>: having already waited doesn't change how much longer you'll wait. That breaks most people's intuition.</p>`,
+          checks: [{ q: 'Buses arrive as a Poisson process, one every 10 minutes on average. You have already waited 5 minutes. How many more minutes do you expect to wait?', a: 10, hint: 'Memorylessness.', sol: 'Still <b>10</b> minutes: the process doesn\'t remember how long you\'ve been there.' }] },
+        { h: 'The normal distribution', html: `<p>Sums of many small independent effects are approximately <b>normal</b> (the central limit theorem, Part 3). For a normal with mean μ and standard deviation σ: about 68% lies within 1σ, 95% within 2σ, and 99.7% within 3σ. To use it, <b>standardise</b>: z = (x − μ)/σ.</p>`,
+          checks: [{ q: 'X is normal with mean 100 and standard deviation 15. Roughly what is P(X > 130)?', a: 1 - 0.97725, tol: { abs: 0.003 }, hint: '130 is 2 standard deviations above the mean; 95% lies within ±2σ.', sol: 'z = 2. 5% lies outside ±2σ, half of it above: ≈ <b>0.025</b> (exactly 0.0228).' }] },
+      ],
+      takeaways: ['Binomial: successes in n trials; mean np, variance np(1 − p).', 'Geometric: trials until the first success; mean 1/p.', 'Poisson: rare events at rate λ; mean = variance = λ.', 'Exponential: memoryless waiting; mean 1/λ.', 'Normal: 68–95–99.7; standardise with z = (x − μ)/σ.'],
+      practice: [['Distributions topic', '#/topic/dist'], ['Formula cards', '#/flashcards']],
+    },
+
+    symmetry: {
+      title: 'Symmetry and clever counting', minutes: 30,
+      goals: ['Spot symmetries that make an answer obvious', 'Use indicator variables on harder counting questions', 'Use the "equal gaps" argument for positions in a random order'],
+      sections: [
+        { h: 'Symmetry first', html: `<p>Before calculating, ask what can't matter. In a shuffled deck, the ace of spades is equally likely to be above or below the king of spades. Two players with identical chances have identical win probabilities. Symmetry often gives the answer outright, or reduces it to "½ of what's left".</p>`,
+          checks: [
+            { q: 'A deck is shuffled. What is the probability the ace of spades is above the king of spades?', a: 0.5, hint: 'Swap the two cards.', sol: 'Swapping them maps every arrangement to one with the opposite order: <b>½</b>.' },
+            { q: '4 fair coin flips. What is the probability of more heads than tails?', a: 5 / 16, hint: 'More heads, more tails, or a tie. The first two are symmetric.', sol: 'P(tie) = C(4, 2)/16 = 6/16. The rest splits evenly: (1 − 6/16)/2 = <b>5/16</b>.' },
+          ] },
+        { h: 'Indicators for harder counts', html: `<p>Linearity plus indicators (Part 1) handles counts that look hopeless. The number of runs in a sequence of flips is 1 plus the number of places where a flip differs from the one before. The number of empty boxes is a sum of "box i is empty" indicators.</p>`,
+          checks: [
+            { q: 'A coin is flipped 10 times. What is the expected number of runs (maximal blocks of the same side, e.g. HHTH has 3)?', a: 5.5, hint: 'Runs = 1 + the number of switches between consecutive flips.', sol: '9 adjacent pairs, each a switch with probability ½: 1 + 9 × ½ = <b>5.5</b>.' },
+            { q: '10 balls are dropped independently into 10 boxes. What is the expected number of empty boxes?', a: 10 * 0.9 ** 10, tol: { abs: 0.02 }, hint: 'Each box is empty with probability (9/10)¹⁰.', sol: '10 × 0.9¹⁰ ≈ 10 × 0.349 ≈ <b>3.49</b>.' },
+          ] },
+        { h: 'Equal gaps', html: `<p>Place K special items at random among N in a row (say aces in a deck). By symmetry, the K items split the other N − K into K + 1 gaps of equal expected size. So the first special item appears on average at position (N + 1)/(K + 1).</p>`,
+          checks: [{ q: 'Turning over a shuffled deck, at what position does the first heart appear on average?', a: 53 / 14, tol: { abs: 0.01 }, hint: '13 hearts split the 39 other cards into 14 gaps.', sol: '(52 + 1)/(13 + 1) = 53/14 ≈ <b>3.79</b>.' }] },
+      ],
+      takeaways: ['Ask what can\'t matter: symmetry often gives the answer outright.', 'Ties break symmetry: (1 − P(tie))/2.', 'Write counts as sums of indicators.', 'K random special items among N: the first is at (N + 1)/(K + 1) on average.'],
+      practice: [['Puzzles topic', '#/topic/puzzles'], ['Classic puzzles', '#/bank/common'], ['Ants on a stick', '#/iq/wc-ants']],
+    },
+
+    recursion: {
+      title: 'First-step analysis', minutes: 30,
+      goals: ['Write an equation for an unknown by conditioning on what happens first', 'Solve waiting-time and win-probability problems this way', 'Handle patterns of coin flips, including overlapping ones'],
+      sections: [
+        { h: 'Condition on the first step', html: `<p>Call the answer E (or p). Ask what can happen on the first step, and what the problem looks like afterwards. Often it looks like the original problem again, so E appears on both sides. For the expected number of rolls to get a six: E = 1 + (5/6)E, so E = 6.</p>`,
+          checks: [{ q: 'A and B take turns rolling a die, A first. The first to roll a six wins. What is A\'s chance of winning?', a: 6 / 11, hint: 'If neither of the first two rolls is a six, A is back where she started: p = 1/6 + (5/6)(5/6)p.', sol: 'p = (1/6)/(1 − 25/36) = (1/6)/(11/36) = <b>6/11</b>.' }] },
+        { h: 'Patterns of flips', html: `<p>To find the expected wait for a pattern, track how much of it you've built so far. Each state gets an equation. Patterns that overlap with themselves (like HTH, which starts again with its own last H) take longer than ones that don't.</p>`,
+          checks: [
+            { q: 'What is the expected number of fair coin flips until you first see HT?', a: 4, hint: 'Once you have an H, you only need a T: wait for an H (2 flips), then a T (2 more).', sol: '2 + 2 = <b>4</b>. An H that follows an H doesn\'t lose progress.' },
+            { q: 'And until HHH?', a: 14, hint: 'States 0, H, HH. A tail always sends you back to the start.', sol: 'E₂ = 1 + ½E₀, E₁ = 1 + ½E₂ + ½E₀, E₀ = 1 + ½E₁ + ½E₀. Solving gives E₀ = <b>14</b> (= 2 + 4 + 8).' },
+          ] },
+        { h: 'Games that loop back', html: `<p>Tennis from deuce, table tennis at 10–10: you need two points in a row, and a split returns you to the same state. Look at pairs of points: P(win) = p²/(p² + q²), ignoring the splits.</p>`,
+          checks: [{ q: 'You win each point with probability 2/3. From deuce, what is your probability of winning the game?', a: 4 / 5, hint: 'p² = 4/9 and q² = 1/9.', sol: '(4/9)/(4/9 + 1/9) = <b>4/5</b>.' }] },
+        { h: 'Explore: race the patterns', html: `<p>Simulate any three-flip pattern and compare with the exact answer.</p>`, widget: 'pattern' },
+      ],
+      takeaways: ['Name the unknown, condition on the first step, and solve the equation.', 'Patterns: one state per prefix you\'ve built.', 'Self-overlapping patterns take longer (HTH: 10, HHH: 14, but HTT: 8).', 'Loops back to the same state: only the steps that end the game matter.'],
+      practice: [['Expected value topic', '#/topic/ev'], ['HTH', '#/iq/sig-hth'], ['HHT v HTT', '#/iq/js-hht-htt'], ['Deuce', '#/iq/wc-deuce']],
+    },
+
+    markov: {
+      title: 'Markov chains', minutes: 30,
+      goals: ['Model a process as states with transition probabilities', 'Find stationary distributions and return times', 'Compute expected hitting times by first-step analysis on the states'],
+      sections: [
+        { h: 'States and transitions', html: `<p>A <b>Markov chain</b> moves between states, and where it goes next depends only on where it is now. Draw the states and arrows with probabilities, then look for structure: symmetric states can be merged (all corners of a cube at the same distance from the target behave alike).</p>`, widget: 'markov',
+          checks: [{ q: 'Weather: a sunny day is followed by rain with probability 0.2; a rainy day by sun with probability 0.4. In the long run, what fraction of days are rainy?', a: 1 / 3, hint: 'In balance, the flow sunny → rainy equals the flow rainy → sunny.', sol: 'π<sub>S</sub> × 0.2 = π<sub>R</sub> × 0.4, so π<sub>R</sub> = 0.2/(0.2 + 0.4) = <b>1/3</b>.' }] },
+        { h: 'Return times', html: `<p>In the long run, if the chain spends a fraction π of its time in a state, it returns to that state every 1/π steps on average.</p>`,
+          checks: [{ q: 'In the weather chain, starting on a sunny day, how many days until the next sunny day, on average?', a: 1.5, hint: 'π<sub>S</sub> = 2/3.', sol: '1/π<sub>S</sub> = 1/(2/3) = <b>1.5</b> days.' }] },
+        { h: 'Hitting times', html: `<p>To find the expected time to reach a target, write h<sub>i</sub> = 1 + Σ P(i → j) h<sub>j</sub> for every state i (with h = 0 at the target) and solve. Symmetry keeps the system small.</p>`,
+          checks: [{ q: 'A walker on positions 0, 1, 2, 3 moves left or right with probability ½ each, except that from 0 it always moves to 1. Starting at 0, what is the expected number of steps to reach 3?', a: 9, hint: 'h₃ = 0, h₀ = 1 + h₁, and h<sub>i</sub> = 1 + ½h<sub>i−1</sub> + ½h<sub>i+1</sub> for i = 1, 2.', sol: 'Solving: h₂ = 5, h₁ = 8, h₀ = <b>9</b>. In general n² steps to reach n from a reflecting wall.' }] },
+      ],
+      takeaways: ['Next state depends only on the current one.', 'Stationary distribution: balance the flows; return time = 1/π.', 'Hitting times: one equation per state, h = 1 + Σ P h.', 'Merge symmetric states before solving.'],
+      practice: [['Markov chains topic', '#/topic/markov'], ['Cube walk', '#/iq/wc-cube-walk'], ['Random rook', '#/iq/drw-rook']],
+    },
+
+    walks: {
+      title: 'Random walks and martingales', minutes: 30,
+      goals: ['Solve gambler\'s ruin, fair and biased', 'Use the martingale trick: a fair game\'s expected value never changes', 'Find expected durations with Wald\'s identity and the i(N − i) formula'],
+      sections: [
+        { h: 'Fair games are martingales', html: `<p>If each step has expected change zero, your expected position at any stopping time is where you started. For a fair ±1 walk from i that stops at 0 or N: i = N × P(reach N), so P(reach N) = i/N.</p>`, widget: 'walk',
+          checks: [
+            { q: 'You have $3 and bet $1 on fair coin flips until you have $10 or nothing. What is the probability you reach $10?', a: 0.3, hint: 'Your expected wealth stays at 3.', sol: '3/10 = <b>0.3</b>.' },
+            { q: 'How many flips does that game last on average?', a: 21, hint: 'For a fair walk between barriers, the expected duration is i(N − i).', sol: '3 × 7 = <b>21</b>.' },
+          ] },
+        { h: 'Biased walks', html: `<p>If each step is +1 with probability p and −1 with q = 1 − p, let r = q/p. Then P(reach N before 0, starting from i) = (1 − r<sup>i</sup>)/(1 − r<sup>N</sup>). (The quantity r<sup>X</sup> is a martingale, which is where this comes from.)</p>`,
+          checks: [{ q: 'Steps are +1 with probability 0.6. Starting at 2, what is the probability of reaching 4 before 0?', a: 9 / 13, tol: { abs: 0.003 }, hint: 'r = 0.4/0.6 = 2/3.', sol: '(1 − 4/9)/(1 − 16/81) = (5/9)/(65/81) = <b>9/13</b> ≈ 0.69.' }] },
+        { h: 'Wald\'s identity', html: `<p>For a walk with average step μ, stopped at a time T that doesn't peek into the future, E[position at T] = μ × E[T]. If the walk hits its target exactly (steps of ±1), that gives E[T] directly.</p>`,
+          checks: [{ q: 'A walk steps +1 with probability 0.6 and −1 with 0.4, starting at 0. What is the expected number of steps to first reach +5?', a: 25, hint: 'The drift is 0.6 − 0.4 per step.', sol: '5 = 0.2 × E[T], so E[T] = <b>25</b>.' }] },
+      ],
+      takeaways: ['Fair game: expected value at the stop = start, so P(reach N) = i/N.', 'Fair walk duration between barriers: i(N − i).', 'Biased: (1 − r<sup>i</sup>)/(1 − r<sup>N</sup>) with r = q/p.', 'Wald: target = drift × expected time.'],
+      practice: [['Random walks topic', '#/topic/walks'], ['Gambler\'s ruin', '#/iq/fr-ruin-6-4'], ['Walk to −100 or +50', '#/iq/imc-walk']],
+    },
+
+    stopping: {
+      title: 'Optimal stopping and dynamic programming', minutes: 30,
+      goals: ['Solve stopping games by backward induction', 'Set thresholds: stop when what you have beats what continuing is worth', 'Value options to continue, including costly ones'],
+      sections: [
+        { h: 'Work backwards', html: `<p>In a game with a limited number of chances, solve the last decision first. Its value tells you the threshold for the decision before it. In "roll a die, reroll if you like, keep the last roll": a reroll is worth 3.5, so keep 4, 5 and 6.</p>`,
+          checks: [
+            { q: 'With one reroll allowed, what is the game worth?', a: 4.25, hint: 'Keep 4–6; reroll otherwise for 3.5.', sol: '(4 + 5 + 6)/6 + (3/6) × 3.5 = 2.5 + 1.75 = <b>4.25</b>.' },
+            { q: 'With two rerolls?', a: 14 / 3, tol: { abs: 0.01 }, hint: 'Continuing is now worth 4.25, so keep only 5 and 6.', sol: '(5 + 6)/6 + (4/6) × 4.25 = <b>14/3</b> ≈ 4.67.' },
+          ] },
+        { h: 'Options have value', html: `<p>The right to do something later is worth the improvement it brings: value with the option minus value without it. Interviewers often ask "what would you pay for the reroll?"</p>`,
+          checks: [{ q: 'What is the option of one reroll worth?', a: 0.75, hint: 'Compare with no reroll.', sol: '4.25 − 3.5 = <b>$0.75</b>.' }] },
+        { h: 'Costly, unlimited tries', html: `<p>If you may reroll forever but each reroll costs c, the game's value V satisfies a stationary threshold rule: stop on x when x ≥ V − c. Try thresholds "stop on the top k faces" and pick the best.</p>`,
+          checks: [{ q: 'A die pays its face; you may reroll as often as you like for $1 each time. What is the game worth?', a: 4, hint: 'Value of "stop on the top k faces" = (13 − k)/2 − (6/k − 1). Try k = 3 and k = 4.', sol: 'k = 3: 5 − 1 = 4; k = 4: 4.5 − 0.5 = 4. Both give <b>$4</b>: stop on 4 or more (indifferent at 3).' }] },
+        { h: 'The secretary problem', html: `<p>When you can't go back, a good rule is: observe some, then take the first that beats everything seen. Skipping the first n/e (about 37%) wins about 37% of the time, for any large n.</p>`,
+          checks: [{ q: 'With 100 candidates, about how many should you see and reject before choosing?', a: 37, tol: { abs: 1.5 }, hint: 'n/e.', sol: '100/e ≈ <b>37</b>.' }] },
+        { h: 'Explore: more rerolls', html: `<p>With more rerolls, the same backward reasoning gives a higher threshold and a higher value.</p>`, widget: 'reroll' },
+      ],
+      takeaways: ['Solve the last decision first; its value sets the earlier thresholds.', 'Stop when what you have beats what continuing is worth.', 'Option value = value with it − value without it.', 'Can\'t go back: skip about 37%, then take the next best-so-far.'],
+      practice: [['Reroll game', '#/iq/js-reroll'], ['Paid rerolls', '#/iq/js-d100-pay'], ['Secretary problem', '#/iq/cl-secretary'], ['Hat game', '#/iq/wc-hat']],
+    },
+
+    continuous: {
+      title: 'Continuous probability and geometry', minutes: 30,
+      goals: ['Turn uniform-random questions into areas', 'Know the order statistics of uniforms', 'Compute expectations by integrating or by symmetry'],
+      sections: [
+        { h: 'Probability as area', html: `<p>Two independent uniforms on [0, 1] are a random point in the unit square, so a probability is just the area of a region. Draw it. The meeting problem, the broken stick and many "random time" questions become geometry.</p>`, widget: 'area',
+          checks: [
+            { q: 'X and Y are independent uniforms on [0, 1]. What is P(X + Y < 1.5)?', a: 0.875, hint: 'Only a corner triangle has X + Y ≥ 1.5.', sol: 'The corner triangle has legs ½, area ⅛. P = 1 − ⅛ = <b>0.875</b>.' },
+            { q: 'Two people arrive at random times within an hour and each waits 10 minutes. What is the probability they meet?', a: 11 / 36, tol: { abs: 0.003 }, hint: 'They miss in two corner triangles with legs 5/6.', sol: '1 − (5/6)² = <b>11/36</b> ≈ 0.31.' },
+          ] },
+        { h: 'Order statistics', html: `<p>Drop n uniform points on [0, 1]. By the equal-gaps argument (Part 2, symmetry), they split the interval into n + 1 pieces of equal expected length 1/(n + 1). So E[min] = 1/(n + 1) and E[max] = n/(n + 1).</p>`,
+          checks: [
+            { q: 'What is the expected maximum of 3 independent uniforms on [0, 1]?', a: 0.75, hint: 'n/(n + 1).', sol: '3/4 = <b>0.75</b>.' },
+            { q: 'A stick is broken at two uniformly random points. What is the expected length of the shortest piece?', a: 1 / 9, tol: { abs: 0.002 }, hint: 'Find P(shortest > t): every piece must exceed t, which leaves a triangle of side 1 − 3t. Then E = ∫ P(shortest > t) dt.', sol: '1/3² = <b>1/9</b>. (The longest averages 11/18.)' },
+          ] },
+        { h: 'Integrating when you have to', html: `<p>E[g(X)] = ∫ g(x) f(x) dx. For a uniform on [0, 1], f = 1, so it's just the average of g over the interval. Look for symmetry first: E[|X − ½|] is the average distance from the middle.</p>`,
+          checks: [{ q: 'X is uniform on [0, 1]. What is E[|X − ½|]?', a: 0.25, hint: '|X − ½| is uniform on [0, ½].', sol: 'Uniform on [0, ½], so its mean is <b>¼</b>.' }] },
+      ],
+      takeaways: ['Two uniforms = a point in the square; probabilities are areas.', 'n uniform points: equal expected gaps of 1/(n + 1).', 'E[max of n] = n/(n + 1); E[min] = 1/(n + 1).', 'Use symmetry before integrating.'],
+      practice: [['Broken stick', '#/iq/wc-stick-triangle'], ['Meeting problem', '#/iq/sq-meeting'], ['Semicircle', '#/iq/cl-semicircle'], ['Distance to an edge', '#/iq/hrt-edge-distance']],
+    },
     clt: { planned: true, title: 'The law of large numbers and the CLT', blurb: 'Why averages settle down, why sums look normal, and the normal approximation you\'ll use constantly.', practice: [['Stats lab', '#/lab'], ['Inference topic', '#/topic/inference']] },
     estimation: { planned: true, title: 'Estimation and regression', blurb: 'Estimators, bias and variance, maximum likelihood, confidence intervals and least squares.', practice: [['Inference topic', '#/topic/inference'], ['Regression topic', '#/topic/regression']] },
     betting: { planned: true, title: 'Betting and position sizing', blurb: 'Expected value isn\'t enough: risk, the Kelly criterion, and why over-betting a winning edge loses money.', practice: [['Bet sizing game', '#/kelly'], ['Finance topic', '#/topic/finance']] },

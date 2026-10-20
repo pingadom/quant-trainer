@@ -847,3 +847,7 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .hb-split .tp { background: var(--ok); }
 .hb-split .fp { background: var(--bad); }
 .hb-nav { justify-content: space-between; margin-top: 18px; flex-wrap: wrap; gap: 8px; }
+
+.hb-square { width: min(260px, 70vw); height: auto; display: block; border: 1px solid var(--line); background: var(--panel); }
+.hb-in { fill: var(--accent); }
+.hb-outpt { fill: var(--muted); opacity: 0.45; }

@@ -225,6 +225,108 @@
       box.addEventListener('input', draw);
       draw();
     },
+    // Distribution explorer: binomial, geometric or Poisson, with mean and standard deviation.
+    dist(box) {
+      box.innerHTML = `<b>Try it: explore a distribution</b>
+        <div class="row hb-controls"><label>Distribution <select data-k><option value="binom">Binomial (n = 20)</option><option value="geom">Geometric</option><option value="pois">Poisson</option></select></label>
+          <label><span data-pl>p</span> <input type="range" min="0.05" max="0.95" step="0.05" value="0.3" data-p> <span class="mono" data-pv></span></label></div>
+        <div class="hb-out"></div>`;
+      const fact = (n) => (n < 2 ? 1 : n * fact(n - 1));
+      const draw = () => {
+        const kind = box.querySelector('[data-k]').value, slider = box.querySelector('[data-p]');
+        if (kind === 'pois') { slider.min = 0.5; slider.max = 10; slider.step = 0.5; } else { slider.min = 0.05; slider.max = 0.95; slider.step = 0.05; }
+        if (+slider.value > +slider.max) slider.value = slider.max;
+        const p = +slider.value;
+        box.querySelector('[data-pl]').textContent = kind === 'pois' ? 'λ' : 'p';
+        box.querySelector('[data-pv]').textContent = f(p);
+        let ks, probs, mean, sd;
+        if (kind === 'binom') { ks = [...Array(21).keys()]; probs = ks.map((k) => choose(20, k) * p ** k * (1 - p) ** (20 - k)); mean = 20 * p; sd = Math.sqrt(20 * p * (1 - p)); }
+        else if (kind === 'geom') { ks = [...Array(20).keys()].map((k) => k + 1); probs = ks.map((k) => (1 - p) ** (k - 1) * p); mean = 1 / p; sd = Math.sqrt(1 - p) / p; }
+        else { ks = [...Array(21).keys()]; probs = ks.map((k) => Math.exp(-p) * p ** k / fact(k)); mean = p; sd = Math.sqrt(p); }
+        box.querySelector('.hb-out').innerHTML = bars(probs, ks.map((k) => (k % (ks.length > 12 ? 2 : 1) === 0 ? k : '')), { label: `${kind} distribution` })
+          + `<p class="small">Mean <b>${f(+mean.toFixed(3))}</b> · standard deviation <b>${f(+sd.toFixed(3))}</b>${kind === 'geom' ? ' (shown up to 20 tries)' : ''}.</p>`;
+      };
+      box.addEventListener('input', draw);
+      draw();
+    },
+    // Pattern race: average flips until a pattern first appears, by simulation and exactly.
+    pattern(box) {
+      const EXACT = { HH: 6, HT: 4, HTH: 10, HHT: 8, HHH: 14, HTT: 8 };
+      box.innerHTML = `<b>Try it: how long until a pattern appears?</b>
+        <div class="row hb-controls"><label>Pattern <select data-pat>${Object.keys(EXACT).map((k) => `<option>${k}</option>`).join('')}</select></label><button type="button" data-go>Flip 2,000 times over</button></div>
+        <div class="hb-out"><p class="small">Pick a pattern and simulate. Notice that patterns that overlap with themselves take longer.</p></div>`;
+      box.querySelector('[data-go]').addEventListener('click', () => {
+        const pat = box.querySelector('[data-pat]').value, T = 2000;
+        let tot = 0;
+        for (let t = 0; t < T; t++) { let s = '', n = 0; while (!s.endsWith(pat)) { s = (s + (Math.random() < 0.5 ? 'H' : 'T')).slice(-3); n++; } tot += n; }
+        box.querySelector('.hb-out').innerHTML = `<p>Average over ${f(T)} games: <b>${f(+(tot / T).toFixed(2))}</b> flips (exactly ${EXACT[pat]}).</p>`;
+      });
+    },
+    // Two-state chain: the long-run share of time in each state, exact and simulated.
+    markov(box) {
+      box.innerHTML = `<b>Try it: a two-state chain</b>
+        <div class="hb-sliders">
+          <label>P(sunny → rainy) <input type="range" min="0.05" max="0.95" step="0.05" value="0.3" data-a> <span class="mono" data-av></span></label>
+          <label>P(rainy → sunny) <input type="range" min="0.05" max="0.95" step="0.05" value="0.5" data-b> <span class="mono" data-bv></span></label>
+        </div><div class="hb-out"></div>`;
+      const draw = () => {
+        const a = +box.querySelector('[data-a]').value, b = +box.querySelector('[data-b]').value;
+        box.querySelector('[data-av]').textContent = f(a); box.querySelector('[data-bv]').textContent = f(b);
+        let s = 0, rainy = 0;
+        for (let t = 0; t < 5000; t++) { s = s === 0 ? (Math.random() < a ? 1 : 0) : (Math.random() < b ? 0 : 1); rainy += s; }
+        box.querySelector('.hb-out').innerHTML = `<p>Long-run share of rainy days: exactly a/(a + b) = <b>${f(+(a / (a + b)).toFixed(3))}</b>; in a 5,000-day simulation, ${f(+(rainy / 5000).toFixed(3))}.</p>`;
+      };
+      box.addEventListener('input', draw);
+      draw();
+    },
+    // Gambler's ruin: simulated paths and the share that reach the top.
+    walk(box) {
+      box.innerHTML = `<b>Try it: walk from i until 0 or N</b>
+        <div class="row hb-controls"><label>Start <input type="number" min="1" max="19" value="4" data-i></label><label>Top <input type="number" min="2" max="20" value="10" data-n></label><label>P(step up) <input type="number" min="0.1" max="0.9" step="0.05" value="0.5" data-p></label><button type="button" data-go>Run 2,000 walks</button></div>
+        <div class="hb-out"></div>`;
+      box.querySelector('[data-go]').addEventListener('click', () => {
+        const N = Math.max(2, Math.min(20, Math.floor(+box.querySelector('[data-n]').value))), i = Math.max(1, Math.min(N - 1, Math.floor(+box.querySelector('[data-i]').value))), p = Math.max(0.1, Math.min(0.9, +box.querySelector('[data-p]').value));
+        let up = 0, steps = 0;
+        const paths = [];
+        for (let t = 0; t < 2000; t++) { let x = i; const path = [x]; while (x > 0 && x < N) { x += Math.random() < p ? 1 : -1; steps++; if (t < 3 && path.length < 400) path.push(x); } if (x === N) up++; if (t < 3) paths.push({ name: `Walk ${t + 1}`, values: path }); }
+        const r = (1 - p) / p, exact = Math.abs(p - 0.5) < 1e-9 ? i / N : (1 - r ** i) / (1 - r ** N);
+        box.querySelector('.hb-out').innerHTML = QT.chart.line(paths, { label: 'Three sample walks', min: 0, max: N, xFirst: '0', xLast: 'steps' })
+          + `<p class="small">Reached ${N} in <b>${f(+(up / 20).toFixed(1))}%</b> of 2,000 walks (exactly ${f(+(exact * 100).toFixed(1))}%). Average length ${f(+(steps / 2000).toFixed(1))} steps${Math.abs(p - 0.5) < 1e-9 ? ` (exactly i(N − i) = ${i * (N - i)})` : ''}.</p>`;
+      });
+    },
+    // Reroll game: threshold and value by backward induction, for 3 to 10 rerolls (the checks cover 1 and 2).
+    reroll(box) {
+      box.innerHTML = `<b>Try it: a die you may reroll</b>
+        <label class="hb-sliders">Rerolls allowed: <input type="range" min="3" max="10" value="3" data-r> <span class="mono" data-rv></span></label>
+        <div class="hb-out"></div>`;
+      const draw = () => {
+        const n = +box.querySelector('[data-r]').value;
+        box.querySelector('[data-rv]').textContent = n;
+        let v = 3.5, keep = [];
+        for (let k = 1; k <= n; k++) { keep = [1, 2, 3, 4, 5, 6].filter((x) => x > v); v = (keep.reduce((a, b) => a + b, 0) + (6 - keep.length) * v) / 6; }
+        box.querySelector('.hb-out').innerHTML = `<p>On the first roll, keep <b>${keep[0]} or more</b>. The game is worth <b>${f(+v.toFixed(3))}</b>.</p>
+          <p class="small">Each extra reroll adds less value: it creeps towards 6.</p>`;
+      };
+      box.addEventListener('input', draw);
+      draw();
+    },
+    // Probability as area: random points in the square, X + Y < t.
+    area(box) {
+      box.innerHTML = `<b>Try it: probability as area</b>
+        <label class="hb-sliders">Region X + Y &lt; t, with t = <input type="range" min="0.1" max="1.9" step="0.1" value="1.2" data-t> <span class="mono" data-tv></span></label>
+        <div class="hb-out"></div>`;
+      const draw = () => {
+        const t = +box.querySelector('[data-t]').value, pts = [];
+        box.querySelector('[data-tv]').textContent = f(t);
+        let hit = 0;
+        for (let k = 0; k < 600; k++) { const x = Math.random(), y = Math.random(), inside = x + y < t; hit += inside; pts.push(`<circle cx="${x * 100}" cy="${100 - y * 100}" r="1.1" class="${inside ? 'hb-in' : 'hb-outpt'}"></circle>`); }
+        const exact = t <= 1 ? t * t / 2 : 1 - (2 - t) ** 2 / 2;
+        box.querySelector('.hb-out').innerHTML = `<svg class="hb-square" viewBox="0 0 100 100" role="img" aria-label="600 random points in the unit square">${pts.join('')}<line x1="${Math.max(0, t - 1) * 100}" y1="${100 - Math.min(1, t) * 100}" x2="${Math.min(1, t) * 100}" y2="${100 - Math.max(0, t - 1) * 100}" class="hb-exact" vector-effect="non-scaling-stroke"></line></svg>
+          <p class="small">${hit} of 600 points fall in the region: ${f(+(hit / 600).toFixed(3))}. The exact area is <b>${f(+exact.toFixed(3))}</b>.</p>`;
+      };
+      box.addEventListener('input', draw);
+      draw();
+    },
   };
 
   QT.views = Object.assign(QT.views || {}, { handbook: (el, id) => (id ? view(el, id) : index(el)) });
