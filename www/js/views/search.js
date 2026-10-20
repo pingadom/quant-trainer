@@ -31,6 +31,7 @@
     ['#/kelly', 'Bet sizing', 'kelly criterion betting game bankroll'],
     ['#/estimate', 'Estimation', 'fermi calibration confidence intervals'],
     ['#/lab', 'Stats lab', 'central limit theorem volatility drag simulation'],
+    ['#/handbook', 'Handbook', 'course learn basics from scratch lessons chapters foundations'],
     ['#/appearance', 'Appearance', 'theme dark mode night ticker sound motion settings'],
     ['#/more', 'Settings and data', 'export import backup reset keypad install'],
   ];
@@ -50,6 +51,7 @@
     const firmName = (id) => (QT.firms[id] ? QT.firms[id].name : id);
     const items = [
       ...PAGES.map(([href, title, text]) => ({ type: 'page', href, title, meta: '', text })),
+      ...(QT.handbook ? Object.entries(QT.handbook.CHAPTERS).filter(([, c]) => !c.planned).map(([id, c]) => ({ type: 'page', href: `#/handbook/${id}`, title: `Handbook: ${c.title}`, meta: '', text: plain(c.sections.map((x) => `${x.h} ${x.html}`).join(' ') + ' ' + c.goals.join(' ')) })) : []),
       ...QT.bank.map((b) => ({
         type: 'iq', href: `#/iq/${b.id}`, title: clip(plain(b.q), 110), meta: `${firmName(b.firm)} · ${b.cat}`,
         text: [b.q, b.cat, firmName(b.firm), b.role, ...(b.parts || []).map((p) => p.q), ...(b.followups || [])].map(plain).join(' '),

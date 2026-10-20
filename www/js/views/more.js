@@ -20,6 +20,7 @@
       <h2 class="menu-head">Learn</h2>
       <div class="menu">
         <a class="card" href="#/practice"><b>Topics</b><span class="small">Formula sheets and endless questions in ${QT.topics.length} topics</span></a>
+        <a class="card" href="#/handbook"><b>Handbook</b><span class="small">A course from the basics up: explanations, interactive tools and checks, chapter by chapter</span></a>
         <a class="card" href="#/flashcards"><b>Formula cards</b><span class="small">${QT.flashcards.CARDS.length} formulas to know cold, on a spaced schedule</span></a>
         <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">${QT.tricks.length} guides to faster arithmetic, each with a drill</span></a>
         <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>

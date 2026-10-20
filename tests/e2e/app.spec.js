@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -502,4 +502,16 @@ test('reset keeps a backup that can be restored', async ({ page }) => {
   await page.locator('#backup-list [data-restore]').first().click();
   await page.goto('./#/bank/all/done');
   await expect(page.locator('.qrow')).toHaveCount(1);
+});
+
+test('handbook: a check answered right counts towards the chapter', async ({ page }) => {
+  await page.goto('./#/handbook/counting');
+  await expect(page.locator('#hb-progress')).toContainText('0 of 6');
+  const first = page.locator('.hb-check').first();
+  await first.locator('input').fill('17576');
+  await first.getByRole('button', { name: 'Check' }).click();
+  await expect(first.locator('.hb-fb')).toContainText('Correct');
+  await expect(page.locator('#hb-progress')).toContainText('1 of 6');
+  await page.goto('./#/handbook');
+  await expect(page.locator('.hb-chapter.started')).toHaveCount(1);
 });

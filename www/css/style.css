@@ -813,3 +813,37 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 
 .zm-only { flex-wrap: wrap; gap: 8px; }
 .zm-only button { min-width: 92px; }
+
+/* handbook */
+.hb-chapters { display: grid; gap: 8px; }
+.hb-chapter { display: grid; grid-template-columns: 2.2em 1fr; gap: 10px; align-items: start; color: var(--ink); text-decoration: none; }
+.hb-chapter p { margin: 2px 0 0; }
+.hb-chapter.planned { opacity: 0.85; }
+.hb-chapter.done { border-left: 3px solid var(--ok); }
+.hb-chapter.started { border-left: 3px solid var(--accent); }
+.hb-num { font: 600 1.05rem var(--mono); color: var(--muted); text-align: center; padding-top: 2px; }
+.hb-chapter.done .hb-num { color: var(--ok); }
+.hb-overview .bar.stack { margin-top: 10px; }
+.hb-goals ul { margin: 6px 0; }
+.hb-section { margin-top: 8px; }
+.hb-text table, .hb-table { border-collapse: collapse; margin: 8px 0; font-size: 0.92em; }
+.hb-table td, .hb-table th { border: 1px solid var(--line); padding: 4px 10px; text-align: left; }
+.hb-check { margin: 12px 0; border-left: 3px solid var(--line); }
+.hb-check.solved { border-left-color: var(--ok); }
+.hb-check .answer-row { margin-top: 6px; }
+.hb-check-actions { gap: 14px; margin-top: 6px; }
+.fb-inline.ok { color: var(--ok); font-weight: 600; }
+.fb-inline.bad { color: var(--bad); font-weight: 600; }
+.hb-widget { margin: 12px 0; }
+.hb-controls { gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+.hb-controls input[type='number'] { width: 70px; margin-left: 6px; }
+.hb-sliders { display: grid; gap: 6px; margin: 8px 0; }
+.hb-sliders input[type='range'] { width: min(260px, 60vw); vertical-align: middle; }
+.hb-bars { width: 100%; height: 140px; display: block; }
+.hb-bar { fill: var(--accent); opacity: 0.75; }
+.hb-exact { stroke: var(--ink); stroke-width: 2; }
+.hb-bar-labels { display: grid; font: 0.72rem var(--mono); color: var(--muted); text-align: center; }
+.hb-split { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 8px 0; background: var(--panel-2); }
+.hb-split .tp { background: var(--ok); }
+.hb-split .fp { background: var(--bad); }
+.hb-nav { justify-content: space-between; margin-top: 18px; flex-wrap: wrap; gap: 8px; }

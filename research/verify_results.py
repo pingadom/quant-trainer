@@ -809,6 +809,33 @@ record("mako-mental.1", 5302 - 1434, "arithmetic")
 record("js-meet-20.0", 1 - Fr(2, 3) ** 2, "unit-square geometry")
 
 
+# ---------------------------------------------------------------- handbook checks (handbook-content.js)
+hb = {
+    "arith": [Fr(3, 8), Fr(7, 12), 47 * 53, 98 * 97, Fr(11, 10) ** 2, len(str(2 ** 20))],
+    "counting": [26 ** 3, math.perm(8, 3), math.comb(6, 2), math.factorial(6) // (math.factorial(3) * math.factorial(2)),
+                 sum(1 for a_ in range(11) for b_ in range(11 - a_)),
+                 sum(1 for pin in itertools.product(range(10), repeat=4) if len(set(pin)) < 4)],
+    "prob-basics": [Fr(sum(a + b == 7 for a, b in pairs), 36), Fr(sum(a == b for a, b in pairs), 36),
+                    1 - Fr(5, 6) ** 4, Fr(13 + 4 - 1, 52), Fr(1, 8), 1 - Fr(1, 8)],
+    "conditional": [Fr(sum(a % 2 == 0 and b % 2 == 0 for a, b in pairs if a + b == 8), sum(a + b == 8 for a, b in pairs)),
+                    Fr(4, 52) * Fr(3, 51), Fr(1, 2) * Fr(2, 3) + Fr(1, 2) * Fr(1, 4),
+                    (Fr(1, 2) * Fr(2, 3)) / (Fr(1, 2) * Fr(2, 3) + Fr(1, 2) * Fr(1, 4)),
+                    Fr(2, 100) * Fr(9, 10) / (Fr(2, 100) * Fr(9, 10) + Fr(98, 100) * Fr(1, 10)), Fr(3, 3 + 4)],
+    "expectation": [Fr(21, 6), 3 * Fr(21, 6),
+                    Fr(sum(len(set(r)) for r in itertools.product(range(6), repeat=6)), 6 ** 6),
+                    10 * Fr(1, 10),  # hats: linearity, n x 1/n (brute-forced below for n = 6)
+                    Fr(5, 6) - 1, Fr(sum(x * x for x in DIE), 6)],
+    "variance": [Fr(sum(x * x for x in DIE), 6) - Fr(7, 2) ** 2, 9 * (Fr(91, 6) - Fr(49, 4)),
+                 math.sqrt(100 * (Fr(91, 6) - Fr(49, 4))), math.sqrt(100 * (Fr(91, 6) - Fr(49, 4))) / 100,
+                 1 + 1 - 2 * 0.5, 1 / math.sqrt(2)],
+}
+# The hats check by brute force on a small case: E[own hats] = 1 for any n (checked for n = 6).
+assert Fr(sum(sum(p[i] == i for i in range(6)) for p in itertools.permutations(range(6))), math.factorial(6)) == 1
+for ch_, vals in hb.items():
+    for i, v in enumerate(vals):
+        record(f"hb.{ch_}.{i}", v, "handbook check")
+
+
 # ---------------------------------------------------------------- report
 def main():
     if hasattr(sys.stdout, "reconfigure"):

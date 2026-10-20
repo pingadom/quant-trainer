@@ -270,6 +270,16 @@
       recs.push({ pri: 41, kind: 'backup', voice: "Your progress only lives in this browser. Let's keep a copy somewhere safe.", title: lastExport ? 'Back up your progress: last copy over a week ago' : 'Back up your progress', why: BF && BF.supported ? 'Clearing browser data would erase it. Choose a backup file once and Theo keeps it updated.' : 'Clearing browser data would erase it. Export a copy now and then.', href: '#/more', label: 'Back up' });
     }
 
+    // The handbook: suggest the next chapter to newcomers, and to anyone part-way through it.
+    const HP = QT.handbookProgress;
+    if (HP) {
+      const nextId = HP.nextChapter(), started = Object.keys(st.handbook || {}).length;
+      if (nextId && (started || (st.days || []).length < 3)) {
+        const ch = QT.handbook.CHAPTERS[nextId];
+        recs.push({ pri: started ? 46 : 38, kind: 'handbook', voice: started ? `Next in the handbook: ${ch.title}. About ${ch.minutes} minutes.` : "If you're starting out, build the foundations first.", title: `Handbook: ${ch.title}`, why: started ? 'Pick up where you left off. Each chapter ends with checks that tell you when you have it.' : 'A short course from the basics up, with interactive tools and questions to check yourself.', href: `#/handbook/${nextId}`, label: started ? 'Continue' : 'Start' });
+      }
+    }
+
     // Interview questions flagged unsure (by you, or by a wrong answer).
     const unsure = QT.ui ? QT.ui.bankCounts().unsure : 0;
     if (unsure) recs.push({ pri: 43, kind: 'unsure', voice: `${unsure} interview question${unsure === 1 ? '' : 's'} you weren't sure about. Go back while they're fresh.`, title: `Unsure: ${unsure} interview question${unsure === 1 ? '' : 's'} to revisit`, why: 'You flagged these, or got a part wrong. Answer them cleanly, then tick them off.', href: '#/bank/all/unsure', label: 'Revisit' });

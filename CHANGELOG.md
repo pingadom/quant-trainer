@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.30.0
+
+- **The Handbook** (Learn → Handbook): a course from the basics up to everything quant trading interviews test, to work through chapter by chapter. Five parts and 21 chapters are planned; **Part 1 (Foundations) is written**:
+  1. Numbers, fractions and fast arithmetic
+  2. Counting
+  3. Probability basics
+  4. Conditional probability and Bayes
+  5. Random variables and expected value
+  6. Variance, covariance and correlation
+- Each chapter has goals, short explanations with worked examples, **interactive tools** (a counting calculator, a dice simulator against the exact distribution, a Bayes slider in natural frequencies, the law of large numbers, the √n rule), and **36 "check yourself" questions** with hints and solutions. A chapter is done when all its checks are right; progress is saved and shown on the handbook page. Chapters end with key takeaways and links to the matching practice and interview questions.
+- Parts 2–5 are outlined with what each chapter will cover and links to existing practice in the meantime.
+- Every check's answer is re-derived in Python like the interview bank. The handbook is in search, the sidebar, More, the welcome screen, and the coach (which suggests the next chapter to newcomers and to anyone part-way through).
+
 ## 0.29.0
 
 - **Answers audited for interview-sized working.** Every one of the 243 parts was checked against "could you get this at a whiteboard in a few minutes, and does the solution show how?". Most could. Changes:

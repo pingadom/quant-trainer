@@ -586,6 +586,31 @@
       }
     }
 
+    // Handbook: every chapter listed exists, checks have answers and solutions, and a check
+    // answered right is saved (and a chapter finishes when all its checks are right).
+    if (QT.handbook) {
+      const { PARTS, CHAPTERS } = QT.handbook, listed = PARTS.flatMap((p) => p.chapters);
+      if (new Set(listed).size !== listed.length) fail('handbook: a chapter is listed twice');
+      for (const id of listed) {
+        const ch = CHAPTERS[id];
+        if (!ch) { fail(`handbook: ${id} is listed but not defined`); continue; }
+        if (!(ch.practice || []).length || ch.practice.some(([l, h]) => !l || !/^#\//.test(h))) fail(`handbook: ${id} practice links`);
+        if (ch.planned) continue;
+        if (!ch.goals?.length || !ch.takeaways?.length || !ch.sections?.length) fail(`handbook: ${id} is missing goals, takeaways or sections`);
+        ch.sections.flatMap((s) => s.checks || []).forEach((c, i) => {
+          if (!c.q || !c.sol || !Number.isFinite(c.a)) fail(`handbook: ${id} check ${i} incomplete`);
+          if (/undefined|NaN/.test(c.q + c.sol + (c.hint || ''))) fail(`handbook: ${id} check ${i} shows junk`);
+        });
+      }
+      for (const id of Object.keys(CHAPTERS)) if (!listed.includes(id)) fail(`handbook: ${id} is defined but not listed`);
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      snap.handbook = { arith: { c: { 0: 1, 1: 0, 99: 1 }, done: false }, 'BAD KEY': { c: {}, done: true } };
+      QT.store.importJson(JSON.stringify(snap));
+      const h = QT.store.get().handbook;
+      if (h.arith?.c?.[0] !== 1 || h.arith.c[1] !== 0 || h['BAD KEY'] || h.arith.c[99] !== 1) fail(`handbook: progress not sanitised as expected ${JSON.stringify(h)}`);
+      QT.store.importJson(saved);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {
