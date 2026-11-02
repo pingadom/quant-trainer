@@ -52,7 +52,7 @@
         <p class="small">${about}</p>
         <div class="menu">${C.PROBLEMS.filter((P) => P.group === g).map((P) => {
           const r = rec(P.id);
-          const status = r?.solved ? '✓ solved' : r?.subs ? `tried (${r.subs} submission${r.subs > 1 ? 's' : ''})` : r?.py || r?.js ? 'started' : 'not started';
+          const status = r?.solved ? `✓ solved${P.lc.length ? ' · LeetCode link unlocked' : ''}` : r?.subs ? `tried (${r.subs} submission${r.subs > 1 ? 's' : ''})` : r?.py || r?.js ? 'started' : 'not started';
           return `<a class="card" href="#/code/${P.id}"><b>${esc(P.title)}</b><span class="small">${P.diff} · ${P.tags.join(', ')}</span><span class="small">${status}</span></a>`;
         }).join('')}</div>`).join('')}
       <p class="small" style="margin-top:16px">Python runs in your browser using Pyodide, downloaded once (about 13 MB) from the jsDelivr network the first time you run Python. JavaScript needs no download and works offline. Your code stays on this device.</p>`;
@@ -97,6 +97,7 @@
         <ol id="hints" class="code-hints"></ol>
         <button type="button" class="ghost" id="hint">Show a hint (1 of ${P.hints.length})</button>
       </div>
+      ${P.lc.length ? '<div class="card" id="leetcode"></div>' : ''}
       <details class="card code-solution" id="solution">
         <summary><b>Solution</b> (gives the answer away)</summary>
         <p><b>Key idea.</b> ${P.sol.idea}</p>
@@ -245,7 +246,10 @@
           }
           store.touchDay();
           store.save();
-          if (r.solved) $('#solved-tag').innerHTML = '<span class="status-tag done">Solved</span>';
+          if (r.solved) {
+            $('#solved-tag').innerHTML = '<span class="status-tag done">Solved</span>';
+            showLeetCode();
+          }
         }
         status.textContent = mode === 'run'
           ? `${passed} of ${total} examples pass.${all ? ' Now submit: the hidden tests include edge cases, random cases and a large one.' : ''}`
@@ -281,12 +285,29 @@
       arm(lang === 'py' ? 180000 : 30000);
     }
 
+    // The matching LeetCode problems, unlocked by solving this one here first.
+    function showLeetCode() {
+      const box = $('#leetcode');
+      if (!box) return;
+      if (!rec(P.id)?.solved) {
+        box.innerHTML = `<h3>On LeetCode</h3><p class="small" style="margin:0">${P.lc.length > 1 ? `${P.lc.length} matching LeetCode problems unlock` : 'The matching LeetCode problem unlocks'} when you solve this one: submit with every test passing.</p>`;
+        return;
+      }
+      box.innerHTML = `<h3>On LeetCode</h3>
+        <ul class="lc-list">${P.lc.map(([n, title, slug, diff, rel, note, premium]) => `<li>
+          <a href="https://leetcode.com/problems/${slug}/" target="_blank" rel="noopener">${n}. ${esc(title)}</a> <span class="small">${diff}${premium ? ' · needs LeetCode Premium' : ''}</span>
+          <span class="chip">${rel === 'same' ? 'the same problem' : 'similar'}</span>
+          <br><span class="small">${note}</span></li>`).join('')}</ul>
+        <p class="small" style="margin-bottom:0">Solve it there from memory rather than pasting this solution: LeetCode's names and return values differ slightly.</p>`;
+    }
+
     QT.cleanup = () => {
       clearTimeout(watchdog);
       if (saveTimer) save();
       if (busy) killWorker();
     };
     showLang();
+    showLeetCode();
   }
 
   // ---------------------------------------------------------------- the knowledge quiz

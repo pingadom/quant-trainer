@@ -906,3 +906,5 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .quiz-review.bad { border-left: 3px solid var(--bad); }
 .quiz-review.ok { border-left: 3px solid var(--ok); }
 .code-view:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+.lc-list { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
+.lc-list .chip { margin-left: 4px; }

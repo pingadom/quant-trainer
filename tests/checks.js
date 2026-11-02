@@ -695,6 +695,9 @@
           if (P.kind === 'cls' && (!Array.isArray(t.init) || t.ops.length !== t.out.length)) fail(`code ${P.id}: a test needs init and one result per call`);
           if (P.kind === 'cls') for (const [m] of t.ops) if (!P.sig.methods.some(([n]) => n === m)) fail(`code ${P.id}: test calls ${m}, which isn't in the signature`);
         }
+        for (const [n, title, slug, diff, rel, note] of P.lc) {
+          if (!(n > 0) || !title || !/^[a-z0-9-]+$/.test(slug) || !['Easy', 'Medium', 'Hard'].includes(diff) || !['same', 'similar'].includes(rel) || !note) fail(`code ${P.id}: malformed LeetCode link ${slug}`);
+        }
         for (const lang of ['py', 'js']) if (!C.starter(P, lang).includes(lang === 'py' ? C.pyName(P) : P.name)) fail(`code ${P.id}: ${lang} starter doesn't define ${P.name}`);
         if (typeof C.compileJs(C.starter(P, 'js'), P.name) !== 'function') fail(`code ${P.id}: JavaScript starter doesn't compile to a ${P.kind}`);
         const ref = C.refImpl(P), all = C.cases(P, 'submit');

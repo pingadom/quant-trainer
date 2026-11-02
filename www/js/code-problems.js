@@ -2522,6 +2522,45 @@
     },
   ];
 
+  // The matching problems on LeetCode, shown once you've solved ours, so you can submit there too.
+  // [number, title, slug, difficulty, 'same' | 'similar', how it differs, premium?]. Checked
+  // against LeetCode's own data (number, title, difficulty, whether it needs Premium) in Nov 2026.
+  const LEETCODE = {
+    'opt-lru': [[146, 'LRU Cache', 'lru-cache', 'Medium', 'same', 'The same task: get returns −1 for a missing key, and put returns nothing.']],
+    'opt-ring-deque': [
+      [641, 'Design Circular Deque', 'design-circular-deque', 'Medium', 'same', 'The same structure with different names: insertFront and insertLast return true or false, and getFront and getRear return −1 when empty.'],
+      [622, 'Design Circular Queue', 'design-circular-queue', 'Medium', 'similar', 'The one-ended version, a ring-buffer queue.'],
+    ],
+    'opt-days-between': [[1360, 'Number of Days Between Two Dates', 'number-of-days-between-two-dates', 'Easy', 'same', 'LeetCode wants the number of days without a sign, for years 1971 to 2100.']],
+    'opt-pair-sum': [[1, 'Two Sum', 'two-sum', 'Easy', 'similar', 'Return the indices of the one pair that adds up to the target. The hash-map idea is the same.']],
+    'opt-peak-live': [
+      [1854, 'Maximum Population Year', 'maximum-population-year', 'Easy', 'similar', 'The earliest year with the most people alive, counting each person from birth up to the year before death: the same half-open sweep.'],
+      [253, 'Meeting Rooms II', 'meeting-rooms-ii', 'Medium', 'similar', 'The classic version: the fewest meeting rooms needed is the peak number of overlapping meetings.', true],
+    ],
+    'opt-log-window': [
+      [933, 'Number of Recent Calls', 'number-of-recent-calls', 'Easy', 'similar', 'The counting half: how many requests arrived in the last 3,000 ms, with a queue.'],
+      [362, 'Design Hit Counter', 'design-hit-counter', 'Medium', 'similar', 'Hits in the last 300 seconds.', true],
+    ],
+    'opt-order-book': [[1801, 'Number of Orders in the Backlog', 'number-of-orders-in-the-backlog', 'Medium', 'similar', 'Match a batch of buy and sell orders with two heaps, then report how much is left resting.']],
+    'opt-debug-matcher': [[1801, 'Number of Orders in the Backlog', 'number-of-orders-in-the-backlog', 'Medium', 'similar', 'The matcher done right, as its own problem: two heaps, then report how much is left resting.']],
+    'opt-route': [
+      [1976, 'Number of Ways to Arrive at Destination', 'number-of-ways-to-arrive-at-destination', 'Medium', 'similar', 'Count the shortest paths with Dijkstra: the part behind the "more than one shortest route" error.'],
+      [743, 'Network Delay Time', 'network-delay-time', 'Medium', 'similar', 'Plain Dijkstra on a weighted graph.'],
+    ],
+    'opt-tree-errors': [
+      [2196, 'Create Binary Tree From Descriptions', 'create-binary-tree-from-descriptions', 'Medium', 'similar', 'Build a binary tree from parent–child pairs and find its root.'],
+      [606, 'Construct String from Binary Tree', 'construct-string-from-binary-tree', 'Medium', 'similar', 'Print a tree as a string with brackets, close to the S-expression here.'],
+    ],
+    'opt-dividends': [[307, 'Range Sum Query - Mutable', 'range-sum-query-mutable', 'Medium', 'similar', 'Point updates and range sums: the Fenwick (or segment) tree behind this problem.']],
+    'opt-pumpkins': [
+      [2353, 'Design a Food Rating System', 'design-a-food-rating-system', 'Medium', 'similar', 'A heap with lazy deletion: ratings change, so out-of-date entries are skipped when they reach the top.'],
+      [480, 'Sliding Window Median', 'sliding-window-median', 'Hard', 'similar', 'Two heaps with lazy deletion, as numbers leave the window.'],
+    ],
+    'opt-numbers-station': [[1656, 'Design an Ordered Stream', 'design-an-ordered-stream', 'Easy', 'similar', 'Values arrive out of order by id; return each run as soon as it is complete.']],
+    'opt-trucks': [[355, 'Design Twitter', 'design-twitter', 'Medium', 'similar', 'Follow, unfollow and a news feed: the same subscribe-and-deliver design.']],
+  };
+  for (const P of PROBLEMS) P.lc = LEETCODE[P.id] || [];
+
   // ---------------------------------------------------------------- running tests
   // JavaScript source -> the function or class it defines. `con` stands in for console.
   function compileJs(src, name, con) {

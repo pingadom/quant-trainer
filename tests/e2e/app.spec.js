@@ -521,6 +521,7 @@ test('coding: run JavaScript, see what failed, fix it and submit; then a knowled
   await page.goto('./#/code/opt-pair-sum');
   await page.getByRole('button', { name: 'JavaScript' }).click();
   const editor = page.getByRole('textbox', { name: 'Your code' });
+  await expect(page.locator('#leetcode')).toContainText('unlocks when you solve');
   await editor.fill('function pairSum(nums, target) {\n  return [];\n}\n');
   await page.getByRole('button', { name: 'Run examples' }).click();
   await expect(page.locator('#status')).toContainText('0 of 2 examples pass');
@@ -528,6 +529,7 @@ test('coding: run JavaScript, see what failed, fix it and submit; then a knowled
   await editor.fill(await page.evaluate(() => QT.code.byId('opt-pair-sum').ref.js));
   await page.getByRole('button', { name: 'Submit (all tests)' }).click();
   await expect(page.locator('#status')).toContainText(/All \d+ tests pass/, { timeout: 60_000 });
+  await expect(page.getByRole('link', { name: '1. Two Sum' })).toHaveAttribute('href', 'https://leetcode.com/problems/two-sum/');
   await page.goto('./#/code');
   await expect(page.locator('.tile').first()).toContainText('1/');
   await page.goto('./#/code/quiz');

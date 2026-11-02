@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.0
+
+- **Coding: LeetCode links.** 14 of the 18 coding problems now link to the matching problem on LeetCode, so you can submit it there too. Three are the same problem (LRU Cache, Design Circular Deque, Number of Days Between Two Dates); the rest are close relatives that practise the same idea, such as Number of Ways to Arrive at Destination for counting shortest routes, or Design a Food Rating System for a heap with lazy deletion. Each link says how LeetCode's version differs, and marks the two that need LeetCode Premium. They unlock once you've solved the problem here, so you meet it fresh first.
+
 ## 0.34.0
 
 - **Coding (SWE)** (Practise → Coding): software engineering interview practice, starting with Optiver's software engineering internship.
