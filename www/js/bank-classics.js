@@ -82,6 +82,26 @@
 
     // ---------------------------------------------------------------- classics (practice)
     classic({
+      id: 'cl-die-square', cat: 'Expected value', src: WIKI('Variance'),
+      q: `A game pays you, in dollars, the square of one roll of a fair die.`,
+      parts: [
+        { q: `(a) What is the fair price of the game?`, a: 91 / 6, tol: { abs: 0.01, rel: 0 },
+          sim: () => R.int(1, 6) ** 2 },
+        { q: `(b) How much more is that than the square of the average roll, 3.5²?`, a: 35 / 12, tol: { abs: 0.01, rel: 0 } },
+      ],
+      followups: ['Would you rather be paid the square of one die, or the product of two dice? (91/6 against 49/4.)'],
+    }),
+    classic({
+      id: 'cl-two-sixes', cat: 'Expected value', src: WIKI('Penney%27s_game', "Penney's game"),
+      q: `You roll a fair die again and again.`,
+      parts: [
+        { q: `(a) What is the expected number of rolls until you first roll two 6s in a row?`, a: 42,
+          sim: () => { let n = 0, prev = 0; for (;;) { const d = R.int(1, 6); n++; if (d === 6 && prev === 6) return n; prev = d; } } },
+        { q: `(b) What is the expected number of rolls until you first roll a 6 followed immediately by a 5?`, a: 36,
+          sim: () => { let n = 0, prev = 0; for (;;) { const d = R.int(1, 6); n++; if (d === 5 && prev === 6) return n; prev = d; } } },
+      ],
+    }),
+    classic({
       id: 'cl-monty-hall', cat: 'Conditional probability', src: WIKI('Monty_Hall_problem'),
       q: `There are three doors: a car behind one, goats behind the others. You pick a door. The host, who knows where the car is, opens another door to show a goat and offers you the chance to switch.`,
       parts: [

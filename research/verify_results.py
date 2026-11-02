@@ -667,6 +667,26 @@ ballots = set(itertools.permutations([1] * 6 + [-1] * 4))
 ahead = sum(all(sum(b[:i + 1]) > 0 for i in range(10)) for b in ballots)
 record("cl-ballot.0", Fr(ahead, len(ballots)), "enumerate distinct counts")
 record("cl-100-prisoners.0", 1 - sum(Fr(1, k) for k in range(51, 101)), "no cycle longer than 50")
+record("cl-die-square.0", Fr(sum(k * k for k in range(1, 7)), 6), "average of the squares")
+record("cl-die-square.1", Fr(sum(k * k for k in range(1, 7)), 6) - Fr(7, 2) ** 2, "variance of one die")
+
+
+def die_wait(pat):
+    """Expected rolls of a fair die until the string `pat` appears: linear solve over prefix states."""
+    states = [pat[:i] for i in range(len(pat))]
+    M, rhs = np.eye(len(states)), np.ones(len(states))
+    for i, st in enumerate(states):
+        for c in "123456":
+            s2 = st + c
+            while s2 and not pat.startswith(s2):
+                s2 = s2[1:]
+            if s2 != pat:
+                M[i, states.index(s2)] -= 1 / 6
+    return np.linalg.solve(M, rhs)[0]
+
+
+record("cl-two-sixes.0", die_wait("66"), "pattern wait over prefix states")
+record("cl-two-sixes.1", die_wait("65"), "pattern wait over prefix states")
 record("cl-first-ace.0", sum(Fr(math.comb(52 - n, 3), math.comb(52, 4)) * n for n in range(1, 50)), "position of the first ace, exact")
 record("cl-semicircle.0", 1 - Fr(sum(math.comb(2, k) for k in range(2)), 2 ** 2), "Wendel: P(3 points in a semicircle) = (1 + 2)/4")
 record("cl-polya.0", math.comb(10, 5) * Fr(math.factorial(5) * math.factorial(5), math.factorial(11)), "sequence probability x C(n,k)")

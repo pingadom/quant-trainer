@@ -38,6 +38,8 @@
       <div class="menu">
         <a class="card" href="#/bank"><b>Interview questions</b><span class="small">Questions candidates report, by firm, with sources</span></a>
         <a class="card" href="#/mock"><b>Mock interview</b><span class="small">Five questions against the clock</span></a>
+        <a class="card" href="#/screen"><b>Phone-screen mock</b><span class="small">A full 45-minute first round: intro, mental maths, probability, market making, behavioural</span></a>
+        <a class="card" href="#/stories"><b>Stories</b><span class="small">Write and rehearse your behavioural answers</span></a>
         <a class="card" href="firms/"><b>Firm guides</b><span class="small">Each firm's process and reported questions, as plain pages to read or share</span></a>
         <a class="card" href="#/talk"><b>Think aloud</b><span class="small">Answer out loud, record yourself, review</span></a>
       </div>

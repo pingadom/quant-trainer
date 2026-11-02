@@ -611,6 +611,40 @@
       QT.store.importJson(saved);
     }
 
+    // Phone-screen mock: market scenarios have the fair values their explanations quote, quotes
+    // are graded on the right numbers, trader arithmetic accepts its own answer (with or without
+    // a % sign), and stories and runs survive export and import, sanitised.
+    if (QT.screen) {
+      const S = QT.screen, EXPECT = { 'two-dice': [7, 4.5], 'ten-flips': [5, 7], 'max-dice': [161 / 36, 31 / 6], 'three-dice': [10.5, 7.5], 'three-cards': [21, 13 + 702 / 51], product: [12.25, 21] };
+      for (const sc of S.SCENARIOS) {
+        const a = S.stats(sc.before()), b = S.stats(sc.after()), [fa, fb] = EXPECT[sc.id] || [];
+        const mass = (l) => l.reduce((t, [, p]) => t + p, 0);
+        if (Math.abs(mass(sc.before()) - 1) > 1e-9 || Math.abs(mass(sc.after()) - 1) > 1e-9) fail(`screen: ${sc.id} probabilities don't add to 1`);
+        if (!(Math.abs(a.fair - fa) < 1e-9 && Math.abs(b.fair - fb) < 1e-9)) fail(`screen: ${sc.id} fair values ${a.fair}, ${b.fair}`);
+        if (!(a.sd > 0 && b.sd > 0)) fail(`screen: ${sc.id} SD`);
+      }
+      const g = S.gradeQuote(6.5, 7.5, { fair: 7, sd: 2.4 }), wide = S.gradeQuote(2, 12, { fair: 7, sd: 2.4 }), off = S.gradeQuote(8, 9, { fair: 7, sd: 2.4 });
+      if (!g.centred || !g.tight || wide.tight || off.centred) fail('screen: quote grading');
+      if (S.tradePnl('buy', 7.5, 4.5) !== 3 || S.tradePnl('sell', 6.5, 4.5) !== -2) fail('screen: trade P&L sign');
+      for (let i = 0; i < 300; i++) {
+        const gen = S.traderGens[i % S.traderGens.length](), ok = gen.ok ? gen.ok(gen.a) : QT.isCorrect(gen.a, gen.a, gen.tol);
+        if (!Number.isFinite(gen.a) || !ok || /undefined|NaN/.test(gen.q + gen.sol)) fail(`screen: trader question ${gen.q} → ${gen.a}`);
+        if (gen.ok && !gen.ok(gen.a / 100)) fail(`screen: % answer typed with a % sign is rejected (${gen.q})`);
+      }
+      if (S.probPick('citadel', 4).length !== 4) fail('screen: probability part needs 4 questions');
+      if (!QT.stories || QT.stories.PROMPTS.some((p) => !p.q || !p.fields.length || !p.tip) || !QT.stories.PROMPTS.some((p) => p.star)) fail('stories: prompts');
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      snap.stories = { intro: { f: ['I study <b>maths</b>', 7, null], t: 5 }, 'BAD KEY!': { f: ['x'] } };
+      snap.screen = { runs: [{ date: '2026-11-02T10:00:00Z', firm: 'citadel', secs: 2700, mental: [8, 10], prob: ['3', 4], mm: [7], self: 'x' }, 'junk'] };
+      QT.store.importJson(JSON.stringify(snap));
+      const st = QT.store.get();
+      if (st.stories.intro?.f?.[0] !== 'I study <b>maths</b>' || st.stories.intro.f[1] !== '7' || st.stories['BAD KEY!']) fail(`stories: not sanitised as expected ${JSON.stringify(st.stories)}`);
+      if (!/&lt;b&gt;/.test(QT.stories.get('intro'))) fail('stories: notes are not escaped when shown');
+      const r = st.screen.runs[0];
+      if (st.screen.runs.length !== 2 || r.prob[0] !== 3 || r.mm[1] !== 0 || r.self[0] !== 0 || r.firm !== 'citadel') fail(`screen: runs not sanitised as expected ${JSON.stringify(st.screen)}`);
+      QT.store.importJson(saved);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {

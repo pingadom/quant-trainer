@@ -23,6 +23,8 @@
     ['#/oa', 'Online tests', 'number sequences digit span running totals online assessment'],
     ['#/bank', 'Interview questions', 'questions candidates report by firm'],
     ['#/mock', 'Mock interview', 'timed interview by firm'],
+    ['#/screen', 'Phone-screen mock', 'full timed first-round interview citadel phone screen zoom market making reveal intro behavioural'],
+    ['#/stories', 'Stories', 'behavioural answers tell me about yourself why trading why this firm star method pitch a trade market you follow'],
     ['#/talk', 'Think aloud', 'answer out loud against the clock speaking communication'],
     ['firms/', 'Firm guides', 'interview process and questions for each firm static pages'],
     ['#/figgie', 'Figgie', 'jane street card trading game bots'],

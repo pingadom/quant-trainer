@@ -54,10 +54,17 @@
     citadel: {
       name: 'Citadel / Citadel Securities',
       process: [
+        'Two separate firms that recruit students together. <b>Citadel</b> is an investment manager with five strategies (Equities, Fixed Income &amp; Macro, Commodities, Credit &amp; Convertibles, and Global Quantitative Strategies) and a risk group that sits outside the investment teams and reports to the CEO. <b>Citadel Securities</b> is a market maker. The Investment &amp; Trading internship (London, Paris, Amsterdam) is at Citadel.',
+        'Official (I&amp;T intern posting): interns develop in-depth knowledge of a financial market and apply statistics to trading. They look for a systematic, quantitative way of thinking, rigour with uncertainty, a passion for markets, and some programming. Know one market well and be ready to talk about it.',
+        'Invitations for the I&amp;T phone screen (2026) describe a 45–60 minute Zoom interview with a member of the team. Rehearse it end to end in the phone-screen mock: introduction, mental maths, probability and expected value, market making, behavioural.',
         'Candidates report an online assessment of probability/EV questions followed by a technical call with a trader.',
         'Expected-value questions often come with a twist (e.g. an option to reroll), and you may be asked for the variance as well as the mean.',
       ],
-      sources: [['Glassdoor: Citadel quant trader', 'https://www.glassdoor.ca/Interview/Citadel-Quantitative-Trader-Interview-Questions-EI_IE14937.0,7_KO8,27.htm']],
+      sources: [
+        ['Citadel: Investment & Trading Intern, Europe (official)', 'https://www.citadel.com/careers/details/investment-trading-intern-europe/'],
+        ['Citadel: What we do (official)', 'https://www.citadel.com/what-we-do/'],
+        ['Glassdoor: Citadel quant trader', 'https://www.glassdoor.ca/Interview/Citadel-Quantitative-Trader-Interview-Questions-EI_IE14937.0,7_KO8,27.htm'],
+      ],
     },
     fiverings: {
       name: 'Five Rings',

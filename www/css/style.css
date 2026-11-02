@@ -851,3 +851,15 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .hb-square { width: min(260px, 70vw); height: auto; display: block; border: 1px solid var(--line); background: var(--panel); }
 .hb-in { fill: var(--accent); }
 .hb-outpt { fill: var(--muted); opacity: 0.45; }
+
+/* Phone-screen mock and Stories */
+.mm-checks { list-style: none; padding: 0; margin: 10px 0; }
+.mm-checks li { padding: 3px 0; }
+.sp-checks { border: 0; padding: 0; margin: 12px 0 0; }
+.sp-checks .check { display: block; margin: 6px 0; }
+.story-notes dl { margin: 8px 0 0; }
+.story-notes dt { font-weight: 600; margin-top: 8px; }
+.story-notes dd { margin: 2px 0 0; }
+.story-form .story-field { display: block; margin: 0 0 14px; }
+.story-form .story-field span { display: block; font-weight: 600; margin-bottom: 4px; }
+.story-form textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical; }

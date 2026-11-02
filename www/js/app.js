@@ -15,6 +15,8 @@
     daily: (el) => QT.daily.render(el),
     oa: (el) => QT.oa.render(el),
     talk: (el, id) => QT.talk.render(el, id),
+    screen: (el, a, b) => QT.screen.render(el, a, b),
+    stories: (el, id) => QT.stories.render(el, id),
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
   const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', drill: 'coach', appearance: 'more', tour: '' };
@@ -22,7 +24,7 @@
   const TAB_PARENT = {
     plan: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
     topic: 'practice', handbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice',
-    iq: 'bank', mock: 'bank', talk: 'bank',
+    iq: 'bank', mock: 'bank', talk: 'bank', screen: 'bank', stories: 'bank',
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',
   };
 

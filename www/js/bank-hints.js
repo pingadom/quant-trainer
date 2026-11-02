@@ -347,6 +347,14 @@
       [`Write the expected value as a sum over k, the number of tosses.`, `P(first head on toss k) = 2<sup>−k</sup>, and the prize is 2<sup>k</sup>. What does each k ≤ 20 contribute?`, `Each k up to 20 contributes exactly $1.`, `Every longer game pays the cap 2<sup>20</sup>. What is P(no head in the first 20 tosses)?`],
       [`Same reasoning as (a), with the cap at 2<sup>30</sup>.`, `Each k ≤ 30 contributes $1, and the tail contributes one more.`, `Notice how little a thousand-times bigger bank adds.`],
     ],
+    'cl-die-square': [
+      [`You need the average of X², not the square of the average.`, `List the squares of the six faces.`, `Add them up and divide by 6.`],
+      [`The gap between E[X²] and E[X]² has a name.`, `Var(X) = E[X²] − E[X]².`, `Use your answer to (a) and E[X] = 3.5.`],
+    ],
+    'cl-two-sixes': [
+      [`Condition on what happens just after your first 6.`, `Reaching a 6 takes 6 rolls on average.`, `After that 6, one more roll either finishes or sends you back to the start: E = 6 + 1 + (5/6)E.`],
+      [`Does a failed attempt send you all the way back this time?`, `After a 6, rolling another 6 keeps you one step along, unlike in (a).`, `Let E₀ be the expected rolls from scratch and E₁ after a 6: E₀ = 6 + E₁ and E₁ = 1 + (1/6)E₁ + (4/6)E₀.`],
+    ],
     'cl-monty-hall': [
       [`What's the chance your first pick is right? Does the host's action change that?`, `The host can always open a goat door, so his reveal tells you nothing new about your own door.`, `Your door keeps its 1/3. Where does the rest of the probability go?`, `Switching wins exactly when your first pick was wrong.`],
       [`Same idea with 100 doors.`, `Your first pick is right 1% of the time.`, `The host leaves exactly one other door closed. When does switching to it win?`],

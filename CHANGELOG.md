@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.32.0
+
+- **Phone-screen mock** (Interviews → Phone-screen mock): a full first-round interview, timed part by part, in the order a 45–60 minute trading phone screen runs:
+  1. Introduce yourself (5 min): your saved answer, spoken against a timer, then a self-check
+  2. Mental maths (10 min): ten trader-style questions (percentages, % moves, fractions as decimals, products, squares, compounding)
+  3. Probability and expected value (15 min): four interview questions, the firm's own first, ones you haven't done before
+  4. Market making (10 min): two markets where the interviewer trades with you and then **reveals information** ("the first die is a 1"), and you re-quote. Scored on centring, width, leaning with the trade and updating on the reveal, with the fair value, SD and the P&L of your position explained after each one.
+  5. Behavioural and your questions (5 min)
+- Every part can be practised on its own; full runs are saved and listed. Firm pages link to it, and the Citadel plan schedules it every other day.
+- **Stories**: write your answers to the questions with no number at the end, field by field (STAR for experience questions), with a word count, the spoken length, and a rehearsal timer. Prompts include "tell me about yourself", "why trading", "why this firm", "which market do you follow?" and "pitch me a trade". Saved with your progress and included in backups. Interview plans now remind you to write the first three.
+- **Citadel profile** rewritten from Citadel's own pages:
+  - Citadel (the investment manager, five strategies) and Citadel Securities (the market maker) are separate firms.
+  - The Investment & Trading internship is at Citadel.
+  - What its posting asks for: in-depth knowledge of a financial market, statistics under uncertainty, and some programming.
+  - The phone-screen format.
+- **Two classic questions:** the square of a die roll (and its gap to 3.5², the variance), and two 6s in a row against a 6 then a 5 (42 against 36). Both have hints, worked solutions and Python checks.
+
 ## 0.31.0
 
 - **Handbook Part 2: Interview probability** is written. It has seven chapters on the techniques behind most interview puzzles:

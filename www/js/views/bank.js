@@ -25,7 +25,7 @@
         p: { ...part, q: `<p class="stem">${b.q}</p><p>${part.q}</p>` },
         record: (ok, hints) => {
           U.recordBank(b.id, pi, ok, hints);
-          onRecord();
+          onRecord(ok, hints);
         },
       };
     };
@@ -61,7 +61,7 @@
       ${F ? `<details class="card intel" ${window.innerWidth > 760 ? 'open' : ''}><summary><b>How ${F.name} interviews</b> (as reported)</summary>
         <ul>${F.process.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: ${F.sources.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(' · ')}</p></details>` : ''}
-      <div class="row" style="margin:14px 0">${mockLink(firm, F)}</div>
+      <div class="row" style="margin:14px 0">${mockLink(firm, F)}${firm ? ` <a class="btn ghost" href="#/screen/${firm}">Phone-screen mock (45 min)</a>` : ''}</div>
       <div class="bank-progress card">
         <div class="row" style="justify-content:space-between"><b>${c.done} of ${scope.length} done${F ? ` at ${F.name}` : ''}</b><span class="small">${c.unsure ? `${c.unsure} unsure · ` : ''}${c.todo} to do</span></div>
         <div class="bar stack" role="progressbar" aria-label="Questions done" aria-valuenow="${Math.round(pct(c.done))}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct(c.done)}%"></i><i class="unsure" style="width:${pct(c.unsure)}%"></i></div>
@@ -186,5 +186,6 @@
     });
   }
 
+  QT.bankSource = bankSource; // the phone-screen mock serves bank questions too
   QT.views = Object.assign(QT.views || {}, { bank, iq: question, mock });
 })();

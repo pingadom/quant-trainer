@@ -11,6 +11,7 @@
     optiver: { topics: ['dice', 'ev', 'sequences'], games: [['quote', 'Make me a market', '#/quote'], ['market', 'Market making', '#/market']], mental: true, oa: true },
     js: { topics: ['ev', 'puzzles', 'bayes', 'cards'], games: [['figgie', 'Figgie', '#/figgie'], ['quote', 'Make me a market', '#/quote']] },
     sig: { topics: ['ev', 'cards', 'bayes'], games: [['kelly', 'Bet sizing', '#/kelly'], ['quote', 'Make me a market', '#/quote']] },
+    citadel: { topics: ['ev', 'dice', 'bayes', 'walks'], games: [['quote', 'Make me a market', '#/quote'], ['market', 'Market making', '#/market']], mental: true, screen: true },
     imc: { topics: ['dice', 'ev', 'walks'], games: [['quote', 'Make me a market', '#/quote'], ['market', 'Market making', '#/market']], mental: true },
     flow: { topics: ['sequences', 'dice', 'ev'], games: [['quote', 'Make me a market', '#/quote']], mental: true, oa: true },
     davinci: { topics: ['dice', 'ev', 'bayes'], games: [['quote', 'Make me a market', '#/quote']], mental: true },
@@ -48,6 +49,13 @@
       const [key, label, href] = F.games[(dayIndex / 2) % F.games.length];
       out.push({ id: `game-${key}`, label, href, auto: () => (s[key]?.history || []).some((r) => on(r.date, day)) });
     }
+    // Behavioural answers: written early, so there's time to rehearse them.
+    if (dayIndex === 0 || dayIndex % 4 === 1) {
+      const need = ['intro', 'why-trading', 'why-firm'].filter((id) => !(s.stories[id]?.f || []).some((x) => x && x.trim()));
+      if (need.length || dayIndex === 0) out.push({ id: 'stories', label: 'Write your answers to "tell me about yourself", "why trading" and "why this firm" (Stories)', href: `#/stories/${need[0] || 'intro'}`, auto: () => !need.length });
+    }
+    // A full timed phone-screen run every other day, and the day before.
+    if (F.screen && (dayIndex % 2 === 1 || left === 1)) out.push({ id: 'screen', label: 'Phone-screen mock (45 minutes, out loud)', href: `#/screen/${p.firm}`, auto: () => s.screen.runs.some((r) => on(r.date, day)) });
     // Spoken practice every third day and on the last day before.
     if (dayIndex % 3 === 2 || left === 1) {
       out.push({ id: 'mock', label: `Mock interview: ${name}`, href: `#/mock/${p.firm}` });
