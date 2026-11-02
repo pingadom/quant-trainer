@@ -7,6 +7,7 @@ test-results/
 playwright-report/
 .lighthouseci/
 answers.json
+code.json
 __pycache__/
 
 # Generated at deploy time by tools/firm-pages.js

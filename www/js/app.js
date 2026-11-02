@@ -18,13 +18,14 @@
     screen: (el, a, b) => QT.screen.render(el, a, b),
     stories: (el, id) => QT.stories.render(el, id),
     weak: (el, a, b) => QT.adapt.render(el, a, b),
+    code: (el, a, b) => QT.coding.render(el, a, b),
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
   const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', drill: 'coach', appearance: 'more', tour: '' };
   // Phone tabs: Home · Coach (my prep) · Practice (learn and practise) · Interviews · More (games, settings).
   const TAB_PARENT = {
     plan: 'coach', weak: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
-    topic: 'practice', handbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice',
+    topic: 'practice', handbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
     iq: 'bank', mock: 'bank', talk: 'bank', screen: 'bank', stories: 'bank',
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',
   };

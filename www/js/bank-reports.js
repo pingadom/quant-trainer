@@ -927,6 +927,81 @@
         sim: () => { let n = 0, run = 0; while (run < 2) { n++; run = R.die() === 5 ? run + 1 : 0; } return n; } }],
     },
 
+    // ---------------------------------------------------------------- Optiver software engineering
+    // Talk-through questions from Optiver's SWE internship rounds. The coding problems themselves
+    // are in the Coding section (js/code-problems.js), where they can be run against tests.
+    {
+      id: 'opt-swe-hft', firm: 'optiver', role: 'Software Engineer Intern', stage: 'Final round', cat: 'System design', kind: 'reported',
+      src: ['Glassdoor: Optiver software engineer internship (2025): "designing a high-frequency trade system … software and hardware components in detail"', 'https://www.glassdoor.co.uk/Interview/Optiver-Software-Engineer-Internship-Interview-Questions-EI_IE243355.0,7_KO8,36.htm'],
+      q: `Design a low-latency trading system, from the exchange's market data arriving to your order reaching the exchange. Describe the components, what hardware they run on, and where the time goes. Go as deep as you can.`,
+      open: { model: `<ol>
+        <li><b>Market data in.</b> Exchanges publish over UDP multicast, often on two redundant feeds (A and B). A feed handler decodes the exchange's binary protocol, checks sequence numbers, takes the first copy of each packet from either feed, and recovers gaps from a snapshot or retransmission service. Kernel-bypass networking (the NIC delivers packets straight to user space) avoids system calls and copies; some firms decode on FPGAs.</li>
+        <li><b>Order book.</b> Build the book per instrument from the updates: price levels in arrays indexed by tick for speed, best bid and offer kept current.</li>
+        <li><b>Strategy.</b> Compute fair values and decide quotes. The hot path is single-threaded and pinned to an isolated core: no locks, no memory allocation, no logging, data laid out for the cache. Other threads talk to it through lock-free single-producer single-consumer ring buffers.</li>
+        <li><b>Risk checks before every order.</b> Position and exposure limits, price bands (no order far from the market), order-rate throttles, and a kill switch. They must be in the path and fast.</li>
+        <li><b>Order gateway.</b> A TCP session per exchange using its binary order protocol or FIX: logon, heartbeats, sequence numbers, handling acknowledgements, fills and rejects, and resynchronising after a disconnect.</li>
+        <li><b>Off the hot path.</b> Asynchronous logging, monitoring and alerting, a drop copy of fills to reconcile positions, and recording of all data for replay and testing.</li>
+        <li><b>Hardware and placement.</b> Servers colocated in the exchange's data centre, fast NICs with hardware timestamps, clocks synchronised by PTP, and tuned machines (isolated cores, no CPU frequency scaling, huge pages).</li>
+        <li><b>Where the time goes.</b> Wire to decoded update, to decision, to risk check, to order on the wire: measure each stage with hardware timestamps and watch the tail (the 99.9th percentile), not just the average. A cache miss is about 100 ns and a system call around a microsecond, so they show up.</li>
+      </ol><p>Say what you would build first, and what happens on failure: a gap on the feed, a disconnect from the exchange, a strategy behaving badly (the kill switch). Ask what latency matters for this business before optimising.</p>` },
+    },
+    {
+      id: 'opt-swe-tickets', firm: 'optiver', role: 'Software Engineer Intern', stage: 'Final round', cat: 'System design', kind: 'reported',
+      src: ['Glassdoor: Optiver software engineer internship (2024): "Design a ticketing system for buying concert tickets"', 'https://www.glassdoor.co.uk/Interview/Optiver-Software-Engineer-Internship-Interview-Questions-EI_IE243355.0,7_KO8,36.htm'],
+      q: `Design a system for selling concert tickets. A popular show sells out in minutes, and no seat may ever be sold twice.`,
+      open: { model: `<ol>
+        <li><b>Requirements first.</b> No double-selling (correctness over speed), fair access when demand spikes, people pick seats, payment can fail. Ask about scale: seats per show, buyers at the start of a sale.</li>
+        <li><b>Data.</b> Events, seats (event, section, row, number, status: free, held, sold), holds (seat, buyer, expiry) and orders.</li>
+        <li><b>Hold, then pay.</b> Selecting a seat places a hold for a few minutes. The hold must be atomic: one conditional update such as "set status to held where id = ? and status = free", or a transaction with a row lock. Exactly one buyer's update succeeds. Holds that expire release the seat.</li>
+        <li><b>Payment.</b> Charge with an idempotency key so a retry never charges twice; on success mark the seats sold and the hold finished, in one transaction.</li>
+        <li><b>The spike.</b> A virtual waiting room lets buyers in at the rate the system can take. Seat maps are read far more than written, so cache them and accept being a second stale; the hold itself always goes to the database.</li>
+        <li><b>Scaling.</b> Shard by event, since one event's seats are only contended among its own buyers. Keep services stateless behind a load balancer.</li>
+      </ol><p>Then talk about failure: what happens if a server dies after the payment succeeds but before the seats are marked sold? (Reconcile from the payment provider's records and the order log.)</p>` },
+    },
+    {
+      id: 'opt-swe-queue', firm: 'optiver', role: 'Software Engineer Intern', stage: 'Technical', cat: 'Data structures', kind: 'reported',
+      src: ['Glassdoor: Optiver software engineer intern (2024–2025): "Talk through how to implement a queue … follow-up is to actually build an array-based queue"', 'https://www.glassdoor.co.uk/Interview/Optiver-Software-Engineer-Intern-Interview-Questions-EI_IE243355.0,7_KO8,32.htm'],
+      q: `Talk me through how you would implement a queue. Now build it on an array. What does each operation cost? What changes if it has to grow, or if one thread pushes while another pops?`,
+      open: { model: `<ul>
+        <li><b>Linked list:</b> keep head and tail pointers; push at the tail, pop at the head, both O(1). Each node is a separate allocation, which is slow and scatters memory.</li>
+        <li><b>Array (ring buffer):</b> keep the array, the index of the front and the count. Push writes at (head + count) mod capacity; pop reads at head and moves it on. Both O(1), nothing shifts. Store the count (or leave one slot empty), or you can't tell full from empty.</li>
+        <li><b>Growing:</b> when full, allocate double the size and copy the items in order to the start. Pushes stay O(1) amortised, because the copies add up to less than 2n.</li>
+        <li><b>Two threads:</b> the simple answer is a mutex (plus a condition variable to wait on). With exactly one producer and one consumer you can avoid locks: only the producer writes the tail index and only the consumer writes the head, both atomics with release and acquire ordering, and each index on its own cache line so the cores don't fight over it (false sharing). Trading systems pass messages between threads this way.</li>
+      </ul><p>Then write it: practise in the Coding section with <a href="#/code/opt-ring-deque">a double-ended queue on a fixed array</a>.</p>` },
+    },
+    {
+      id: 'opt-swe-tcp-udp', firm: 'optiver', role: 'Software Engineer Intern', stage: 'Technical', cat: 'CS fundamentals', kind: 'reported',
+      src: ['Glassdoor: Optiver software engineer intern (2024, 2026): "Difference between UDP and TCP"', 'https://www.glassdoor.co.uk/Interview/Optiver-Software-Engineer-Intern-Interview-Questions-EI_IE243355.0,7_KO8,32.htm'],
+      q: `What is the difference between TCP and UDP? Which would you use to receive market data, and which to send orders, and why?`,
+      open: { model: `<ul>
+        <li><b>TCP:</b> a connection (three-way handshake: SYN, SYN-ACK, ACK) carrying a reliable, ordered byte stream. Lost segments are retransmitted, and flow and congestion control slow the sender down. A lost segment holds up everything behind it (head-of-line blocking). Nagle's algorithm can delay small writes; low-latency code sets TCP_NODELAY.</li>
+        <li><b>UDP:</b> independent datagrams with no connection, no retransmission and no ordering. Less overhead and no waiting for lost data, and it supports multicast.</li>
+        <li><b>Market data: UDP multicast.</b> The exchange sends each update once to every subscriber. Stale prices are useless, so don't wait for a retransmission: detect the gap from sequence numbers, mark the book as unreliable, and recover from a snapshot or a separate retransmission channel (often TCP).</li>
+        <li><b>Orders: TCP.</b> Every order, cancel and fill must arrive exactly once and in order, and the exchange needs a session for each firm. Exchange order protocols run over TCP.</li>
+      </ul>` },
+    },
+    {
+      id: 'opt-swe-languages', firm: 'optiver', role: 'Software Engineer Intern', stage: 'Technical', cat: 'CS fundamentals', kind: 'reported',
+      src: ['Glassdoor: Optiver software engineer interviews (2024–2025): "Difference between Python and C++", "Java vs C++"', 'https://www.glassdoor.co.uk/Interview/Optiver-Software-Engineer-Internship-Interview-Questions-EI_IE243355.0,7_KO8,36.htm'],
+      q: `Compare Python, C++ and Java. Why might a trading firm write its fastest systems in C++ and its tools in Python?`,
+      open: { model: `<ul>
+        <li><b>How they run:</b> C++ compiles ahead of time to machine code. Java compiles to bytecode that a JIT compiles while the program runs, so it needs warming up. CPython interprets bytecode, roughly 10 to 100 times slower for plain loops.</li>
+        <li><b>Memory:</b> C++ is managed by hand, made safe with RAII (destructors free resources at the end of a scope) and smart pointers, and you control the layout of data in memory. Java and Python use garbage collection (Python mainly reference counting), so there are pauses or overhead you don't control directly.</li>
+        <li><b>Types:</b> C++ and Java are statically typed; Python is dynamic, which makes it fast to write and easier to get wrong at run time.</li>
+        <li><b>Concurrency:</b> C++ and Java threads run in parallel; CPython's global interpreter lock stops threads running Python code at the same time (processes or native libraries such as NumPy get round it).</li>
+        <li><b>The trade-off:</b> on the latency-critical path, predictability matters most: no garbage collection pauses, no JIT warm-up, control of the cache. That favours C++. For research, analysis, tooling and glue code, speed of writing matters more, and Python's libraries win. Java sits between, with careful tuning to avoid garbage collection on the hot path.</li>
+      </ul>` },
+    },
+    {
+      id: 'opt-swe-behavioural', firm: 'optiver', role: 'Software Engineer Intern', stage: 'Interview', cat: 'Behavioural', kind: 'reported',
+      src: ['Glassdoor: Optiver software engineer intern interviews (2023–2026)', 'https://www.glassdoor.co.uk/Interview/Optiver-Software-Engineer-Intern-Interview-Questions-EI_IE243355.0,7_KO8,32.htm'],
+      q: `Behavioural questions candidates report from Optiver's software engineering interviews:<ul><li>Why Optiver, and not a software company?</li><li>What does a market maker do?</li><li>Describe a project on your CV. What was the hardest technical decision?</li><li>Tell me about a time you failed or didn't meet expectations.</li><li>What would people who have worked with you say is your weakness?</li></ul>Answer one out loud, as you would in the interview.`,
+      open: { model: `<p><b>Why Optiver rather than a tech company:</b> the software <i>is</i> the business. Its performance and correctness show up straight away in profit and loss, engineers sit with traders, and problems such as low latency and risk are unusual. Name something concrete you learned from Optiver's own material or from someone there.</p>
+        <p><b>What a market maker does:</b> it quotes both a price to buy (bid) and a price to sell (ask) in many products, all the time, so others can trade when they want. It earns the spread between them and manages the risk of the positions it ends up with, hedging quickly. The skill is pricing accurately and reacting fast, which is why the technology matters.</p>
+        <p><b>Projects:</b> be ready to go deep: why you chose that design, what you would change, what broke and how you found it. Only claim what you can defend line by line.</p>
+        <p><b>Failure and weakness:</b> ${STAR} Pick a real weakness with a cost, and what you now do about it.</p>` },
+    },
+
     // ---------------------------------------------------------------- Behavioural
     behavioural('opt-behavioural', 'optiver', ['Glassdoor: Optiver interviews (QT intern, Oct 2026)', GD('Optiver-Interview-Questions-E243355.htm')],
       ['Tell me about an accomplishment you are particularly proud of.', 'How have you worked in a team, and how did you handle conflict?', 'Why Optiver, and why do you want to be a trader?']),

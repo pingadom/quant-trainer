@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -455,7 +455,7 @@ test.describe('accessibility in every theme', () => {
 });
 
 test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
-  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice']) {
+  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'code', 'code/opt-order-book', 'code/quiz']) {
     test(`no serious violations on #/${r}`, async ({ page }) => {
       await page.goto(`./?demo#/${r}`); // demo data so the populated screens are checked too
       await expect(page.locator('main h1').first()).toBeVisible();
@@ -514,4 +514,27 @@ test('handbook: a check answered right counts towards the chapter', async ({ pag
   await expect(page.locator('#hb-progress')).toContainText('1 of 6');
   await page.goto('./#/handbook');
   await expect(page.locator('.hb-chapter.started')).toHaveCount(1);
+});
+
+test('coding: run JavaScript, see what failed, fix it and submit; then a knowledge quiz', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto('./#/code/opt-pair-sum');
+  await page.getByRole('button', { name: 'JavaScript' }).click();
+  const editor = page.getByRole('textbox', { name: 'Your code' });
+  await editor.fill('function pairSum(nums, target) {\n  return [];\n}\n');
+  await page.getByRole('button', { name: 'Run examples' }).click();
+  await expect(page.locator('#status')).toContainText('0 of 2 examples pass');
+  await expect(page.locator('.code-row.fail').first()).toContainText('expected [[-1, 7], [1, 5]]');
+  await editor.fill(await page.evaluate(() => QT.code.byId('opt-pair-sum').ref.js));
+  await page.getByRole('button', { name: 'Submit (all tests)' }).click();
+  await expect(page.locator('#status')).toContainText(/All \d+ tests pass/, { timeout: 60_000 });
+  await page.goto('./#/code');
+  await expect(page.locator('.tile').first()).toContainText('1/');
+  await page.goto('./#/code/quiz');
+  await page.getByRole('button', { name: 'Start the quiz' }).click();
+  for (let i = 0; i < 20; i++) {
+    await page.locator('.quiz-opt').first().click();
+    await page.getByRole('button', { name: i === 19 ? 'Finish' : 'Next' }).click();
+  }
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^\d+ of 20$/);
 });

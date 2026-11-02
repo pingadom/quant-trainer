@@ -678,6 +678,60 @@
       QT.store.importJson(saved);
     }
 
+    // Coding: every problem is complete; the JavaScript reference passes every case, including the
+    // random and large ones (the Python reference is checked in research/verify_code.py); the
+    // starter code defines the right names; the debugging starters really are buggy; the quiz is
+    // well formed; and saved coding data is sanitised.
+    if (QT.code) {
+      const C = QT.code, ids = new Set();
+      for (const P of C.PROBLEMS) {
+        if (ids.has(P.id)) fail(`code ${P.id}: duplicate id`);
+        ids.add(P.id);
+        if (!C.GROUPS.some(([g]) => g === P.group)) fail(`code ${P.id}: unknown group ${P.group}`);
+        if (!P.title || !P.body || !P.rules.length || !P.note || !/^https:\/\//.test(P.src[1])) fail(`code ${P.id}: missing statement, limits, note or source`);
+        if (!P.tests.some((t) => t.ex) || P.hints.length < 3 || !P.sol.idea || !P.sol.steps.length || !P.sol.cx || !P.sol.trap) fail(`code ${P.id}: needs an example, three hints and a full solution`);
+        if (!P.ref.py.trim() || !P.ref.js.trim()) fail(`code ${P.id}: missing a reference solution`);
+        for (const t of P.tests) {
+          if (P.kind === 'cls' && (!Array.isArray(t.init) || t.ops.length !== t.out.length)) fail(`code ${P.id}: a test needs init and one result per call`);
+          if (P.kind === 'cls') for (const [m] of t.ops) if (!P.sig.methods.some(([n]) => n === m)) fail(`code ${P.id}: test calls ${m}, which isn't in the signature`);
+        }
+        for (const lang of ['py', 'js']) if (!C.starter(P, lang).includes(lang === 'py' ? C.pyName(P) : P.name)) fail(`code ${P.id}: ${lang} starter doesn't define ${P.name}`);
+        if (typeof C.compileJs(C.starter(P, 'js'), P.name) !== 'function') fail(`code ${P.id}: JavaScript starter doesn't compile to a ${P.kind}`);
+        const ref = C.refImpl(P), all = C.cases(P, 'submit');
+        if (P.fuzz && all.length < P.tests.length + 25) fail(`code ${P.id}: random cases missing`);
+        for (const t of all) {
+          let got;
+          try { got = C.exec(ref, P, t); } catch (err) { got = err; }
+          if (!C.same(got, t.out)) { fail(`code ${P.id}: reference fails ${t.label}`); break; }
+        }
+        if (P.starter) {
+          const buggy = C.compileJs(P.starter.js, P.name);
+          const caught = all.filter((t) => { try { return !C.same(C.exec(buggy, P, t), t.out); } catch { return true; } });
+          if (!caught.length) fail(`code ${P.id}: the buggy starter passes every case`);
+        }
+      }
+      if (C.same([1, [2, null]], [1, [2.0000000001, undefined]]) !== true || C.same([1], [1, 2]) || C.same('1', 1)) fail('code: same() compares wrongly');
+      if (C.snake('serveAll') !== 'serve_all' || C.snake('LRUCache') !== 'lrucache' || C.pyName(C.byId('opt-lru')) !== 'LRUCache') fail('code: Python names');
+      const QZ = QT.codeQuiz, qids = new Set();
+      if (QZ.QS.length < QZ.N) fail('code quiz: fewer questions than a quiz needs');
+      for (const q of QZ.QS) {
+        if (qids.has(q.id) || !/^[a-z0-9-]{1,30}$/.test(q.id)) fail(`code quiz ${q.id}: duplicate or bad id`);
+        qids.add(q.id);
+        if (!QZ.TOPICS.includes(q.topic) || q.opts.length !== 4 || new Set(q.opts).size !== 4 || !q.why || !q.q) fail(`code quiz ${q.id}: malformed`);
+      }
+      for (const t of QZ.TOPICS) if (!QZ.QS.some((q) => q.topic === t)) fail(`code quiz: no questions on ${t}`);
+      // The right answer mustn't stand out by length (it is listed first, and shuffled when shown).
+      const longest = QZ.QS.filter((q) => q.opts[0].length > Math.max(...q.opts.slice(1).map((o) => o.length))).length;
+      if (longest > QZ.QS.length / 4) fail(`code quiz: the right answer is the longest option in ${longest} of ${QZ.QS.length} questions`);
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      snap.code = { lang: 'cobol', p: { 'opt-lru': { py: 123, js: 'x'.repeat(30000), solved: '5', subs: 2, first: 1 }, 'BAD KEY!': { py: 'x' } }, quiz: { runs: [{ date: '2026-11-02T10:00:00Z', n: 20, right: 15 }, 'x'], q: { 'ds-heap': [1, 0, '1', 5, 0, 1], 'bad id!': [1] } } };
+      QT.store.importJson(JSON.stringify(snap));
+      const cd = QT.store.get().code;
+      if (cd.lang !== 'py' || cd.p['opt-lru'].py !== '' || cd.p['opt-lru'].js.length !== 20000 || cd.p['opt-lru'].solved !== 5 || !cd.p['opt-lru'].first || cd.p['BAD KEY!']
+        || cd.quiz.runs.length !== 2 || cd.quiz.runs[0].right !== 15 || JSON.stringify(cd.quiz.q['ds-heap']) !== '[0,1,1,0,1]' || cd.quiz.q['bad id!']) fail(`code: not sanitised as expected ${JSON.stringify(cd).slice(0, 300)}`);
+      QT.store.importJson(saved);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {
@@ -775,7 +829,7 @@
     if (files.pkg && JSON.parse(files.pkg).version !== QT.VERSION) fail(`version mismatch: package.json vs core.js ${QT.VERSION}`);
 
     const fails = out.length;
-    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated) · ${(QT.estimateFacts || []).length} estimation facts · ${(QT.tricks || []).length} speed tricks · Figgie, Kelly, daily, quote, online-test and chart checks`);
+    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated) · ${(QT.estimateFacts || []).length} estimation facts · ${(QT.tricks || []).length} speed tricks · ${QT.code ? `${QT.code.PROBLEMS.length} coding problems · ${QT.codeQuiz.QS.length} quiz questions · ` : ''}Figgie, Kelly, daily, quote, online-test and chart checks`);
     out.push(fails ? `${fails} FAILURE(S)` : 'ALL CHECKS PASSED');
     return { lines: out, fails };
   }

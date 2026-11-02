@@ -26,3 +26,11 @@ Re-derives every interview-bank answer in Python by a different method from the 
 python research/verify_results.py
 node tests/export-answers.js > answers.json && python research/verify_results.py --js answers.json
 ```
+
+## 3. Are the coding problems' tests right? → [verify_code.py](verify_code.py)
+
+Each coding problem has reference solutions in JavaScript and Python. The app's tests (hand-written, plus seeded random and large cases whose expected output comes from the JavaScript reference) are exported and run against the Python reference, and against a brute-force Python version written a different, slower way. The debugging problems' buggy starter code must fail at least one case.
+
+```bash
+node tests/export-code.js > code.json && python research/verify_code.py code.json
+```

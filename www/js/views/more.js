@@ -33,6 +33,7 @@
         <a class="card" href="#/mistakes"><b>Mistakes to review</b><span class="small">Wrong answers coming back on a schedule</span></a>
         <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80 in 8 (multiple choice or typed), Zetamac and speed reps</span></a>
         <a class="card" href="#/oa"><b>Online tests</b><span class="small">Number sequences, digit span and running totals, timed</span></a>
+        <a class="card" href="#/code"><b>Coding (SWE)</b><span class="small">Optiver software engineering problems, run in Python or JavaScript, and a CS knowledge quiz</span></a>
       </div>
       <h2 class="menu-head">Interviews</h2>
       <div class="menu">

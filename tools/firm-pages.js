@@ -67,6 +67,8 @@ ${body}
     const description = id === 'common'
       ? `${qs.length} question formats used across trading-firm interviews (market making, options, quoting), with worked solutions. Free.`
       : `${reported} interview question${reported === 1 ? '' : 's'} candidates report from ${F.name}, with worked solutions and how the interview process runs. Free practice, no sign-up.`;
+    // Links into the app (#/…) point up a level from these pages.
+    const appLinks = (html) => html.replace(/href="#\//g, 'href="../#/');
     const parts = (b) => (b.parts || []).map((p) => `
           <li>${p.q}${p.ext && !/follow-up/i.test(p.q) ? ' <span class="small">(our follow-up)</span>' : ''}
             <details><summary>Answer and worked solution</summary><p><b>Answer: ${answer(QT, p.a)}</b></p><div class="solution">${p.sol}</div></details>
@@ -77,7 +79,7 @@ ${body}
         <p class="question">${b.q}</p>
         ${b.note ? `<p class="small">${b.note}</p>` : ''}
         ${b.parts ? `<ol>${parts(b)}
-        </ol>` : b.open ? `<details><summary>Model answer</summary><div class="solution">${b.open.model}</div></details>` : ''}
+        </ol>` : b.open ? `<details><summary>Model answer</summary><div class="solution">${appLinks(b.open.model)}</div></details>` : ''}
         ${b.followups && b.followups.length ? `<p class="small"><b>Interviewers may push further:</b> ${b.followups.join(' ')}</p>` : ''}
         <p class="small">Source: <a href="${esc(b.src[1])}" rel="noopener">${esc(b.src[0])}</a> · <a href="../#/iq/${esc(b.id)}">Try it in the app →</a></p>
       </article>`).join('');
@@ -88,7 +90,7 @@ ${body}
     <p class="lede">${id === 'common' ? 'Formats that come up at many trading firms, with worked solutions.' : `How ${esc(F.name)}'s process runs, as candidates and the firm describe it, and the questions candidates report, each with a worked solution.`} Free, no sign-up.</p>
     <p><a class="btn" href="../#/bank/${id}">Practise these in the app</a> <a class="btn ghost" href="../#/mock/${id}">Mock interview</a></p>
     ${F.process && F.process.length ? `<h2>How ${esc(id === 'common' ? 'these formats work' : `${F.name} interviews`)}</h2>
-    <ul>${F.process.map((x) => `<li>${x}</li>`).join('')}</ul>
+    <ul>${F.process.map((x) => `<li>${appLinks(x)}</li>`).join('')}</ul>
     <p class="small">Sources: ${(F.sources || []).map(([l, u]) => `<a href="${esc(u)}" rel="noopener">${esc(l)}</a>`).join(' · ')}</p>` : ''}
     <h2>Questions (${qs.length})</h2>
     <p class="small">Try each one before opening the solution. Interviewers change the numbers, so learn the method.</p>

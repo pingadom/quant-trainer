@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.34.0
+
+- **Coding (SWE)** (Practise → Coding): software engineering interview practice, starting with Optiver's software engineering internship.
+  - **18 problems** built from candidate reports (Glassdoor and LeetCode Discuss, 2020–2026), each our own version with the reported task: the long class-design problems Optiver's online assessment is known for (a worst-trade tracker, supermarket checkout queues, a ticket feed, a log monitor, truck position updates, a numbers-station decoder, a heaviest-in-the-tent heap with lazy deletion, prices after dividends, a limit order book, a shortest route with error codes, a tree from pairs with error codes), data structures from technical rounds (a deque on a fixed array, an LRU cache, peak live orders), two debugging exercises (a position and P&L tracker, a slow and wrong order matcher), and two warm-ups.
+  - **Run your code here**, in Python or JavaScript. Run the examples, then submit against every test: hand-written edge cases, 25 random cases and a large case whose time limit is a multiple of the reference solution's time on your own device. Failures show the calls up to the first wrong answer, with what came back, the error and anything you printed. Code runs in a web worker, so an endless loop is stopped rather than freezing the app. Python is Pyodide, downloaded once (about 13 MB).
+  - Each problem has three hints, a worked solution with its cost and the usual trap, and reference solutions in both languages. Your code is saved as you type.
+  - **Knowledge quiz**: 20 multiple-choice questions in 20 minutes on data structures, algorithms, operating systems, concurrency, networking, C++, Python and databases, like the "coding knowledge" part of Optiver's online assessment, from a bank of 45. Answers and explanations at the end; questions you got wrong come back more often.
+  - **How Optiver's SWE internship interviews run**, summarised from 2022–2026 candidate reports, and six talk-through questions added to the Optiver interview questions: designing a low-latency trading system, designing a ticketing system, a queue on an array (and between two threads), TCP against UDP for market data and orders, Python against C++ and Java, and the behavioural questions SWE candidates report.
+  - Every problem is checked in CI: the JavaScript reference against every case, and the Python reference and a brute-force Python version against the same cases (research/verify_code.py).
+- Wide code no longer widens the page on phones.
+
 ## 0.33.0
 
 - **Weak spots** (My prep → Weak spots): an adaptive learner that finds your weakest interview skills and trains them.

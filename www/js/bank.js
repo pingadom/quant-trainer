@@ -40,8 +40,9 @@
       process: [
         'Online assessment reported to include the 80-in-8 mental maths test, a "Beat the Odds" probability section, Zap-N reaction/neuro games and number-sequence puzzles.',
         'Later rounds reported to include probability questions, estimation, and trading/betting games with dice, coins and cards where you look for arbitrage and size bets.',
+        'Software engineering applicants (including interns) take a different online assessment: one or two long class-design coding problems on HackerRank, a 20-minute computer-science quiz and Zap-N games. Then a recruiter call, technical interviews (data structures, networking and operating systems, debugging a trading program) and a final round with system design. Practise them in <a href="#/code">Coding (SWE)</a>.',
       ],
-      sources: [['Glassdoor: Optiver OA components', GD('80-in-8-80-questions-in-8-minutes-Testing-your-ability-in-math-calculation-Zap-N-9-short-neuro-assessment-games-take-QTN_6844844.htm')], ['QuantVault: Optiver process', 'https://quantvault.org/optiver-interview-process.html']],
+      sources: [['Glassdoor: Optiver OA components', GD('80-in-8-80-questions-in-8-minutes-Testing-your-ability-in-math-calculation-Zap-N-9-short-neuro-assessment-games-take-QTN_6844844.htm')], ['QuantVault: Optiver process', 'https://quantvault.org/optiver-interview-process.html'], ['Glassdoor: Optiver software engineer internship', 'https://www.glassdoor.co.uk/Interview/Optiver-Software-Engineer-Internship-Interview-Questions-EI_IE243355.0,7_KO8,36.htm']],
     },
     imc: {
       name: 'IMC',
