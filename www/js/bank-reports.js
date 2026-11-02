@@ -509,6 +509,100 @@
         sol: `5.5² = 30.25, a little high. One Newton step: 5.5 − 0.25/(2 × 5.5) ≈ 5.5 − 0.023 = 5.477. Then quote around it: something like 5.47 bid, 5.49 offered, tightening as you refine. You know the answer can be computed, so the market should be tight and centred; a wide market here signals you're unsure of your own arithmetic.` }],
     },
 
+    // Citadel reports read November 2026 (Glassdoor role pages and Wall Street Oasis). Where a
+    // report gives the topic but not the numbers, the numbers are ours and `note` says so.
+    {
+      id: 'cit-heads-market', firm: 'citadel', role: 'Trader', stage: 'Interview', cat: 'Market making', kind: 'reported',
+      src: ['Glassdoor: Citadel trader interviews', GD('Citadel-Trader-Interview-Questions-EI_IE14937.0,7_KO8,14.htm')],
+      q: `"I flip a fair coin 100 times. Make me a market on the number of heads." Then: "Now make it 10,000 flips."`,
+      parts: [
+        { q: `(a) What standard deviation do you size your 100-flip market from?`, a: 5, tol: { abs: 0.05, rel: 0 } },
+        { q: `(b) By what factor should the width of your market grow for 10,000 flips?`, a: 10, tol: { abs: 0.05, rel: 0 } },
+      ],
+      followups: ['As a fraction of the fair value, is the 10,000-flip market wider or narrower? (Narrower: 50/5000 against 5/50.)'],
+    },
+    {
+      id: 'cit-exceed-2', firm: 'citadel', role: 'Quantitative Trader', stage: 'Interview', cat: 'Expected value', kind: 'reported',
+      src: ['Glassdoor: Citadel quantitative trader interviews', GD('Citadel-Quantitative-Trader-Interview-Questions-EI_IE14937.0,7_KO8,27.htm')],
+      q: `You draw independent Uniform(0, 1) numbers and keep a running total.`,
+      parts: [{ q: `What is the expected number of draws until the total first exceeds 2? (2 dp)`, a: Math.E ** 2 - Math.E, tol: { abs: 0.01, rel: 0 },
+        sim: () => { let s = 0, n = 0; while (s <= 2) { s += Math.random(); n++; } return n; } }],
+      followups: ['And to exceed 1? (e ≈ 2.72.) Roughly how many draws to exceed a large x? (About 2x + 2/3.)'],
+    },
+    {
+      id: 'cit-disk', firm: 'citadel', role: 'Quantitative Trader', stage: 'Interview', cat: 'Probability', kind: 'reported',
+      src: ['Glassdoor: Citadel quantitative trader interviews', GD('Citadel-Quantitative-Trader-Interview-Questions-EI_IE14937.0,7_KO8,27.htm')],
+      note: `The report asks how; the parts below check the reasoning with numbers.`,
+      q: `Using two independent Uniform(0, 1) numbers U and V, produce a point uniformly distributed over a disk of radius 1.`,
+      parts: [
+        { q: `(a) Take angle 2πV and radius √U. What is the probability the point lands within distance ½ of the centre?`, a: 1 / 4,
+          sim: () => (Math.sqrt(Math.random()) < 0.5 ? 1 : 0) },
+        { q: `(b) If you used radius U instead, what would that probability be?`, a: 1 / 2,
+          sim: () => (Math.random() < 0.5 ? 1 : 0) },
+        { q: `(c) For a uniform point on the disk, what is its expected distance from the centre?`, a: 2 / 3,
+          sim: () => Math.sqrt(Math.random()) },
+      ],
+      followups: ['Another way with no square root? (Rejection: draw from the square [−1, 1]², keep it if it lands in the disk; you keep π/4 of them.)'],
+    },
+    {
+      id: 'cit-bag-stones', firm: 'citadel', role: 'Quant Trader Intern', stage: 'Superday', cat: 'Conditional probability', kind: 'reported',
+      src: ['Wall Street Oasis: Citadel Securities interview reports', 'https://www.wallstreetoasis.com/company/citadel-securities/interview'],
+      note: `The report doesn't say how the bag was filled. We assume every number of black stones from 0 to 4 is equally likely, then compare with a different assumption in (c).`,
+      q: `A bag holds four stones, each black or white; you don't know how many of each. You draw two without replacement and both are black.`,
+      parts: [
+        { q: `(a) What is the probability the next stone you draw is black?`, a: 3 / 4,
+          sim: () => { const k = R.int(0, 4), bag = R.shuffle([0, 1, 2, 3].map((i) => (i < k ? 1 : 0))); return bag[0] && bag[1] ? bag[2] : null; } },
+        { q: `(b) You're offered an even-money $1 bet that the next stone is black. What is your expected profit?`, a: 0.5 },
+        { q: `(c) If instead each stone had been black with probability ½, independently, what would the probability in (a) be?`, a: 1 / 2 },
+      ],
+      followups: ['How much would you pay to see the third stone before betting? Would you change your bet size?'],
+    },
+    {
+      id: 'cit-meet-10', firm: 'citadel', role: 'Quantitative Researcher Intern', stage: 'Interview', cat: 'Probability', kind: 'reported',
+      src: ['Glassdoor: Citadel quantitative research intern interviews', GD('Citadel-Quantitative-Research-Intern-Interview-Questions-EI_IE14937.0,7_KO8,36.htm')],
+      q: `Two people each arrive at a station at a uniformly random time between 4pm and 5pm, and each waits 10 minutes for the other.`,
+      parts: [{ q: `What is the probability they meet?`, a: 11 / 36,
+        sim: () => (Math.abs(Math.random() - Math.random()) <= 1 / 6 ? 1 : 0) }],
+    },
+    {
+      id: 'cit-normal-cond', firm: 'citadel', role: 'Quantitative Researcher', stage: 'Interview', cat: 'Conditional probability', kind: 'reported',
+      src: ['Glassdoor: Citadel quantitative researcher interviews', GD('Citadel-Quantitative-Researcher-Interview-Questions-EI_IE14937.0,7_KO8,31.htm')],
+      note: `The report's wording is garbled ("E[X>0|X+Y>0]"), so both natural readings are asked.`,
+      q: `X and Y are independent standard normal random variables, and you're told X + Y > 0.`,
+      parts: [
+        { q: `(a) What is P(X > 0 | X + Y > 0)?`, a: 3 / 4,
+          sim: () => { const x = R.normal(), y = R.normal(); return x + y > 0 ? (x > 0 ? 1 : 0) : null; } },
+        { q: `(b) What is E[X | X + Y > 0]? (3 dp)`, a: 1 / Math.sqrt(Math.PI), tol: { abs: 0.01, rel: 0 },
+          sim: () => { const x = R.normal(), y = R.normal(); return x + y > 0 ? x : null; } },
+      ],
+    },
+    {
+      id: 'cit-convolution', firm: 'citadel', role: 'Quantitative Researcher', stage: 'Interview', cat: 'Probability', kind: 'reported',
+      src: ['Wall Street Oasis: Citadel Securities interview reports', 'https://www.wallstreetoasis.com/company/citadel-securities/interview'],
+      note: `The report says the questions were about convolution but gives no numbers; these are ours.`,
+      q: `X and Y are independent Uniform(0, 1). Let S = X + Y.`,
+      parts: [
+        { q: `(a) What is the density of S at s = 1.5?`, a: 0.5 },
+        { q: `(b) What is P(S > 1.5)?`, a: 1 / 8,
+          sim: () => (Math.random() + Math.random() > 1.5 ? 1 : 0) },
+      ],
+      followups: ['What does the density of the sum of three uniforms look like? (Three quadratic pieces, peak 3/4 at 1.5.)'],
+    },
+    {
+      id: 'cit-vega-gamma', firm: 'citadel', role: 'Trader', stage: 'Interview', cat: 'Options', kind: 'reported',
+      src: ['Glassdoor: Citadel trader interviews', GD('Citadel-Trader-Interview-Questions-EI_IE14937.0,7_KO8,14.htm')],
+      q: `How would you build a position that is long vega and short gamma?`,
+      open: { model: `<p><b>Sell short-dated options and buy long-dated ones at the same strike</b> (sell the front-month straddle, buy the back-month straddle).</p><ul><li><b>Gamma</b> is concentrated in short-dated options, so the short front leg dominates: <b>short gamma</b>.</li><li><b>Vega</b> grows with time to expiry (roughly with √T), so the long back leg dominates: <b>long vega</b>.</li><li><b>Theta: positive.</b> The front option decays faster, and you're short it.</li></ul><p>You profit if implied volatility rises (especially further out) while the stock stays still. You lose on a big move now. Mention that you'd delta-hedge to stay near flat.</p>` },
+    },
+    {
+      id: 'cit-regression', firm: 'citadel', role: 'Quantitative Research Intern', stage: 'Interview', cat: 'Statistics', kind: 'reported',
+      src: ['Wall Street Oasis: Citadel Securities interview reports', 'https://www.wallstreetoasis.com/company/citadel-securities/interview'],
+      q: `What are the assumptions of linear regression, and how would you check each one in practice? When would you use ridge rather than lasso?`,
+      open: { model: `<ul><li><b>Linearity</b> (the mean of y is linear in the features): plot residuals against fitted values and against each feature; look for curves.</li><li><b>Independent errors</b>: in time series, check residual autocorrelation (ACF plot, Durbin–Watson).</li><li><b>Constant variance</b>: residuals fanning out against fitted values; Breusch–Pagan test. Fix with transforms, weighted least squares or robust (HC) standard errors.</li><li><b>No perfect multicollinearity</b>: correlated features inflate coefficient variances; check variance inflation factors.</li><li><b>Normal errors</b> (only needed for small-sample inference): Q–Q plot of residuals.</li><li><b>Exogeneity</b> (errors uncorrelated with features): the hardest to check; think about omitted variables and look-ahead.</li></ul><p><b>Ridge vs lasso.</b> Both shrink coefficients to cut variance. Ridge (L2) shrinks smoothly and keeps every feature: use it when many correlated features each carry a little signal. Lasso (L1) sets some coefficients to exactly zero: use it when you believe few features matter and want selection. With groups of correlated features lasso picks one arbitrarily; elastic net mixes the two. Choose the penalty by cross-validation, respecting time order for market data.</p>` },
+    },
+    behavioural('cit-behavioural-2', 'citadel', ['Glassdoor: Citadel trader interviews', GD('Citadel-Trader-Interview-Questions-EI_IE14937.0,7_KO8,14.htm')],
+      ['Tell me about a time you experienced a conflict in the workplace.', 'What do you enjoy most about trading?', 'What do you want to achieve?', 'Describe a scenario in which your team wasn\'t cooperating well.']),
+
     // ---------------------------------------------------------------- DRW
     {
       id: 'drw-bottom-card', firm: 'drw', role: 'Quant trader intern', stage: 'Interview', cat: 'Expected value', kind: 'reported',

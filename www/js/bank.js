@@ -333,6 +333,8 @@
       parts: [
         { q: `What is the expected value?`, a: 441 / 6, sol: `(1 + 8 + 27 + 64 + 125 + 216)/6 = 441/6 = 73.5. Shortcut: Σk³ = (Σk)² = 21² = 441.`, sim: () => R.die() ** 3 },
         { q: `Follow-up (ours): what is (E[X])³, and why is it smaller?`, a: 42.875, ext: true, sol: `3.5³ = 42.875. Cubing is convex on positive numbers, so by Jensen's inequality E[X³] ≥ (E[X])³. The same idea explains why options are worth more with more volatility.` },
+        { q: `Follow-up (ours; another Citadel report mentions rerolls): you may reroll once and are paid the cube of the final roll. What is the game worth?`, a: 635 / 6, tol: { abs: 0.05, rel: 0 }, ext: true,
+          sim: () => { const x = R.die(); return x >= 5 ? x ** 3 : R.die() ** 3; } },
       ],
       followups: ['What is the variance of the payout?'],
     },

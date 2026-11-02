@@ -282,6 +282,8 @@
 
     // Interview questions flagged unsure (by you, or by a wrong answer).
     const unsure = QT.ui ? QT.ui.bankCounts().unsure : 0;
+    const ws = QT.adapt && QT.adapt.weakest();
+    if (ws) recs.push({ pri: 76, kind: 'weakspot', voice: `${ws.A.name} is your weakest area right now. Twelve questions, aimed at it.`, title: `Weak spot: ${ws.A.name} (${Math.round(ws.e.m * 100)}%)`, why: `Pooled from ${ws.e.from.join(', ')}. A session starts at the right level and steps up as you get it right.`, href: `#/weak/session/${ws.A.id}`, label: 'Train it' });
     if (unsure) recs.push({ pri: 43, kind: 'unsure', voice: `${unsure} interview question${unsure === 1 ? '' : 's'} you weren't sure about. Go back while they're fresh.`, title: `Unsure: ${unsure} interview question${unsure === 1 ? '' : 's'} to revisit`, why: 'You flagged these, or got a part wrong. Answer them cleanly, then tick them off.', href: '#/bank/all/unsure', label: 'Revisit' });
 
     // Formula cards that are due.

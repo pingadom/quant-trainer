@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.32.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.33.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -121,7 +121,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] } });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] } });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -315,6 +315,9 @@
     // Phone-screen mock runs: [right, of] for each scored part.
     const pair = (v) => { const a = arr(v, 2).map((x) => Math.max(0, num(x))); return [a[0] || 0, a[1] || 0]; };
     s.screen = { runs: arr(obj(r.screen).runs, 50).map((x) => ({ ...when(x), firm: text(obj(x).firm, 20), secs: num(obj(x).secs), mental: pair(obj(x).mental), prob: pair(obj(x).prob), mm: pair(obj(x).mm), self: pair(obj(x).self) })) };
+    // Weak spots: recent session scores (0–1) per skill area, and a log of sessions.
+    const ad = obj(r.adapt);
+    s.adapt = { r: mapKeys(ad.r, (v) => arr(v, 20).map((x) => Math.max(0, Math.min(1, num(x)))), (k) => /^[a-z]{1,12}$/.test(k)), sessions: num(ad.sessions), log: arr(ad.log, 50).map((x) => ({ ...when(x), n: num(obj(x).n), right: num(obj(x).right) })) };
     s.flash = mapKeys(r.flash, (x) => ({ box: Math.min(4, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-z0-9-]{1,30}$/.test(k));
     s.demo = !!r.demo;
     if (r.writer) s.writer = text(r.writer, 20);
@@ -333,7 +336,7 @@
   // True when nothing has been recorded yet (used to decide whether to restore a native backup).
   const isEmpty = () => !state.days.length && !state.log.length && !state.plan && !state.market.games
     && ['topics', 'bank', 'cases', 'mental', 'flash', 'speed', 'speedReview', 'daily', 'oa', 'tricks', 'roadmap', 'handbook', 'stories'].every((k) => !Object.keys(state[k] || {}).length)
-    && !state.mistakes.length && !state.talk.sessions && !state.figgie.games && !state.kelly.games && !state.quote.rounds && !state.estimate.rounds && !state.screen.runs.length;
+    && !state.mistakes.length && !state.talk.sessions && !state.figgie.games && !state.kelly.games && !state.quote.rounds && !state.estimate.rounds && !state.screen.runs.length && !state.adapt.sessions;
   const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   QT.dayKey = dayKey;

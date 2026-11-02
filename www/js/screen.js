@@ -319,5 +319,5 @@
     begin();
   }
 
-  QT.screen = { render, PARTS, SCENARIOS, stats, gradeQuote, tradePnl, traderGens, probPick };
+  QT.screen = { render, PARTS, SCENARIOS, stats, gradeQuote, tradePnl, traderGens, probPick, mm: mmScenario };
 })();

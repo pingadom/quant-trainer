@@ -49,6 +49,8 @@
       const [key, label, href] = F.games[(dayIndex / 2) % F.games.length];
       out.push({ id: `game-${key}`, label, href, auto: () => (s[key]?.history || []).some((r) => on(r.date, day)) });
     }
+    // A weak-spot session most days: it targets whatever is weakest across everything you've done.
+    if (QT.adapt && dayIndex % 3 !== 2) out.push({ id: 'weak', label: 'Weak-spot session (12 questions)', href: '#/weak/session', auto: () => s.adapt.log.some((r) => on(r.date, day)) });
     // Behavioural answers: written early, so there's time to rehearse them.
     if (dayIndex === 0 || dayIndex % 4 === 1) {
       const need = ['intro', 'why-trading', 'why-firm'].filter((id) => !(s.stories[id]?.f || []).some((x) => x && x.trim()));

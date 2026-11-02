@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.33.0
+
+- **Weak spots** (My prep → Weak spots): an adaptive learner that finds your weakest interview skills and trains them.
+  - **One estimate per area, pooled from everything you've done:** topic drills, interview questions (a hint counts as part credit, an "unsure" flag as a miss), handbook checks, mental maths by question type, market-making results, and its own sessions. There are nine areas, from mental maths and counting to market making and options.
+  - **Honest with little data:** each estimate is (right + 1) ÷ (answered + 2), so two lucky answers don't read as mastery. Areas you haven't tried say so.
+  - **12-question sessions** go to the area with the most to gain: low estimate, little evidence, and (with an interview plan) how often that firm asks about it.
+  - **Difficulty follows you within an area:** handbook check → drill → interview question. A miss steps down and usually brings the area straight back; two right in a row steps up, then rests it. Market making uses the phone-screen markets with reveals.
+  - The coach recommends your weakest area, and interview plans include a session most days.
+- **10 more Citadel questions** from candidate reports (Glassdoor and Wall Street Oasis, 2022–2026), each with hints, a worked solution and a Python check:
+  - making a market on heads in 100 flips, then 10,000
+  - the expected number of uniform draws to pass 2
+  - a uniform point on a disk (and the √U trap)
+  - Bayes with a bag of stones and a bet on the next one
+  - meeting at a station within 10 minutes
+  - P(X > 0 | X + Y > 0) and E[X | X + Y > 0] for normals
+  - convolution of uniforms
+  - a long-vega, short-gamma position
+  - regression assumptions and ridge vs lasso
+  - Citadel's reported behavioural questions
+- Citadel's "die cubed" question gains a reroll follow-up (worth 635/6).
+
 ## 0.32.0
 
 - **Phone-screen mock** (Interviews → Phone-screen mock): a full first-round interview, timed part by part, in the order a 45–60 minute trading phone screen runs:

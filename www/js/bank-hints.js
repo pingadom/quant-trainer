@@ -62,6 +62,7 @@
     'cit-cubed': [
       [`Average the six possible payouts.`, `The cubes are 1, 8, 27, 64, 125, 216.`, `Shortcut: 1³ + … + n³ = (1 + … + n)².`],
       [`Cube the expected roll, 3.5.`, `Compare with (a): cubing is convex, so Jensen's inequality says E[X³] ≥ (E[X])³.`, `3.5³ = 3.5 × 12.25.`],
+      [`Reroll when your roll's cube is worth less than a fresh roll.`, `A fresh roll is worth your answer to (a). Which faces have cubes above that?`, `Keep 5 and 6; reroll 1 to 4. Value = (125 + 216)/6 + (4/6) × (a).`],
     ],
     'fr-poker': [
       [`Look at it from your opponent's side when you raise: are they facing an ace or a bluff?`, `If you bluff a queen with probability q, a raise is a bluff with probability q/(1 + q).`, `Calling: +2 against a bluff, −2 against an ace. Folding: −1. Make the two equal.`, `Solve 2·q/(1 + q) − 2/(1 + q) = −1 for q.`],
@@ -256,6 +257,33 @@
     'cit-every-face': [[`Break the wait into stages: the 1st new face, the 2nd, and so on up to the 6th.`, `With k faces already seen, each roll is new with probability (6 − k)/6.`, `Each stage is geometric with mean 6/(6 − k).`, `Add them: 6(1/6 + 1/5 + 1/4 + 1/3 + 1/2 + 1).`]],
     'cit-coin-ranges': [[`Work out each range in standard deviations from the mean.`, `100 flips: mean 50, σ = 5. So 40–60 is ±2σ.`, `About 95% of a normal is within ±2σ; including the endpoints pushes it a little higher.`, `1000 flips: σ ≈ 15.8, so 400–600 is about ±6σ. Which is more likely?`]],
     'cit-local-min': [[`Use linearity: find the probability that one position is a local minimum, then multiply by 5.`, `A number and its two neighbours are three different values in random order.`, `What's the chance the middle one is the smallest of three?`]],
+    'cit-heads-market': [
+      [`Heads in n fair flips is binomial: mean n/2, variance n/4.`, `Standard deviation = √(n/4).`, `n = 100.`],
+      [`Width should scale with the standard deviation, not with n.`, `The standard deviation grows like √n.`, `n went up by a factor of 100.`],
+    ],
+    'cit-exceed-2': [[`Know the classic first: the expected draws to exceed 1 is e.`, `Let m(x) be the expected draws to exceed x. For 0 ≤ x ≤ 1, m(x) = e<sup>x</sup>.`, `For 1 ≤ x ≤ 2, condition on the first draw u: m(x) = 1 + ∫₀¹ m(x − u) du, which gives m′(x) = m(x) − m(x − 1).`, `Solve on [1, 2] with m(1) = e, then put x = 2.`]],
+    'cit-disk': [
+      [`The radius √U is chosen so that P(R ≤ r) = r².`, `P(R ≤ ½) = P(√U ≤ ½) = P(U ≤ ¼).`, `Check against areas: the inner disk has radius ½.`],
+      [`Now the radius itself is uniform on [0, 1].`, `What is P(U ≤ ½)?`, `Compare with (a): this puts too many points near the centre.`],
+      [`The density of the distance is 2r on [0, 1].`, `E[R] = ∫₀¹ r · 2r dr.`, `Integrate 2r².`],
+    ],
+    'cit-bag-stones': [
+      [`Use Bayes over the number of black stones, k = 0 to 4.`, `P(first two black | k) = C(k, 2)/C(4, 2); this is zero unless k ≥ 2.`, `Weights for k = 2, 3, 4 are 1, 3 and 6 (out of 6).`, `Given k, the next stone is black with probability (k − 2)/2.`],
+      [`An even-money $1 bet wins $1 with probability p and loses $1 otherwise.`, `EV = p − (1 − p) = 2p − 1.`, `Use your answer to (a).`],
+      [`If the stones are independent, does seeing two black ones tell you anything about the others?`, `Independence means the first two draws carry no information about the rest.`, `So the third stone is black with its prior probability.`],
+    ],
+    'cit-meet-10': [[`Draw the hour as a unit square of arrival times.`, `They meet when the arrival times differ by at most 10 minutes = 1/6 hour.`, `They miss in two corner triangles, each with legs 5/6.`]],
+    'cit-normal-cond': [
+      [`(X, Y) is rotationally symmetric, so probabilities are angles over 360°.`, `X > 0 is a half-plane, and so is X + Y > 0.`, `Their intersection is a wedge of 135°; the condition alone is 180°.`],
+      [`Let S = X + Y. Then E[X | S] = S/2 by symmetry between X and Y.`, `So E[X | S > 0] = E[S | S > 0]/2, and S ~ N(0, 2).`, `For Z ~ N(0, 1), E[Z | Z > 0] = √(2/π). Scale by √2, then halve.`],
+    ],
+    'cit-convolution': [
+      [`The density of a sum of independent variables is the convolution of their densities.`, `For two uniforms it's a triangle on [0, 2] with its peak at 1.`, `For 1 ≤ s ≤ 2, f(s) = 2 − s.`],
+      [`P(S > 1.5) is the area under the triangle to the right of 1.5.`, `That's a small triangle with base 0.5.`, `Its height at 1.5 is your answer to (a).`],
+    ],
+    'cit-vega-gamma': [[`Think about how gamma and vega depend on time to expiry.`, `Short-dated options have most of the gamma; long-dated options have most of the vega.`, `So you want to be short one maturity and long the other, at the same strike.`]],
+    'cit-regression': [[`List what ordinary least squares assumes about the relationship and about the errors.`, `For each assumption, name a plot or a test you'd actually run on the residuals.`, `For ridge vs lasso, think about what each penalty does to small coefficients.`]],
+    'cit-behavioural-2': [[`Pick one story per prompt and keep it to about two minutes.`, `Use STAR: situation, task, what you did, the result.`, `End with what you learned or would do differently.`]],
     'cit-sqrt-30': [[`Find a nearby perfect square: 5.5² = 30.25.`, `Refine with one Newton step: x − (x² − 30)/(2x).`, `5.5 − 0.25/11.`]],
     'drw-bottom-card': [[`Watch the original bottom card. How does it move up?`, `It rises only when a card is inserted below it. Count the cards below it.`, `With k cards below, a moved card lands below it with probability (k + 1)/52, which takes 52/(k + 1) moves on average.`, `Add the waits for k = 0, …, 50: that's 52 times a harmonic number. Approximate H<sub>n</sub> ≈ ln n + 0.577.`]],
     'drw-cube-colours': [[`Count colourings first, then divide by the symmetries.`, `There are 6! ways to paint the faces.`, `How many rotations does a cube have? (6 faces could be on top × 4 ways to turn it.)`, `Or directly: put colour 1 on the bottom, choose the top, then arrange the four sides around a circle.`]],

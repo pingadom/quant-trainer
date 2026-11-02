@@ -863,3 +863,14 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .story-form .story-field { display: block; margin: 0 0 14px; }
 .story-form .story-field span { display: block; font-weight: 600; margin-bottom: 4px; }
 .story-form textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical; }
+
+/* Weak spots */
+.weak-list { display: grid; gap: 10px; margin: 16px 0; }
+.weak-row { margin: 0; }
+.weak-head, .weak-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.weak-row .bar { margin: 8px 0; }
+.weak-row .bar i.neg { background: var(--bad); }
+.weak-row .bar i.pos { background: var(--ok); }
+.chip-status { font-size: 0.8em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.chip-status.s-weak { border-color: var(--bad); }
+.chip-status.s-strong { border-color: var(--ok); }

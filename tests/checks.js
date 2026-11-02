@@ -645,6 +645,39 @@
       QT.store.importJson(saved);
     }
 
+    // Weak spots: every area points at real topics, chapters and question categories; every
+    // numeric question category belongs to an area; an untried area sits at 50%; wrong answers
+    // pull an area down; every area serves a valid question at every level; data is sanitised.
+    if (QT.adapt) {
+      const A = QT.adapt, cats = new Set(A.AREAS.flatMap((a) => a.cats));
+      for (const a of A.AREAS) {
+        a.topics.forEach((t) => { if (!QT.topicById(t)) fail(`weak spots: ${a.id} topic ${t}`); });
+        a.hb.forEach((h) => { if (!QT.handbook?.CHAPTERS[h]) fail(`weak spots: ${a.id} chapter ${h}`); });
+        a.cats.forEach((c) => { if (!QT.bank.some((b) => b.cat === c)) fail(`weak spots: ${a.id} category ${c} has no questions`); });
+      }
+      for (const b of QT.bank) if (b.parts && !cats.has(b.cat)) fail(`weak spots: category ${b.cat} (${b.id}) isn't in any area`);
+      const saved = QT.store.exportJson();
+      QT.store.reset();
+      const e0 = A.estimate(A.AREAS.find((a) => a.id === 'prob'));
+      if (Math.abs(e0.m - 0.5) > 1e-9 || e0.status !== 'untested') fail(`weak spots: blank estimate ${JSON.stringify(e0)}`);
+      for (const a of A.AREAS) for (const L of [0, 1, 2]) {
+        const it = A.item(a, L);
+        if (!it) { fail(`weak spots: ${a.id} has no question at level ${L}`); continue; }
+        if (!it.mm && (!it.p || !Number.isFinite(+it.p.a) || !it.p.q || /undefined|NaN/.test(it.p.q + (it.p.sol || '')))) fail(`weak spots: ${a.id} level ${L} served ${JSON.stringify(it.p)}`);
+      }
+      const probQs = QT.bank.filter((b) => b.parts && b.cat === 'Probability').slice(0, 6);
+      probQs.forEach((b) => QT.ui.recordBank(b.id, 0, false, 0));
+      const e1 = A.estimate(A.AREAS.find((a) => a.id === 'prob'));
+      if (!(e1.m < 0.3 && e1.status === 'weak' && e1.from.includes('interview questions'))) fail(`weak spots: wrong answers didn't count ${JSON.stringify(e1)}`);
+      if (A.ranked()[0].A.id !== 'prob') fail(`weak spots: the weakest area isn't ranked first (${A.ranked()[0].A.id})`);
+      const snap = JSON.parse(QT.store.exportJson());
+      snap.adapt = { r: { prob: [1, 0, '0.5', 7, -2], 'BAD!': [1] }, sessions: '3', log: [{ date: '2026-11-02T10:00:00Z', n: 12, right: 8 }, 'x'] };
+      QT.store.importJson(JSON.stringify(snap));
+      const ad = QT.store.get().adapt;
+      if (JSON.stringify(ad.r.prob) !== '[1,0,0.5,1,0]' || ad.r['BAD!'] || ad.sessions !== 3 || ad.log.length !== 2 || ad.log[0].right !== 8) fail(`weak spots: not sanitised as expected ${JSON.stringify(ad)}`);
+      QT.store.importJson(saved);
+    }
+
     // Question tracking: answers set the status unless you've set one; your mark survives export
     // and import; anything else in an imported file is dropped.
     if (QT.ui && QT.ui.bankStatus) {

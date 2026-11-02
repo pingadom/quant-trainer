@@ -330,5 +330,5 @@
   };
 
   QT.views = Object.assign(QT.views || {}, { handbook: (el, id) => (id ? view(el, id) : index(el)) });
-  QT.handbookProgress = { progress, nextChapter, order };
+  QT.handbookProgress = { progress, nextChapter, order, markCheck };
 })();
