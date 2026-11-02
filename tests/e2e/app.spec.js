@@ -534,7 +534,7 @@ test('coding: run JavaScript, see what failed, fix it and submit; then a knowled
   await page.getByRole('button', { name: 'Start the quiz' }).click();
   for (let i = 0; i < 20; i++) {
     await page.locator('.quiz-opt').first().click();
-    await page.getByRole('button', { name: i === 19 ? 'Finish' : 'Next' }).click();
+    await page.getByRole('button', { name: i === 19 ? 'Finish' : 'Next', exact: true }).click();
   }
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^\d+ of 20$/);
 });
