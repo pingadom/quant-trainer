@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -539,4 +539,25 @@ test('coding: run JavaScript, see what failed, fix it and submit; then a knowled
     await page.getByRole('button', { name: i === 19 ? 'Finish' : 'Next', exact: true }).click();
   }
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^\d+ of 20$/);
+});
+
+test('flow training: a method drill shows the steps, then times you, and the table fills in', async ({ page }) => {
+  await page.goto('./#/mental/flow/method/sub-round');
+  await expect(page.locator('main')).toContainText('74 − 39: 74 − 40 = 34, + 1 = 35');
+  await page.getByRole('button', { name: 'Start' }).click();
+  for (let i = 0; i < 14; i++) {
+    await page.evaluate(() => {
+      const [x, , y] = document.querySelector('#fl-q').textContent.split(' '), input = document.querySelector('#fl-in');
+      input.value = String(+x - +y);
+      input.dispatchEvent(new Event('input'));
+    });
+    if (i < 4) {
+      await expect(page.locator('#fl-steps')).toContainText('+');
+      await page.getByRole('button', { name: 'Next' }).click();
+    }
+  }
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Method drill: done');
+  await page.goto('./#/mental/flow');
+  await expect(page.locator('.flow-table')).toContainText('Subtracting a number ending in 8 or 9');
+  await expect(page.locator('.flow-table tr', { hasText: 'ending in 8 or 9' }).nth(1).locator('td').nth(2)).toHaveText('10');
 });

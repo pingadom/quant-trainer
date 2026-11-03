@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.36.0
+
+- **Flow training for Zetamac's + and −** (Mental maths → Flow training). For the gap between answers that come instantly and ones you have to work out.
+  - **Where you slow down:** every + and − answer from Zetamac and the new drills is sorted into eight kinds of sum: adding with and without a carry, adding a number ending in 8 or 9, adding past 100, and the same four for subtracting. A table shows your typical time on each and how often you were automatic (under 1.3 s) or in thinking mode (over 2 s). Zetamac's results screen now shows the split for that game.
+  - **Rhythm drill (2 minutes):** a bar empties at your pace. Three answers in a row on the beat quicken it; one behind the beat eases it, so you practise at the edge of your fast mode, keeping up about four times in five. Skip anything that makes you stop and think; the drill reports which kinds of sum broke the rhythm.
+  - **Method drill:** a faster method for one kind of sum (such as counting up for borrow subtractions, or rounding 39 to 40 and giving 1 back), four guided sums showing the worked steps, then ten timed ones, compared with your time before.
+  - A 10-minute routine using both, and what to do mid-game when you catch yourself narrating the sum.
+
 ## 0.35.0
 
 - **Coding: LeetCode links.** 14 of the 18 coding problems now link to the matching problem on LeetCode, so you can submit it there too. Three are the same problem (LRU Cache, Design Circular Deque, Number of Days Between Two Dates); the rest are close relatives that practise the same idea, such as Number of Ways to Arrive at Destination for counting shortest routes, or Design a Food Rating System for a heap with lazy deletion. Each link says how LeetCode's version differs, and marks the two that need LeetCode Premium. They unlock once you've solved the problem here, so you meet it fresh first.

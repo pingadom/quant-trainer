@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.35.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.36.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -121,7 +121,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } } });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} } });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -325,6 +325,13 @@
       p: mapKeys(cd.p, (x) => ({ py: src(obj(x).py), js: src(obj(x).js), solved: num(obj(x).solved), subs: num(obj(x).subs), first: !!obj(x).first }), (k) => /^[a-z0-9-]{1,40}$/.test(k)),
       quiz: { runs: arr(cq.runs, 50).map((x) => ({ ...when(x), n: num(obj(x).n), right: num(obj(x).right) })), q: mapKeys(cq.q, (v) => bits(v, 5), (k) => /^[a-z0-9-]{1,30}$/.test(k)) },
     };
+    // Flow training: recent + and − answers as [op, x, y, ms], rhythm drills, method drills by kind of sum.
+    const fl = obj(r.flow), int = (v) => Math.max(0, Math.min(60000, Math.round(num(v))));
+    s.flow = {
+      log: arr(fl.log, 1000).filter((x) => Array.isArray(x) && (x[0] === '+' || x[0] === '-')).map((x) => [x[0], Math.min(10000, int(x[1])), Math.min(10000, int(x[2])), int(x[3])]).filter((x) => x[0] === '+' || x[1] >= x[2]),
+      rhythm: arr(fl.rhythm, 50).map((x) => ({ ...when(x), pace: int(obj(x).pace), start: int(obj(x).start), fastest: int(obj(x).fastest), n: num(obj(x).n), onBeat: num(obj(x).onBeat), skipped: num(obj(x).skipped) })),
+      method: mapKeys(fl.method, (x) => ({ runs: num(obj(x).runs), ms: int(obj(x).ms) }), (k) => /^(add|sub)-(easy|carry|borrow|round|cross)$/.test(k)),
+    };
     s.flash = mapKeys(r.flash, (x) => ({ box: Math.min(4, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-z0-9-]{1,30}$/.test(k));
     s.demo = !!r.demo;
     if (r.writer) s.writer = text(r.writer, 20);
@@ -344,7 +351,7 @@
   const isEmpty = () => !state.days.length && !state.log.length && !state.plan && !state.market.games
     && ['topics', 'bank', 'cases', 'mental', 'flash', 'speed', 'speedReview', 'daily', 'oa', 'tricks', 'roadmap', 'handbook', 'stories'].every((k) => !Object.keys(state[k] || {}).length)
     && !state.mistakes.length && !state.talk.sessions && !state.figgie.games && !state.kelly.games && !state.quote.rounds && !state.estimate.rounds && !state.screen.runs.length && !state.adapt.sessions
-    && !Object.keys(state.code.p).length && !state.code.quiz.runs.length;
+    && !Object.keys(state.code.p).length && !state.code.quiz.runs.length && !state.flow.log.length;
   const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   QT.dayKey = dayKey;

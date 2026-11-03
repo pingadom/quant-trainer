@@ -49,6 +49,7 @@
 
   function render(el, sub, arg, arg2) {
     if (sub === 'rep' && QT.mentalTips.KINDS[arg]) return rep(el, arg);
+    if (sub === 'flow' && QT.flow) return QT.flow.render(el, arg, arg2);
     if (sub === 'challenge' && SEED_RE.test(arg || '')) return challengeIntro(el, arg, /^\d{1,4}$/.test(arg2 || '') ? +arg2 : null);
     const st = store.get().mental, style = savedStyle();
     const best = (k) => st[k]?.best ?? '–';
@@ -57,6 +58,7 @@
       <p class="lede">Market-making firms screen with fast arithmetic tests. Speed comes from practice plus a handful of tricks you can learn in an afternoon.</p>
       <a class="card shortcut primary" href="#/tricks" style="margin-bottom:16px"><b>Learn the speed tricks →</b><span>20 short guides (squaring, near-100 multiplication, fractions, last-digit checks, guessing strategy…) each with a practice drill</span></a>
       ${repsCard()}
+      <a class="card shortcut" href="#/mental/flow" style="margin-bottom:16px"><b>Flow training for + and − →</b><span>Find the sums that drop you into slow, step-by-step mode, then a rhythm drill and method drills to make them automatic</span></a>
       <div class="grid">
         <div class="card wide">
           <h3>${MODES.full.label}</h3>
@@ -414,6 +416,7 @@
       rec.runs.push({ date: new Date().toISOString(), correct: score, wrong: 0 });
       if (rec.runs.length > 50) rec.runs.shift();
       recordSpeed(answered);
+      if (QT.flow) QT.flow.recordZetamac(answered);
       const added = scheduleReps(answered, slowSecs());
       store.touchDay();
       store.save();
@@ -430,6 +433,7 @@
           <p class="small" style="margin-top:0">Send a friend these exact questions and your score to beat.</p>
           <div class="row"><button id="zm-share">Challenge a friend</button><span class="small" id="zm-msg" aria-live="polite"></span></div>
         </div>` : ''}
+        ${QT.flow ? QT.flow.resultCard(answered) : ''}
         ${review(answered, slowSecs())}
         ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}.</p>` : ''}
         <div class="row" style="margin-top:18px"><button id="again">Play again</button><a class="btn ghost" href="#/mental">Back</a></div>`;

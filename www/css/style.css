@@ -908,3 +908,16 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .code-view:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
 .lc-list { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
 .lc-list .chip { margin-left: 4px; }
+
+/* Flow training */
+.flow-bar { height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; margin: 10px 0 0; }
+.flow-bar i { display: block; height: 100%; width: 100%; background: var(--accent); }
+#fl-card.fl-off .flow-bar i { background: var(--bad); }
+.flow-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.flow-table th, .flow-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.flow-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.flow-table tr.flow-slow td.hl { color: var(--bad); font-weight: 600; }
+.flow-eg, .flow-steps .mono { font-size: 1rem; }
+.flow-tip { text-align: center; margin: 10px 0 0; }
+.flow-steps { text-align: center; margin-top: 10px; }
+.flow-routine { margin: 0 0 10px; padding-left: 22px; }

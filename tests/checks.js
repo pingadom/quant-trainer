@@ -678,6 +678,55 @@
       QT.store.importJson(saved);
     }
 
+    // Flow training: each example is its own kind of sum; for random sums of every kind the worked
+    // steps are true equations ending in the answer; the pace staircase moves the right way; the
+    // summary splits automatic from thinking mode; saved data is sanitised.
+    if (QT.flow) {
+      const F = QT.flow;
+      if (F.ORDER.length !== Object.keys(F.PATTERNS).length) fail('flow: ORDER and PATTERNS differ');
+      for (const k of F.ORDER) {
+        const P = F.PATTERNS[k], [op, x, y] = P.eg;
+        if (F.classify(op, x, y) !== k) fail(`flow ${k}: its example ${x} ${op} ${y} is a ${F.classify(op, x, y)}`);
+        for (let i = 0; i < 300; i++) {
+          const q = F.question(null, k);
+          if (q.kind !== k || F.classify(q.op, q.x, q.y) !== k || q.a !== (q.op === '+' ? q.x + q.y : q.x - q.y) || q.a < 0) { fail(`flow ${k}: question ${q.q} = ${q.a} is wrong`); break; }
+          const steps = P.steps(q.x, q.y), nums = steps.match(/\d+/g).map(Number);
+          if (nums[nums.length - 1] !== q.a || /NaN|undefined|\+ 0 |− 0 | 0 \+ | is 0,/.test(steps)) { fail(`flow ${k}: steps for ${q.q} = ${q.a} are "${steps}"`); break; }
+          for (const [, a, o, b, c] of steps.matchAll(/(\d+) ([+−]) (\d+) = (\d+)/g)) {
+            if ((o === '+' ? +a + +b : +a - +b) !== +c) { fail(`flow ${k}: "${a} ${o} ${b} = ${c}" in the steps for ${q.q}`); break; }
+          }
+        }
+      }
+      if (F.classify('+', 47, 23) !== 'add-carry' || !F.PATTERNS['add-carry'].steps(47, 23).endsWith('= 70')) fail('flow: a carry that lands on a ten');
+      if (F.classify('+', 100, 45) !== 'add-easy' || F.classify('-', 150, 100) !== 'sub-easy' || F.classify('-', 145, 37) !== 'sub-borrow') fail('flow: classify edge cases');
+      for (let i = 0; i < 2000; i++) { const q = F.question(); if (!F.ORDER.includes(q.kind)) { fail(`flow: unclassified ${q.q}`); break; } }
+      let st = { pace: 2000, streak: 0 };
+      st = F.step(st.pace, true, st.streak); st = F.step(st.pace, true, st.streak);
+      if (st.pace !== 2000 || st.streak !== 2) fail('flow: two on the beat should not change the pace');
+      st = F.step(st.pace, true, st.streak);
+      if (!(st.pace < 2000) || st.streak !== 0) fail('flow: three on the beat should quicken the pace');
+      const quick = st.pace;
+      st = F.step(st.pace, false, 2);
+      if (!(st.pace > quick) || st.streak !== 0) fail('flow: off the beat should ease the pace');
+      let lo = 600;
+      for (let i = 0; i < 50; i++) lo = F.step(lo, true, 2).pace;
+      if (lo < 500) fail('flow: pace went below its floor');
+      const sm = F.summary([['+', 2, 3, 500], ['+', 2, 3, 900], ['-', 74, 39, 2500], ['-', 74, 39, 3000], ['-', 74, 39, 2600], ['-', 74, 39, 2700], ['-', 74, 39, 2800]]);
+      const sr = sm.kinds.find((k) => k.kind === 'sub-round');
+      if (sm.n !== 7 || Math.abs(sm.auto - 2 / 7) > 1e-9 || Math.abs(sm.think - 5 / 7) > 1e-9 || sr.n !== 5 || sr.median !== 2700 || F.slowest(sm).kind !== 'sub-round') fail(`flow: summary ${JSON.stringify(sm).slice(0, 200)}`);
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      const game = [{ ok: true, kind: 'zAdd', v: [2, 3], ms: 800 }, ...Array.from({ length: 5 }, () => ({ ok: true, kind: 'zSub', v: [74, 39], ms: 2600 })), { ok: true, kind: 'zMul', v: [3, 4], ms: 900 }];
+      QT.store.get().flow.log.length = 0; // restored from `saved` below
+      F.recordZetamac(game);
+      const card = F.resultCard(game);
+      if (!/17% automatic/.test(card) || !card.includes('#/mental/flow/method/sub-round')) fail(`flow: result card ${card.slice(0, 200)}`);
+      snap.flow = { log: [['+', 2, 3, 900.4], ['*', 1, 2, 3], ['-', 3, 5, 100], ['-', 9, 4, 99999], 'x'], rhythm: [{ date: '2026-11-03T10:00:00Z', pace: 1200, start: 2000, fastest: 1100, n: 60, onBeat: 48, skipped: 2 }], method: { 'sub-round': { runs: 2, ms: 1500 }, 'bad-kind': { runs: 1 } } };
+      QT.store.importJson(JSON.stringify(snap));
+      const fl = QT.store.get().flow;
+      if (JSON.stringify(fl.log) !== '[["+",2,3,900],["-",9,4,60000]]' || fl.rhythm[0].pace !== 1200 || fl.method['sub-round'].runs !== 2 || fl.method['bad-kind']) fail(`flow: not sanitised as expected ${JSON.stringify(fl)}`);
+      QT.store.importJson(saved);
+    }
+
     // Coding: every problem is complete; the JavaScript reference passes every case, including the
     // random and large ones (the Python reference is checked in research/verify_code.py); the
     // starter code defines the right names; the debugging starters really are buggy; the quiz is
