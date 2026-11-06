@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.37.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.38.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -184,7 +184,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [] } });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] } });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -400,7 +400,9 @@
       const o = obj(x), a = { question_id: text(o.question_id, 40), tags: arr(o.tags, 12).map((t) => text(t, 40)), correct: Math.max(0, Math.min(1, num(o.correct))), time_s: Math.max(0, num(o.time_s)), hints_used: Math.max(0, Math.round(num(o.hints_used))), timestamp: text(o.timestamp, 40) };
       if (typeof o.notes === 'string' && o.notes) a.notes = o.notes.slice(0, 4000);
       return a;
-    }) };
+    }), cards: mapKeys(obj(r.sse).cards, (x) => ({ ease: Math.max(1.3, num(obj(x).ease, 2.5)), interval: Math.max(0, num(obj(x).interval, 1)), reps: Math.max(0, num(obj(x).reps)), due: num(obj(x).due) }), (k) => /^q-[a-z0-9-]{1,40}$/.test(k)),
+    sims: arr(obj(r.sse).sims, 50).map((x) => ({ ...when(x), scenario: text(obj(x).scenario, 20), level: num(obj(x).level), score: num(obj(x).score), pnl: num(obj(x).pnl), width: num(obj(x).width), trades: num(obj(x).trades), quality: Math.max(0, Math.min(1, num(obj(x).quality))) })),
+    mocks: arr(obj(r.sse).mocks, 20).map((x) => ({ ...when(x), secs: num(obj(x).secs), overall: Math.max(0, Math.min(1, num(obj(x).overall))), segs: arr(obj(x).segs, 8).map((g) => ({ id: text(obj(g).id, 20), score: Math.max(0, Math.min(1, num(obj(g).score))) })), weak: arr(obj(x).weak, 3).map((t) => text(t, 40)) })) };
     s.flash = mapKeys(r.flash, (x) => ({ box: Math.min(4, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-z0-9-]{1,30}$/.test(k));
     s.demo = !!r.demo;
     if (r.writer) s.writer = text(r.writer, 20);

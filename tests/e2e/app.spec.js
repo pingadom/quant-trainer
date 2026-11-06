@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -566,6 +566,47 @@ test('Citadel SSE prep: a numeric and a conceptual card are logged, and the plan
   await expect(page.locator('.sse-table tr', { hasText: 'Equity quant' })).toContainText('1/7');
   await page.goto('./#/sse/all/any/pca');
   await expect(page.locator('.sse-list a')).toHaveCount(1);
+});
+
+test('Citadel SSE prep: a full mock ends in a report, and a rated card comes back on schedule', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.goto('./#/sse/mock');
+  await page.getByRole('button', { name: 'Start the mock' }).click();
+  await page.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    for (let step = 0; step < 30 && document.querySelector('#m-seg'); step++) {
+      const box = document.querySelector('#m-box');
+      if (box.querySelector('#sim-q')) {
+        box.querySelector('#sim-bid').value = '5';
+        box.querySelector('#sim-ask').value = '8';
+        box.querySelector('#sim-q').requestSubmit();
+      } else if (box.querySelector('#sim-next')) box.querySelector('#sim-next').click();
+      else {
+        const notes = box.querySelector('#c-notes');
+        if (notes) notes.value = 'my reasoning';
+        if (box.querySelector('#c-form')) {
+          box.querySelector('#c-in').value = '1';
+          box.querySelector('#c-form').requestSubmit();
+        } else {
+          box.querySelector('#c-reveal').click();
+          box.querySelector('[data-grade="1"]').click();
+        }
+        box.querySelector('#c-next').click();
+      }
+      await wait(30);
+    }
+  });
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mock report');
+  await expect(page.getByRole('heading', { name: 'Your three weakest tags' })).toBeVisible();
+  await expect(page.locator('a[href^="#/sse/drill/any/"]').first()).toBeVisible();
+  expect(await page.evaluate(() => QT.store.get().sse.attempts.filter((a) => a.notes === 'my reasoning').length)).toBe(10);
+  await page.goto('./#/sse/q/q-ev-001');
+  await page.evaluate(() => {
+    document.querySelector('#c-in').value = '4.25';
+    document.querySelector('#c-form').requestSubmit();
+  });
+  await page.getByRole('button', { name: /^Good/ }).click();
+  expect(await page.evaluate(() => QT.store.get().sse.cards['q-ev-001'].interval)).toBe(2.5);
 });
 
 test('flow training: a method drill shows the steps, then times you, and the table fills in', async ({ page }) => {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.38.0
+
+- **Citadel SSE prep: mock, simulator and spaced repetition.**
+  - **45-minute mock** (Citadel SSE prep → 45-minute mock): introduction, probability and EV, statistics and regression, market making, a project deep-dive and your questions, with a clock for the whole call and each segment. A think-aloud box beside each question is saved with the attempt. The report gives a score per segment, the time on each question, your three weakest tags and links to drill them.
+  - **Market-making simulator:** a hidden value is really drawn (two dice, ten flips or three cards), and you quote against a bot that trades on a noisy signal. L1 is uninformed bots with no information; L2 adds reveals and some informed bots. Your position is marked to the true value, with a width penalty, and the review shows each quote against the fair value at that point. A game takes under three minutes.
+  - **Spaced repetition:** after each card choose Again, Hard, Good or Easy, with the next interval shown. Using a hint or missing the answer caps it at Hard. Due cards come first in drills and show on the plan.
+
 ## 0.37.0
 
 - **Citadel SSE prep** (Interviews → Citadel SSE prep): one place to train for the Quantitative Trading, Semi-Systematic Equities phone screen.

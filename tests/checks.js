@@ -783,6 +783,61 @@
       const ts = S.trackStats('statistics-regression', log);
       if (ts.n !== 12 || ts.attempted !== 2 || ts.correct !== 2 || !near(ts.mastery, 1.3 / 12)) fail(`sse: track stats ${JSON.stringify(ts)}`);
       if (!near(S.tagMastery('regression', log), 0.79) || !near(S.questionMastery('q-stat-002', log), 0.3) || S.readiness([]) !== 0) fail('sse: mastery');
+      // Spaced repetition, as specified: Again resets, Hard ×1.2, Good × ease, Easy × ease × 1.3, ease ≥ 1.3, hints cap at Hard.
+      const c0 = { ease: 2.5, interval: 4, reps: 3, due: 0 }, day = 864e5;
+      const sc = (r, h = 0, c = c0) => S.schedule(c, r, h, 1000);
+      if (sc('again').interval !== 1 || sc('again').reps !== 0 || sc('again').ease !== 2.5 || sc('again').due !== 1000 + day) fail('sse: Again');
+      if (!near(sc('hard').interval, 4.8) || !near(sc('hard').ease, 2.35) || sc('hard').reps !== 4) fail('sse: Hard');
+      if (sc('good').interval !== 10 || sc('good').ease !== 2.5) fail('sse: Good');
+      if (!near(sc('easy').interval, 13) || !near(sc('easy').ease, 2.65)) fail('sse: Easy');
+      if (!near(sc('good', 1).interval, 4.8) || !near(sc('easy', 2).ease, 2.35) || sc('again', 1).interval !== 1) fail('sse: hints should cap at Hard');
+      if (S.schedule({ ease: 1.35 }, 'hard', 0, 0).ease !== 1.3) fail('sse: ease floor');
+      if (S.schedule(undefined, 'good', 0, 0).interval !== 2.5) fail('sse: a new card');
+      // Simulator: the deals match their fair values on average, P&L has the right sign, the width
+      // penalty applies, and over many games a sensible width beats a far too wide or too tight one.
+      if (QT.sseSim) {
+        const M = QT.sseSim, X = (bid, ask, side, informed = false, fair = 5, sd = 2) => ({ bid, ask, side, informed, fair, sd });
+        const st = M.settle([X(4, 6, 'buy'), X(4, 6, 'sell', true), X(4, 6, null)], 5);
+        if (st.pnl !== 2 || st.adverse !== 1 || st.trades !== 2 || st.position !== 0) fail(`sim: settle ${JSON.stringify(st)}`);
+        const sold = M.settle([X(4, 6, 'buy')], 3), bought = M.settle([X(4, 6, 'sell')], 3);
+        if (sold.pnl !== 3 || bought.pnl !== -1 || sold.position !== -1 || bought.position !== 1 || sold.inventory !== 1) fail('sim: P&L sign: selling above the value makes money');
+        if (!near(sold.penalty, M.LAMBDA * 2) || !near(sold.score, 3 - M.LAMBDA * 2) || sold.width !== 2) fail('sim: width penalty');
+        const inf = M.settle([X(4, 6, 'buy', true), X(4, 6, 'buy', false)], 8);
+        if (inf.adverse !== -2 || inf.pnl !== -4 || inf.inventory !== 2) fail('sim: adverse selection counts informed trades only');
+        if (M.settle([X(4, 6, null, false, 5, 2), X(7, 8, null, false, 5, 2)], 5).quality !== 0.5) fail('sim: quality');
+        const rng = QT.code ? QT.code.rng(20261106).next : Math.random;
+        for (const [id, s] of Object.entries(M.SCENARIOS)) {
+          const N = 4000;
+          let sum = 0;
+          for (let i = 0; i < N; i++) {
+            const d = s.deal(rng);
+            if (d.stages.length < 2 || !d.stages.every((x) => x.fair >= 0 && x.sd > 0 && (x.text || x === d.stages[0]))) { fail(`sim ${id}: bad stages`); break; }
+            sum += d.value - d.stages[d.stages.length - 1].fair; // the last fair value is unbiased
+          }
+          if (Math.abs(sum / N) > 0.35) fail(`sim ${id}: fair value is biased by ${sum / N}`);
+        }
+        const d0 = M.SCENARIOS['two-dice'].deal(() => 0.5);
+        if (d0.stages[1].fair !== d0.value - 4 + 3.5 || !near(d0.stages[0].sd, Math.sqrt(35 / 6)) || M.stagesFor(d0, 1).length !== 3 || M.stagesFor(d0, 2).length !== 2) fail('sim: stages');
+        const avg = (w) => {
+          let t = 0;
+          for (let i = 0; i < 3000; i++) {
+            const d = M.SCENARIOS['ten-flips'].deal(rng), qs = M.stagesFor(d, 1).map((s) => { const bid = s.fair - (w * s.sd) / 2, ask = s.fair + (w * s.sd) / 2; return { bid, ask, fair: s.fair, sd: s.sd, ...M.bot(bid, ask, d.value, s, 1, rng) }; });
+            t += M.settle(qs, d.value).score;
+          }
+          return t / 3000;
+        };
+        if (!(avg(1) > avg(4) && avg(1) > avg(0.1))) fail('sim: a one-SD market should beat far too wide and far too tight');
+      }
+      if (QT.sseMock) {
+        const P = QT.sseMock.draw();
+        if (P.prob.length !== 3 || P.stats.length !== 3 || P.project.length !== 2) fail('mock: wrong number of questions');
+        if (P.prob.some((c) => c.difficulty < 2 || c.difficulty > 4 || !['probability', 'expected-value'].includes(c.track)) || P.stats.some((c) => c.track !== 'statistics-regression') || P.project.some((c) => !/^q-(beh-004|proj-)/.test(c.id)) || new Set(P.prob.map((c) => c.id)).size !== 3) fail('mock: question choice');
+        if (QT.sseMock.SEGMENTS.reduce((s, x) => s + x.mins, 0) !== 45) fail('mock: segments should add up to 45 minutes');
+        const row = (seg, id, correct, time_s, hints_used = 0) => ({ seg, q: q(id), attempt: { correct, time_s, hints_used } });
+        const rep = QT.sseMock.report([row('prob', 'q-prob-001', 1, 60), row('prob', 'q-prob-002', 0, 60), row('stats', 'q-stat-001', 1, 10), row('stats', 'q-stat-012', 0.5, 60)], { quality: 0.5 });
+        const seg = Object.fromEntries(rep.segs.map((x) => [x.id, x.score]));
+        if (seg.prob !== 0.5 || seg.stats !== 0.75 || seg.mm !== 0.5 || seg.intro !== 0 || rep.weak.length !== 3 || !rep.weak.includes('conditional') || !near(rep.overall, 1.75 / 6)) fail(`mock: report ${JSON.stringify(rep)}`);
+      }
       const saved = QT.store.exportJson(), snap = JSON.parse(saved);
       snap.sse = { attempts: [{ question_id: 'q-stat-001', tags: ['a', 7], correct: 3, time_s: -1, hints_used: 1.6, timestamp: '2026-11-06T10:00:00Z', notes: 'x', evil: 1 }, 'x'] };
       QT.store.importJson(JSON.stringify(snap));

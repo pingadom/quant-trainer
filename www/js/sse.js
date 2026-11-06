@@ -85,16 +85,52 @@
   };
   const allTags = () => [...new Set(ALL.flatMap((q) => q.tags))].sort();
   const filtered = (track, tag) => ALL.filter((q) => (!track || q.track === track) && (!tag || q.tags.includes(tag)));
-  // Drill order: questions you haven't tried, easiest first, then your lowest mastery.
-  function queue(list) {
-    const log = attempts(), seen = (q) => log.some((a) => a.question_id === q.id);
-    return [...list].sort((a, b) => (seen(a) - seen(b)) || (seen(a) ? questionMastery(a.id, log) - questionMastery(b.id, log) : a.difficulty - b.difficulty));
+  // Drill order: cards due for review, then questions you haven't tried (easiest first), then the
+  // rest, lowest mastery first.
+  function queue(list, now = Date.now()) {
+    const log = attempts(), seen = (q) => log.some((a) => a.question_id === q.id), due = (q) => !!cards()[q.id] && cards()[q.id].due <= now;
+    const rank = (q) => (due(q) ? 0 : seen(q) ? 2 : 1);
+    return [...list].sort((a, b) => rank(a) - rank(b) || (rank(a) === 0 ? cards()[a.id].due - cards()[b.id].due : rank(a) === 1 ? a.difficulty - b.difficulty : questionMastery(a.id, log) - questionMastery(b.id, log)));
   }
 
+  // ---------------------------------------------------------------- spaced repetition
+  // SM-2 style. Again: back tomorrow. Hard: interval × 1.2, ease − 0.15. Good: interval × ease.
+  // Easy: interval × ease × 1.3, ease + 0.15. Ease never drops below 1.3. Using a hint caps the
+  // rating at Hard.
+  const DAY = 864e5, NEW_CARD = { ease: 2.5, interval: 1, reps: 0, due: 0 };
+  function schedule(card, rating, hints = 0, now = Date.now()) {
+    const c = { ...NEW_CARD, ...card }, r = hints && (rating === 'good' || rating === 'easy') ? 'hard' : rating;
+    if (r === 'again') {
+      c.reps = 0;
+      c.interval = 1;
+    } else {
+      c.reps++;
+      if (r === 'hard') {
+        c.interval *= 1.2;
+        c.ease -= 0.15;
+      } else if (r === 'good') c.interval *= c.ease;
+      else {
+        c.interval *= c.ease * 1.3;
+        c.ease += 0.15;
+      }
+    }
+    c.ease = Math.max(1.3, c.ease);
+    c.due = now + c.interval * DAY;
+    return c;
+  }
+  const cards = () => store.get().sse.cards;
+  const rateCard = (q, rating, hints) => {
+    cards()[q.id] = schedule(cards()[q.id], rating, hints);
+    store.save();
+  };
+  const dueList = (now = Date.now()) => ALL.filter((q) => cards()[q.id] && cards()[q.id].due <= now).sort((a, b) => cards()[a.id].due - cards()[b.id].due);
+
   // ---------------------------------------------------------------- the question card
-  // One question. `done(attempt)` runs when you press Next. `think` adds a box for your reasoning,
-  // saved with the attempt.
-  function card(box, q, { label = TRACKS[q.track], think = false, nextText = 'Next question →', done }) {
+  // One question. `done(attempt)` runs when you're ready to move on. `think` adds a box for your
+  // reasoning, saved with the attempt. `rate`: finish by choosing when it comes back (Again, Hard,
+  // Good, Easy); with false, as in a mock, the result decides that and a Next button is shown.
+  // `story`: your notes to show under a spoken prompt.
+  function card(box, q, { label = TRACKS[q.track], think = false, rate = true, nextText = 'Next question →', story = null, done }) {
     const numeric = q.type === 'numeric', t0 = Date.now();
     let finished = false, attempt = null, frozen = null; // frozen: the time at the reveal
     const secs = () => frozen ?? (Date.now() - t0) / 1000;
@@ -102,6 +138,7 @@
       <div class="card qcard sse-card" id="c-card">
         <div class="q-top"><span class="tag">${esc(label)} · level ${q.difficulty}</span><span class="mono sse-timer" id="c-time" title="Going over the target is fine: it isn't marked as a fail"></span></div>
         <div class="question">${q.prompt}</div>
+        ${story ? `<details class="small"><summary>Your notes</summary><div class="story-notes">${story}</div></details>` : ''}
         <div id="c-hints">${U().hintBox(q.hints)}</div>
         ${numeric ? `
           <form class="answer-row" id="c-form">
@@ -123,13 +160,33 @@
     tick();
     const timer = setInterval(tick, 500);
     const stop = () => clearInterval(timer);
-    QT.cleanup = stop;
+    const before = QT.cleanup; // a mock's clock keeps running under the card
+    QT.cleanup = () => { stop(); if (before) before(); };
     const solution = (head) => `${head}<details class="solution-box" open><summary>Worked solution</summary><div class="solution"><p><b>Answer:</b> ${q.answer}</p>${q.solution}</div></details>`;
-    const next = () => `<button type="button" class="next-btn" id="c-next">${esc(nextText)}</button>`;
+    // Moving on. A question only joins the review schedule if it's one of the real ones.
+    const real = !!byId(q.id);
+    const days = (d) => `${+d.toFixed(1)} day${+d.toFixed(1) === 1 ? '' : 's'}`;
+    const next = () => {
+      if (!attempt) return '<div id="c-after"></div>';
+      if (rate && real) {
+        const free = attempt.correct === 1 && !attempt.hints_used, cur = cards()[q.id];
+        const opts = free ? ['again', 'hard', 'good', 'easy'] : ['again', 'hard'];
+        return `<div class="row sse-grade" role="group" aria-label="When should this come back?"><span class="small">Bring it back:</span>${opts.map((r) => `<button type="button" class="${r === 'good' ? '' : 'ghost'}" data-rate="${r}">${r[0].toUpperCase()}${r.slice(1)} · ${days(schedule(cur, r, attempt.hints_used).interval)}</button>`).join('')}</div>${attempt.hints_used ? '<p class="small">You used a hint, so this is capped at Hard.</p>' : ''}`;
+      }
+      return `<button type="button" class="next-btn" id="c-next">${esc(nextText)}</button>`;
+    };
     const wireNext = () => {
       const b = $('#c-next');
-      b.addEventListener('click', () => done(attempt));
-      b.focus({ preventScroll: true });
+      if (b) {
+        if (real) rateCard(q, attempt.correct === 1 ? 'good' : attempt.correct ? 'hard' : 'again', attempt.hints_used);
+        b.addEventListener('click', () => done(attempt));
+        b.focus({ preventScroll: true });
+      }
+      box.querySelectorAll('[data-rate]').forEach((x) => x.addEventListener('click', () => {
+        rateCard(q, x.dataset.rate, attempt.hints_used);
+        done(attempt);
+      }));
+      box.querySelector('[data-rate="good"], [data-rate="hard"]')?.focus({ preventScroll: true });
     };
     const overNote = (s) => (s > q.time ? ` · ${clock(s)}, over the ${clock(q.time)} target` : ` · ${clock(s)}`);
     function finish(correct) {
@@ -147,6 +204,7 @@
       if (kp) $('#c-card').classList.add('has-keypad');
       const close = (ok, shown) => {
         const s = finish(ok ? 1 : 0);
+        think && $('#c-notes') && ($('#c-notes').disabled = true);
         $in.disabled = true;
         $actions.hidden = true;
         form.querySelector('button').disabled = true;
@@ -191,6 +249,8 @@
     if (a === 'all') return browse(el, b, c);
     if (a === 'drill') return drill(el, b, c);
     if (a === 'q' && byId(b)) return single(el, byId(b));
+    if (a === 'mock') return QT.sseMock.render(el);
+    if (a === 'sim') return QT.sseSim.render(el, b, c);
     plan(el);
   }
   const some = (x) => (x && x !== 'any' ? x : null);
@@ -204,7 +264,7 @@
   }
 
   function plan(el) {
-    const stats = Object.keys(TRACKS).map((t) => trackStats(t)), n = attempts().length;
+    const stats = Object.keys(TRACKS).map((t) => trackStats(t)), due = dueList().length, mock = store.get().sse.mocks.at(-1);
     const tried = stats.reduce((s, t) => s + t.attempted, 0);
     el.innerHTML = `
       <h1>Citadel SSE prep</h1>
@@ -213,9 +273,15 @@
         <div class="tile"><div class="v sse-clock" id="sse-count">${countdown()}</div><div class="k">until the interview</div></div>
         <div class="tile"><div class="v">${pct(readiness())}</div><div class="k">readiness (average mastery)</div></div>
         <div class="tile"><div class="v">${tried}<span class="of">/${ALL.length}</span></div><div class="k">questions attempted</div></div>
-        <div class="tile"><div class="v">${n}</div><div class="k">attempts logged</div></div>
+        <div class="tile"><div class="v">${due}</div><div class="k">due for review</div></div>
+        <div class="tile"><div class="v">${mock ? pct(mock.overall) : '–'}</div><div class="k">last mock</div></div>
       </div>
-      <div class="row" style="margin:14px 0"><a class="btn" href="#/sse/drill">Drill the next questions</a><a class="btn ghost" href="#/sse/all">All questions by track and tag</a></div>
+      <div class="row" style="margin:14px 0">
+        <a class="btn" href="#/sse/drill${due ? '/due' : ''}">${due ? `Review ${due} due` : 'Drill the next questions'}</a>
+        <a class="btn" href="#/sse/mock">45-minute mock</a>
+        <a class="btn ghost" href="#/sse/sim">Market-making simulator</a>
+        <a class="btn ghost" href="#/sse/all">All questions by track and tag</a>
+      </div>
       <div class="card table-wrap">
         <table class="sse-table">
           <thead><tr><th>Track</th><th class="num">Attempted</th><th class="num">Correct</th><th>Mastery</th><th></th></tr></thead>
@@ -253,7 +319,7 @@
 
   function drill(el, trackArg, tagArg) {
     const track = trackOf(some(trackArg)), tag = allTags().includes(some(tagArg)) ? some(tagArg) : null;
-    const list = queue(filtered(track, tag)), title = track ? TRACKS[track] : tag || 'Next questions';
+    const dueOnly = trackArg === 'due', list = dueOnly ? dueList() : queue(filtered(track, tag)), title = dueOnly ? 'Due for review' : track ? TRACKS[track] : tag || 'Next questions';
     let i = 0, right = 0, done = 0;
     el.innerHTML = `<a class="back" href="#/sse">← Citadel SSE prep</a><h1>${esc(title)}${track && tag ? `: ${esc(tag)}` : ''}</h1><div id="d-box"></div>`;
     const box = el.querySelector('#d-box');
@@ -277,5 +343,5 @@
     card(el.querySelector('#d-box'), q, { nextText: `Back to ${TRACKS[q.track].toLowerCase()}`, done: () => { location.hash = `#/sse/all/${q.track}`; } });
   }
 
-  QT.sse = { render, TRACKS, INTERVIEW, readAnswer, check, attemptScore, ewma, questionMastery, tagMastery, trackStats, readiness, logAttempt, filtered, queue, allTags, card };
+  QT.sse = { render, TRACKS, INTERVIEW, readAnswer, check, attemptScore, ewma, questionMastery, tagMastery, trackStats, readiness, logAttempt, filtered, queue, allTags, card, schedule, dueList };
 })();
