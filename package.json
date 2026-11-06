@@ -1,6 +1,6 @@
 {
   "name": "theo",
-  "version": "0.36.0",
+  "version": "0.37.0",
   "private": true,
   "description": "Quant trading interview practice. One codebase in www/, deployed as a website (PWA) and wrapped as a native app with Capacitor.",
   "license": "MIT",
@@ -13,6 +13,8 @@
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "verify": "node tests/export-answers.js > answers.json && python research/verify_results.py --js answers.json",
+    "verify:sse": "node tests/export-sse.js > sse.json && python research/verify_sse.py sse.json",
+    "content": "node tools/import-content.js",
     "verify:code": "node tests/export-code.js > code.json && python research/verify_code.py code.json",
     "research": "python research/learner_models.py",
     "assets": "capacitor-assets generate",

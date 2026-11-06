@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.36.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.37.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -115,13 +115,76 @@
     return Math.abs(user - ans) <= Math.max(abs, rel * Math.abs(ans));
   };
 
+  // Arithmetic in a typed answer: numbers, + - * / ^, brackets, %, √, sqrt, ln, exp, abs, pi and e,
+  // so "sqrt(2)/2" and "0.05*sqrt(252)" work. A small recursive-descent parser: nothing typed is
+  // ever run as code, and anything else (names, quotes, semicolons…) gives NaN.
+  QT.evalExpr = function (raw) {
+    const s = String(raw ?? '').replace(/[\u2212\u2012\u2013\u2014]/g, '-').replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/\s+/g, '').toLowerCase();
+    if (!s || s.length > 64) return NaN;
+    const FNS = { sqrt: Math.sqrt, ln: Math.log, exp: Math.exp, abs: Math.abs };
+    let i = 0;
+    const fail = () => { throw new Error('unreadable'); };
+    const word = () => (s.slice(i).match(/^(sqrt|ln|exp|abs|pi|e(?![0-9]))/) || [])[0];
+    function expr() {
+      let v = term();
+      while (s[i] === '+' || s[i] === '-') v = s[i++] === '+' ? v + term() : v - term();
+      return v;
+    }
+    function term() {
+      let v = unary();
+      for (;;) {
+        if (s[i] === '*') { i++; v *= unary(); }
+        else if (s[i] === '/') { i++; v /= unary(); }
+        else if (s[i] === '(' || s[i] === '√' || word()) v *= unary(); // 2sqrt(3), 3(4+1)
+        else return v;
+      }
+    }
+    function unary() {
+      if (s[i] === '-') { i++; return -unary(); }
+      if (s[i] === '+') { i++; return unary(); }
+      return power();
+    }
+    function power() {
+      const base = atom();
+      if (s[i] === '^') { i++; return base ** unary(); }
+      return base;
+    }
+    function bracket() {
+      if (s[i] !== '(') fail();
+      i++;
+      const v = expr();
+      if (s[i] !== ')') fail();
+      i++;
+      return v;
+    }
+    function atom() {
+      let v;
+      const num = s.slice(i).match(/^(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/), w = word();
+      if (num) { i += num[0].length; v = Number(num[0]); }
+      else if (s[i] === '(') v = bracket();
+      else if (s[i] === '√') { i++; v = Math.sqrt(s[i] === '(' ? bracket() : atom()); }
+      else if (w === 'pi') { i += 2; v = Math.PI; }
+      else if (w === 'e') { i++; v = Math.E; }
+      else if (w) { i += w.length; v = FNS[w](bracket()); }
+      else fail();
+      if (s[i] === '%') { i++; v /= 100; }
+      return v;
+    }
+    try {
+      const v = expr();
+      return i === s.length && Number.isFinite(v) ? v : NaN;
+    } catch {
+      return NaN;
+    }
+  };
+
   // ---- Progress storage (localStorage, per browser) ----
   // The app's old name (Quant Trainer) stays in this key: renaming it would lose everyone's progress.
   const KEY = 'quant-trainer:v1';
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} } });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [] } });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -332,6 +395,12 @@
       rhythm: arr(fl.rhythm, 50).map((x) => ({ ...when(x), pace: int(obj(x).pace), start: int(obj(x).start), fastest: int(obj(x).fastest), n: num(obj(x).n), onBeat: num(obj(x).onBeat), skipped: num(obj(x).skipped) })),
       method: mapKeys(fl.method, (x) => ({ runs: num(obj(x).runs), ms: int(obj(x).ms) }), (k) => /^(add|sub)-(easy|carry|borrow|round|cross)$/.test(k)),
     };
+    // Citadel SSE prep: every attempt, as { question_id, tags, correct, time_s, hints_used, timestamp }.
+    s.sse = { attempts: arr(obj(r.sse).attempts, 5000).map((x) => {
+      const o = obj(x), a = { question_id: text(o.question_id, 40), tags: arr(o.tags, 12).map((t) => text(t, 40)), correct: Math.max(0, Math.min(1, num(o.correct))), time_s: Math.max(0, num(o.time_s)), hints_used: Math.max(0, Math.round(num(o.hints_used))), timestamp: text(o.timestamp, 40) };
+      if (typeof o.notes === 'string' && o.notes) a.notes = o.notes.slice(0, 4000);
+      return a;
+    }) };
     s.flash = mapKeys(r.flash, (x) => ({ box: Math.min(4, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-z0-9-]{1,30}$/.test(k));
     s.demo = !!r.demo;
     if (r.writer) s.writer = text(r.writer, 20);
@@ -351,7 +420,7 @@
   const isEmpty = () => !state.days.length && !state.log.length && !state.plan && !state.market.games
     && ['topics', 'bank', 'cases', 'mental', 'flash', 'speed', 'speedReview', 'daily', 'oa', 'tricks', 'roadmap', 'handbook', 'stories'].every((k) => !Object.keys(state[k] || {}).length)
     && !state.mistakes.length && !state.talk.sessions && !state.figgie.games && !state.kelly.games && !state.quote.rounds && !state.estimate.rounds && !state.screen.runs.length && !state.adapt.sessions
-    && !Object.keys(state.code.p).length && !state.code.quiz.runs.length && !state.flow.log.length;
+    && !Object.keys(state.code.p).length && !state.code.quiz.runs.length && !state.flow.log.length && !state.sse.attempts.length;
   const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   QT.dayKey = dayKey;

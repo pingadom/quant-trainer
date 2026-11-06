@@ -24,7 +24,7 @@ export default [
   { files: ['www/js/code-worker.js'], languageOptions: { globals: { ...globals.worker } } },
   {
     files: ['tests/**/*.js', 'tools/**/*.js', 'playwright.config.js'],
-    languageOptions: { ecmaVersion: 2023, sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser, QT: 'readonly', runChecks: 'writable', firmPages: 'readonly' } },
+    languageOptions: { ecmaVersion: 2023, sourceType: 'commonjs', globals: { ...globals.node, ...globals.browser, QT: 'readonly', runChecks: 'writable', firmPages: 'readonly', parseContent: 'readonly', generateContent: 'readonly' } },
     rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }] },
   },
 ];

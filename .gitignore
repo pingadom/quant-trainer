@@ -8,6 +8,7 @@ playwright-report/
 .lighthouseci/
 answers.json
 code.json
+sse.json
 __pycache__/
 
 # Generated at deploy time by tools/firm-pages.js

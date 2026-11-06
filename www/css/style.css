@@ -921,3 +921,17 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .flow-tip { text-align: center; margin: 10px 0 0; }
 .flow-steps { text-align: center; margin-top: 10px; }
 .flow-routine { margin: 0 0 10px; padding-left: 22px; }
+
+/* Citadel SSE prep */
+.sse-clock { font-family: var(--mono); font-size: 1.55rem; font-weight: 600; }
+.sse-timer.over { color: var(--bad); }
+.sse-card textarea { display: block; width: 100%; box-sizing: border-box; min-height: 90px; margin: 6px 0 10px; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.sse-card .question code, .sse-list code, .solution code { font-family: var(--mono); font-size: 0.9em; }
+.sse-grade { margin: 12px 0; }
+.sse-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.sse-table th, .sse-table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.sse-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sse-table .bar { min-width: 70px; margin: 0; }
+.sse-list { display: grid; gap: 8px; }
+.sse-list a { display: block; color: var(--ink); text-decoration: none; }
+.sse-list a:hover { border-color: var(--accent); }

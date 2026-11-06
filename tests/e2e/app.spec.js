@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -455,7 +455,7 @@ test.describe('accessibility in every theme', () => {
 });
 
 test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
-  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'code', 'code/opt-order-book', 'code/quiz']) {
+  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'code', 'code/opt-order-book', 'code/quiz', 'sse', 'sse/all', 'sse/q/q-eq-001']) {
     test(`no serious violations on #/${r}`, async ({ page }) => {
       await page.goto(`./?demo#/${r}`); // demo data so the populated screens are checked too
       await expect(page.locator('main h1').first()).toBeVisible();
@@ -539,6 +539,33 @@ test('coding: run JavaScript, see what failed, fix it and submit; then a knowled
     await page.getByRole('button', { name: i === 19 ? 'Finish' : 'Next', exact: true }).click();
   }
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^\d+ of 20$/);
+});
+
+test('Citadel SSE prep: a numeric and a conceptual card are logged, and the plan shows them', async ({ page }) => {
+  await page.goto('./#/sse/q/q-stat-005');
+  await expect(page.locator('#c-time')).toContainText('/ 1:30');
+  await page.getByRole('button', { name: 'Hint (1 of 2)' }).click();
+  await page.evaluate(() => {
+    document.querySelector('#c-in').value = 'alert(1)';
+    document.querySelector('#c-form').requestSubmit();
+  });
+  await expect(page.locator('#c-msg')).toContainText("can't read that");
+  await page.evaluate(() => {
+    document.querySelector('#c-in').value = 'sqrt(2)/2';
+    document.querySelector('#c-form').requestSubmit();
+  });
+  await expect(page.locator('.fb')).toContainText('Correct');
+  await expect(page.locator('.solution')).toContainText('1/√2');
+  await page.goto('./#/sse/q/q-eq-006');
+  await page.getByRole('button', { name: 'Reveal the solution' }).click();
+  await page.getByRole('button', { name: 'Partial' }).click();
+  const log = await page.evaluate(() => QT.store.get().sse.attempts);
+  expect(log.map((a) => [a.question_id, a.correct, a.hints_used])).toEqual([['q-stat-005', 1, 1], ['q-eq-006', 0.5, 0]]);
+  await page.goto('./#/sse');
+  await expect(page.locator('.tile').nth(2)).toContainText('2/54');
+  await expect(page.locator('.sse-table tr', { hasText: 'Equity quant' })).toContainText('1/7');
+  await page.goto('./#/sse/all/any/pca');
+  await expect(page.locator('.sse-list a')).toHaveCount(1);
 });
 
 test('flow training: a method drill shows the steps, then times you, and the table fills in', async ({ page }) => {

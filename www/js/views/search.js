@@ -21,6 +21,7 @@
     ['#/review', 'Mixed practice', 'questions from every topic adaptive'],
     ['#/mistakes', 'Mistakes to review', 'wrong answers spaced repetition'],
     ['#/mental', 'Mental maths: Zetamac and 80 in 8', 'zetamac arithmetic speed 80 in 8 optiver numeric test timed challenge a friend'],
+    ['#/sse', 'Citadel SSE prep', 'citadel semi-systematic equities study plan statistics regression equity quant readiness countdown'],
     ['#/mental/flow', 'Flow training for + and −', 'zetamac addition subtraction automatic flow rhythm pace carry borrow slow thinking mode method drill'],
     ['#/code', 'Coding (SWE)', 'software engineer swe coding leetcode programming optiver hackerrank online assessment python javascript data structures order book lru cache queue'],
     ['#/code/quiz', 'Coding knowledge quiz', 'computer science multiple choice operating systems networking tcp udp c++ python concurrency'],

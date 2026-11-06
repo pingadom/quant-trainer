@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.37.0
+
+- **Citadel SSE prep** (Interviews → Citadel SSE prep): one place to train for the Quantitative Trading, Semi-Systematic Equities phone screen.
+  - **54 questions in nine tracks,** including two new ones, statistics and regression (12) and equity quant (7), filterable by track and tag. They live in `content/*.md` in the `theo-content-v1` format; `node tools/import-content.js` parses them, reports any errors and regenerates `www/js/sse-content.js`. A test fails if the two ever differ.
+  - **Answer checker:** integers, decimals, fractions, percentages and expressions such as `sqrt(2)/2` or `0.05*sqrt(252)`, read by a small parser that never runs what you type. Conceptual questions go reveal, then self-grade (Correct, Partial, Missed).
+  - **Question cards:** attempt, hint 1, hint 2, submit, solution, with a timer against each question's target. Going over is shown but isn't a fail.
+  - **Every attempt is logged** with its time, hints and tags, and is included in backups.
+  - **Plan page:** a countdown to the interview, readiness, and attempted, correct and mastery for each track. Mastery weights recent attempts, counts speed against the target, takes off for hints, and counts untried questions as zero.
+  - Every numeric answer is re-derived independently in Python in CI (research/verify_sse.py).
+
 ## 0.36.0
 
 - **Flow training for Zetamac's + and −** (Mental maths → Flow training). For the gap between answers that come instantly and ones you have to work out.

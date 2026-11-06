@@ -727,6 +727,73 @@
       QT.store.importJson(saved);
     }
 
+    // Citadel SSE prep: the expression evaluator rejects anything that isn't arithmetic; the answer
+    // checker reads every format on real questions; the importer parses all the content and catches
+    // bad input; the generated file matches the content; mastery and saved attempts behave.
+    if (QT.sse) {
+      const S = QT.sse, near = (a, b) => Math.abs(a - b) < 1e-9, q = (id) => QT.sseContent.find((x) => x.id === id);
+      for (const [s, v] of [['1+2*3', 7], ['(1+2)*3', 9], ['2^3^2', 512], ['-2^2', -4], ['10/4', 2.5], ['sqrt(2)/2', Math.SQRT1_2], ['0.05*sqrt(252)', 0.05 * Math.sqrt(252)], ['1/√2', Math.SQRT1_2], ['√(9)+1', 4], ['2sqrt(9)', 6], ['3(4+1)', 15], ['50%', 0.5], ['1e-3*2', 0.002], ['1 - 0.95^100', 1 - 0.95 ** 100], ['e^0', 1], ['ln(e)', 1], ['2*pi', 2 * Math.PI], ['abs(-3)', 3], ['exp(0)', 1], ['3 × 4 ÷ 2', 6], ['−5+1', -4]]) {
+        if (!near(QT.evalExpr(s), v)) fail(`evalExpr("${s}") gave ${QT.evalExpr(s)}, expected ${v}`);
+      }
+      const hostile = ['alert(1)', 'process.exit()', 'constructor', '__proto__', 'this', 'window', 'eval("1")', 'Function("return 1")()', '1;2', '1,2', '[]', '{}', '""', "'1'", '`1`', '${1}', 'x', '1+', '(1', '1)', 'sqrt', 'sqrt 2', 'sqrt(', '1/0', '9^9^9^9', '()', '<script>', 'a=1', '1=1', '//', '1'.repeat(70), 'import("x")', 'toString', 'valueOf()', 'sqrt.constructor', 'e.constructor', 'abs(1).x'];
+      for (const s of hostile) if (!Number.isNaN(QT.evalExpr(s))) fail(`evalExpr should reject ${JSON.stringify(s)} but gave ${QT.evalExpr(s)}`);
+      for (const s of hostile.filter((x) => /[^0-9,]/.test(x))) if (S.check(s, q('q-prob-005')) !== null) fail(`check should not read ${JSON.stringify(s)}`);
+      const yes = [['q-prob-001', '161/36'], ['q-prob-001', '4.47'], ['q-prob-001', '4.4722'], ['q-prob-006', '6'], ['q-prob-006', '36/6'], ['q-prob-002', '1/3'], ['q-prob-002', '33.3%'], ['q-mm-arith-004', '8.33%'], ['q-mm-arith-004', '8.33'], ['q-mm-arith-004', '100/12'], ['q-stat-005', 'sqrt(2)/2'], ['q-stat-005', '1/√2'], ['q-stat-005', '0.707'], ['q-stat-006', '0.05*sqrt(252)'], ['q-stat-006', '0.79'], ['q-stat-007', '99.4%'], ['q-stat-007', '0.994'], ['q-stat-007', '99.4'], ['q-stat-007', '1-0.95^100'], ['q-stat-009', '17.3%'], ['q-stat-009', '17.3'], ['q-stat-009', '0.173'], ['q-stat-010', '0.063'], ['q-stat-010', '0.063%'], ['q-stat-003', '-1/2'], ['q-stat-003', '−0.5'], ['q-ev-002', '14/3'], ['q-ev-002', '4 2/3'], ['q-eq-003', '$15m'], ['q-eq-003', '15'], ['q-eq-004', '20 bps'], ['q-eq-005', '15%'], ['q-eq-005', '15'], ['q-mm-arith-003', '9,801'], ['q-mm-001', '4 at 5'], ['q-mm-001', '4.5'], ['q-mm-002', '4.5 at 5.5'], ['q-fermi-001', '60m'], ['q-fermi-001', '60 million'], ['q-fermi-001', '7e7'], ['q-fermi-001', '100000000'], ['q-fermi-001', '0.1bn']];
+      for (const [id, s] of yes) if (S.check(s, q(id)) !== true) fail(`check: "${s}" should be right for ${id} (got ${S.check(s, q(id))})`);
+      const no = [['q-prob-001', '4.6'], ['q-prob-001', '5'], ['q-prob-006', '6.1'], ['q-stat-003', '0.5'], ['q-stat-005', '0.8'], ['q-mm-arith-004', '9%'], ['q-stat-009', '20%'], ['q-eq-005', '10'], ['q-mm-001', '6.5 at 7.5'], ['q-fermi-001', '1m'], ['q-fermi-001', '1000000000'], ['q-fermi-001', '-5']];
+      for (const [id, s] of no) if (S.check(s, q(id)) !== false) fail(`check: "${s}" should be wrong for ${id} (got ${S.check(s, q(id))})`);
+      for (const s of ['', '   ', 'abc', '4.5.6']) if (S.check(s, q('q-prob-001')) !== null) fail(`check: "${s}" should be unreadable`);
+      for (const c of QT.sseContent.filter((x) => x.type === 'numeric')) {
+        if (S.check(String(c.value), c) !== true) fail(`check: ${c.id} rejects its own answer ${c.value}`);
+        if (c.track !== 'fermi' && S.check(String(c.value + Math.max(1, Math.abs(c.value)) * 0.5 + c.tol * 2), c) !== false) fail(`check: ${c.id} accepts a far-off answer`);
+      }
+      if (typeof parseContent === 'function') {
+        const ok = parseContent(`# Title\n\n### q-t-001\n- **track:** probability\n- **tags:** [a-b, c]\n- **difficulty:** 2\n- **time_target_s:** 60\n- **prompt:** What is **1 + 1** and \`x\`?\n- **hint_1:** Add.\n- **hint_2:**\n- **answer:** "2"\n- **answer_numeric:** 2\n- **tolerance:** 0\n- **solution:**\n  Line one.\n  1. **First**\n  2. Second\n  \`\`\`python\n  x = 1 < 2\n  \`\`\`\n\n### q-t-002\n- **track:** behavioural\n- **tags:** [a]\n- **prompt:** Why?\n- **solution:**\n  Because.\n\n---\n\n## Not a question\n- **track:** nonsense\n`);
+        const [a, b] = ok.questions;
+        if (ok.errors.length || ok.questions.length !== 2) fail(`importer: ${JSON.stringify(ok.errors)}`);
+        else {
+          if (a.type !== 'numeric' || a.value !== 2 || a.tol !== 0 || a.answer !== '2' || a.hints.length !== 1 || a.tags.join() !== 'a-b,c' || !a.prompt.includes('<b>1 + 1</b>') || !a.prompt.includes('<code>x</code>')) fail(`importer: numeric fields ${JSON.stringify(a)}`);
+          if (!a.solution.includes('<p>Line one.</p><ol><li><b>First</b></li><li>Second</li></ol>') || !a.solution.includes('x = 1 &lt; 2')) fail(`importer: solution ${a.solution}`);
+          if (b.type !== 'conceptual' || b.difficulty !== 2 || b.time !== 120 || b.value !== undefined) fail(`importer: legacy behavioural ${JSON.stringify(b)}`);
+        }
+        const errs = (t) => parseContent(`### q-x\n- **track:** probability\n- **tags:** [a]\n- **difficulty:** 2\n- **time_target_s:** 60\n- **prompt:** P\n- **answer:** 1\n- **answer_numeric:** 1\n- **tolerance:** 0\n- **solution:** S\n${t}`).errors;
+        if (errs('').length) fail(`importer: a valid question gave ${errs('')}`);
+        for (const [what, t] of [['bad track', '- **track:** nope'], ['bad difficulty', '- **difficulty:** 9'], ['bad time', '- **time_target_s:** soon'], ['bad type', '- **answer_type:** essay'], ['bad number', '- **answer_numeric:** many'], ['no tolerance', '- **tolerance:**'], ['no prompt', '- **prompt:**'], ['no solution', '- **solution:**'], ['no tags', '- **tags:** []'], ['bad tag', '- **tags:** [Not OK]'], ['code-task without tests', '- **answer_type:** code-task']]) {
+          if (!errs(t).length) fail(`importer: ${what} wasn't reported`);
+        }
+        if (parseContent('### q-x\n- **track:** behavioural\n- **tags:** [a]\n- **prompt:** P\n- **solution:** S\n\n### q-x\n- **track:** behavioural\n- **tags:** [a]\n- **prompt:** P\n- **solution:** S\n').errors.length !== 1) fail('importer: duplicate ids');
+        if (files.content && files.content.every(Boolean)) {
+          const parsed = files.content.map((t) => parseContent(t));
+          const qs = parsed.flatMap((r) => r.questions), errors = parsed.flatMap((r) => r.errors);
+          if (errors.length) fail(`importer: ${errors.length} parse errors in content/: ${errors[0]}`);
+          if (qs.length !== 54) fail(`importer: ${qs.length} questions, expected 54`);
+          if (JSON.stringify(qs) !== JSON.stringify(QT.sseContent)) fail('www/js/sse-content.js is out of date: run node tools/import-content.js');
+        }
+      }
+      for (const t of Object.keys(S.TRACKS)) if (!S.filtered(t).length) fail(`sse: no questions in ${t}`);
+      for (const c of QT.sseContent) {
+        if (!S.TRACKS[c.track]) fail(`sse ${c.id}: unknown track`);
+        if (/undefined|\*\*|\bnull\b/.test(c.prompt + c.solution)) fail(`sse ${c.id}: unconverted text`);
+      }
+      const at = (correct, time_s, hints_used = 0, question_id = 'q-stat-001') => ({ question_id, tags: q(question_id).tags, correct, time_s, hints_used, timestamp: '2026-11-06T10:00:00Z' });
+      const t60 = q('q-stat-001').time;
+      if (!near(S.attemptScore(at(1, 30), t60), 1) || !near(S.attemptScore(at(1, 120), t60), 0.5) || !near(S.attemptScore(at(0, 10), t60), 0) || !near(S.attemptScore(at(1, 30, 2), t60), 0.7) || !near(S.attemptScore(at(0.5, 60), t60), 0.5) || S.attemptScore(at(0, 10, 2), t60) !== 0) fail('sse: attempt score');
+      if (S.ewma([]) !== 0 || !near(S.ewma([1]), 1) || !near(S.ewma([1, 0]), 0.7) || !near(S.ewma([0, 1, 1]), 0.51)) fail('sse: ewma');
+      const log = [at(1, 30), at(0, 30, 0, 'q-stat-002'), at(1, 30, 0, 'q-stat-002')];
+      const ts = S.trackStats('statistics-regression', log);
+      if (ts.n !== 12 || ts.attempted !== 2 || ts.correct !== 2 || !near(ts.mastery, 1.3 / 12)) fail(`sse: track stats ${JSON.stringify(ts)}`);
+      if (!near(S.tagMastery('regression', log), 0.79) || !near(S.questionMastery('q-stat-002', log), 0.3) || S.readiness([]) !== 0) fail('sse: mastery');
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      snap.sse = { attempts: [{ question_id: 'q-stat-001', tags: ['a', 7], correct: 3, time_s: -1, hints_used: 1.6, timestamp: '2026-11-06T10:00:00Z', notes: 'x', evil: 1 }, 'x'] };
+      QT.store.importJson(JSON.stringify(snap));
+      const got = QT.store.get().sse.attempts[0];
+      if (got.correct !== 1 || got.time_s !== 0 || got.hints_used !== 2 || got.notes !== 'x' || 'evil' in got || got.tags.length !== 2) fail(`sse: not sanitised as expected ${JSON.stringify(got)}`);
+      S.logAttempt(q('q-prob-001'), 1, 12.34, 1, 'my working');
+      const last = QT.store.get().sse.attempts.at(-1);
+      if (last.question_id !== 'q-prob-001' || last.correct !== 1 || last.time_s !== 12.3 || last.hints_used !== 1 || last.tags !== q('q-prob-001').tags && last.tags.join() !== q('q-prob-001').tags.join() || !last.timestamp || last.notes !== 'my working') fail(`sse: attempt ${JSON.stringify(last)}`);
+      QT.store.importJson(saved);
+    }
+
     // Coding: every problem is complete; the JavaScript reference passes every case, including the
     // random and large ones (the Python reference is checked in research/verify_code.py); the
     // starter code defines the right names; the debugging starters really are buggy; the quiz is

@@ -38,6 +38,7 @@
       <h2 class="menu-head">Interviews</h2>
       <div class="menu">
         <a class="card" href="#/bank"><b>Interview questions</b><span class="small">Questions candidates report, by firm, with sources</span></a>
+        <a class="card" href="#/sse"><b>Citadel SSE prep</b><span class="small">Study plan for the Semi-Systematic Equities phone screen: statistics, equity quant, probability and more</span></a>
         <a class="card" href="#/mock"><b>Mock interview</b><span class="small">Five questions against the clock</span></a>
         <a class="card" href="#/screen"><b>Phone-screen mock</b><span class="small">A full 45-minute first round: intro, mental maths, probability, market making, behavioural</span></a>
         <a class="card" href="#/stories"><b>Stories</b><span class="small">Write and rehearse your behavioural answers</span></a>

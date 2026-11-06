@@ -52,16 +52,19 @@
   <script src="../www/js/adapt.js"></script>
   <script src="../www/js/code-problems.js"></script>
   <script src="../www/js/code-quiz.js"></script>
+  <script src="../www/js/sse-content.js"></script>
+  <script src="../www/js/sse.js"></script>
   <script src="../www/js/handbook-content.js"></script>
   <script src="../www/js/keypad.js"></script>
   <script src="../www/js/ui.js"></script>
   <script src="../www/js/views/search.js"></script>
   <script src="../tools/firm-pages.js"></script>
+  <script src="../tools/import-content.js"></script>
   <script src="checks.js"></script>
   <script>
     (async () => {
       const text = (p) => fetch(p, { cache: 'no-store' }).then((r) => (r.ok ? r.text() : undefined)).catch(() => undefined);
-      const files = { index: await text('../www/index.html'), sw: await text('../www/sw.js'), pkg: await text('../package.json') };
+      const files = { index: await text('../www/index.html'), sw: await text('../www/sw.js'), pkg: await text('../package.json'), content: [await text('../content/citadel-module.md'), await text('../content/citadel-sse.md')] };
       const keepBackups = localStorage.getItem('theo-backups'); // the checks import test data; don't leave it in the backup list
       const { lines, fails: checkFails } = runChecks(QT, files);
       if (keepBackups === null) localStorage.removeItem('theo-backups'); else localStorage.setItem('theo-backups', keepBackups);

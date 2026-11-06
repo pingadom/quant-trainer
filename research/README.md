@@ -27,7 +27,15 @@ python research/verify_results.py
 node tests/export-answers.js > answers.json && python research/verify_results.py --js answers.json
 ```
 
-## 3. Are the coding problems' tests right? → [verify_code.py](verify_code.py)
+## 3. Are the Citadel SSE answers right? → [verify_sse.py](verify_sse.py)
+
+Re-derives every numeric answer in `content/*.md` by exact enumeration, dynamic programming or a direct formula, and checks the stored answer is within that question's tolerance.
+
+```bash
+node tests/export-sse.js > sse.json && python research/verify_sse.py sse.json
+```
+
+## 4. Are the coding problems' tests right? → [verify_code.py](verify_code.py)
 
 Each coding problem has reference solutions in JavaScript and Python. The app's tests (hand-written, plus seeded random and large cases whose expected output comes from the JavaScript reference) are exported and run against the Python reference, and against a brute-force Python version written a different, slower way. The debugging problems' buggy starter code must fail at least one case.
 

@@ -44,6 +44,10 @@ jobs:
         run: |
           node tests/export-code.js > code.json
           python research/verify_code.py code.json
+      - name: Re-derive every numeric answer in the Citadel SSE questions
+        run: |
+          node tests/export-sse.js > sse.json
+          python research/verify_sse.py sse.json
       - name: Learner-model study (quick run)
         run: python research/learner_models.py --quick
 
