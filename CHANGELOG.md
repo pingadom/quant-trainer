@@ -6,6 +6,10 @@
   - **45-minute mock** (Citadel SSE prep → 45-minute mock): introduction, probability and EV, statistics and regression, market making, a project deep-dive and your questions, with a clock for the whole call and each segment. A think-aloud box beside each question is saved with the attempt. The report gives a score per segment, the time on each question, your three weakest tags and links to drill them.
   - **Market-making simulator:** a hidden value is really drawn (two dice, ten flips or three cards), and you quote against a bot that trades on a noisy signal. L1 is uninformed bots with no information; L2 adds reveals and some informed bots. Your position is marked to the true value, with a width penalty, and the review shows each quote against the fair value at that point. A game takes under three minutes.
   - **Spaced repetition:** after each card choose Again, Hard, Good or Easy, with the next interval shown. Using a hint or missing the answer caps it at Hard. Due cards come first in drills and show on the plan.
+  - **Simulator levels 3 and 4:** L3 has sharper bots, so one-way flow is information. L4 adds a position limit and 5 seconds per quote, with a cost for each breach or missed quote.
+  - **Mastery by tag:** a heatmap on the plan page, the three next best drills, and your streak.
+  - **Python drills run in the browser** against hidden tests with numpy and pandas (about 12 MB more the first time). These include direct look-ahead checks, such as nothing being earned on the day a signal turns on.
+- Leaving the Coding screen during a run can no longer throw an error.
 
 ## 0.37.0
 

@@ -935,3 +935,9 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .sse-list { display: grid; gap: 8px; }
 .sse-list a { display: block; color: var(--ink); text-decoration: none; }
 .sse-list a:hover { border-color: var(--accent); }
+.sse-heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.sse-cell { display: flex; justify-content: space-between; gap: 8px; padding: 5px 9px; border: 1px solid var(--line); border-left-width: 5px; border-radius: 6px; background: var(--panel); color: var(--ink); text-decoration: none; font-size: 0.82rem; }
+.sse-cell b { font-family: var(--mono); font-weight: 600; }
+.sse-cell.t-low { border-left-color: var(--bad); }
+.sse-cell.t-mid { border-left-color: #b8860b; }
+.sse-cell.t-high { border-left-color: var(--ok); }

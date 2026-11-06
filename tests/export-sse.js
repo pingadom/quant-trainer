@@ -4,4 +4,5 @@ const { loadQT } = require('./load-qt');
 
 const { QT } = loadQT();
 const out = QT.sseContent.filter((q) => q.type === 'numeric').map(({ id, value, tol }) => ({ id, value, tol }));
-process.stdout.write(JSON.stringify(out));
+const drills = Object.entries(QT.ssePy).map(([id, d]) => ({ id, test: d.test, reference: QT.sseContent.find((q) => q.id === id).solution }));
+process.stdout.write(JSON.stringify({ numeric: out, drills }));

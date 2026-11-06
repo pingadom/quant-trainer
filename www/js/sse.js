@@ -125,13 +125,38 @@
   };
   const dueList = (now = Date.now()) => ALL.filter((q) => cards()[q.id] && cards()[q.id].due <= now).sort((a, b) => cards()[a.id].due - cards()[b.id].due);
 
+  // ---------------------------------------------------------------- Python drills
+  // Runs in the same worker as the Coding section (Pyodide); it stays loaded between runs.
+  let worker = null, jobs = 0;
+  function runDrill(id, code, onStatus) {
+    return new Promise((resolve) => {
+      const job = ++jobs;
+      let timer = null;
+      worker ||= new Worker('js/code-worker.js');
+      const end = (r) => { clearTimeout(timer); resolve(r); };
+      const arm = (ms) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { worker.terminate(); worker = null; end({ err: 'Stopped: no result after a long wait. An endless loop, or the download failed.' }); }, ms);
+      };
+      worker.onmessage = ({ data: m }) => {
+        if (m.job !== job) return;
+        if (m.type === 'status') { onStatus(m.text); arm(180000); }
+        else if (m.type === 'drill') end(m.res);
+        else if (m.type === 'error') end({ err: m.text, stdout: m.stdout });
+      };
+      worker.onerror = (e) => { e.preventDefault(); worker = null; end({ err: 'The code runner failed to start.' }); };
+      worker.postMessage({ job, drill: id, code });
+      arm(180000);
+    });
+  }
+
   // ---------------------------------------------------------------- the question card
   // One question. `done(attempt)` runs when you're ready to move on. `think` adds a box for your
   // reasoning, saved with the attempt. `rate`: finish by choosing when it comes back (Again, Hard,
   // Good, Easy); with false, as in a mock, the result decides that and a Next button is shown.
   // `story`: your notes to show under a spoken prompt.
   function card(box, q, { label = TRACKS[q.track], think = false, rate = true, nextText = 'Next question →', story = null, done }) {
-    const numeric = q.type === 'numeric', t0 = Date.now();
+    const numeric = q.type === 'numeric', t0 = Date.now(), drillable = !!QT.ssePy?.[q.id];
     let finished = false, attempt = null, frozen = null; // frozen: the time at the reveal
     const secs = () => frozen ?? (Date.now() - t0) / 1000;
     box.innerHTML = `
@@ -147,7 +172,8 @@
           </form>
           <div class="q-actions" id="c-actions"><span class="small" id="c-msg">${q.logTol ? 'A number, such as 70 million, 70m or 7e7' : q.track === 'market-making' ? 'Your fair value, or a quote such as 4 at 5' : 'Fraction, decimal, percent or expression, such as 5/36, 8.33% or sqrt(2)/2'}</span><button type="button" class="link" id="c-skip">I don't know</button></div>` : ''}
         ${!numeric || think ? `<label class="small" for="c-notes">${q.type === 'code-task' ? 'Your code' : numeric ? 'Think aloud: your reasoning' : 'Your answer, in note form'}</label><textarea id="c-notes" rows="${q.type === 'code-task' ? 8 : 4}" spellcheck="${q.type !== 'code-task'}"></textarea>` : ''}
-        ${numeric ? '' : '<button type="button" id="c-reveal">Reveal the solution</button>'}
+        ${drillable ? '<div class="row" style="margin-bottom:8px"><button type="button" id="c-run">Run the tests</button><span class="small" id="c-status" role="status"></span></div><div id="c-tests"></div>' : ''}
+        ${numeric ? '' : `<button type="button" id="c-reveal" class="${drillable ? 'ghost' : ''}">Reveal the solution</button>`}
         <div id="c-out" aria-live="polite"></div>
       </div>`;
     const $ = (s) => box.querySelector(s), hintsUsed = U().wireHints($('#c-hints'), q.hints), notes = () => $('#c-notes')?.value.trim() || '';
@@ -226,6 +252,30 @@
       $('#c-skip').addEventListener('click', () => { if (!finished) close(false, ''); });
       if (!kp) $in.focus({ preventScroll: true });
     } else {
+      if (drillable) {
+        $('#c-notes').value = QT.ssePy[q.id].starter;
+        $('#c-notes').addEventListener('keydown', (e) => {
+          if (e.key !== 'Tab' || e.shiftKey) return;
+          e.preventDefault();
+          e.target.setRangeText('    ', e.target.selectionStart, e.target.selectionEnd, 'end');
+        });
+        $('#c-run').addEventListener('click', async (e) => {
+          e.target.disabled = true;
+          const r = await runDrill(q.id, $('#c-notes').value, (t) => { if ($('#c-status')) $('#c-status').textContent = t; });
+          if (!$('#c-status')) return;
+          $('#c-status').textContent = '';
+          e.target.disabled = false;
+          const cases = r.cases || [], all = !r.err && cases.length > 0 && cases.every((c) => c[1]);
+          $('#c-tests').innerHTML = `${cases.map(([n, ok, why]) => `<div class="code-row ${ok ? '' : 'fail'}"><span class="${ok ? 'pos' : 'neg'}">${ok ? '✓' : '✗'}</span> ${esc(n)}${ok ? '' : `<br><span class="small">${esc(why)}</span>`}</div>`).join('')}${r.err ? `<pre class="code-view code-err" tabindex="0">${esc(r.err)}</pre>` : ''}${r.stdout ? `<pre class="code-view" tabindex="0">${esc(r.stdout)}</pre>` : ''}`;
+          if (!all || finished) return;
+          e.target.hidden = true;
+          $('#c-reveal').hidden = true;
+          frozen = secs();
+          const s = finish(1);
+          $('#c-out').innerHTML = solution(`<div class="fb ok">✓ All tests pass<span class="fb-note">${overNote(s)}</span></div>${next()}`);
+          wireNext();
+        });
+      }
       $('#c-reveal').addEventListener('click', (e) => {
         e.target.hidden = true;
         frozen = secs();
@@ -275,6 +325,7 @@
         <div class="tile"><div class="v">${tried}<span class="of">/${ALL.length}</span></div><div class="k">questions attempted</div></div>
         <div class="tile"><div class="v">${due}</div><div class="k">due for review</div></div>
         <div class="tile"><div class="v">${mock ? pct(mock.overall) : '–'}</div><div class="k">last mock</div></div>
+        <div class="tile"><div class="v">${store.streak()}</div><div class="k">day streak</div></div>
       </div>
       <div class="row" style="margin:14px 0">
         <a class="btn" href="#/sse/drill${due ? '/due' : ''}">${due ? `Review ${due} due` : 'Drill the next questions'}</a>
@@ -290,9 +341,27 @@
             <td class="num">${pct(t.mastery)} · <a href="#/sse/drill/${t.track}" aria-label="Drill ${TRACKS[t.track]}">Drill</a></td></tr>`).join('')}</tbody>
         </table>
         <p class="small" style="margin-bottom:0">Mastery weights recent attempts most, counts speed against each question's target, takes off for hints, and counts untried questions as zero. Mental maths here is only a few cards: keep up <a href="#/mental">Zetamac and flow training</a> too.</p>
-      </div>`;
+      </div>
+      ${heatmap()}`;
     const timer = setInterval(() => { const c = el.querySelector('#sse-count'); if (c) c.textContent = countdown(); }, 20000);
     QT.cleanup = () => clearInterval(timer);
+  }
+
+  // Tags you've tried, weakest first, then the rest: the map of what to work on.
+  function tagTable() {
+    const log = attempts(), tried = new Set(log.flatMap((a) => a.tags));
+    return allTags().map((tag) => ({ tag, tried: tried.has(tag), mastery: tried.has(tag) ? tagMastery(tag, log) : 0 })).sort((a, b) => b.tried - a.tried || a.mastery - b.mastery || (a.tag < b.tag ? -1 : 1));
+  }
+  // Tier for the heatmap: a colour and a word, so it doesn't rely on colour alone.
+  const tier = (t) => (!t.tried ? 'none' : t.mastery < 0.4 ? 'low' : t.mastery < 0.75 ? 'mid' : 'high');
+  function heatmap() {
+    const tags = tagTable(), next = tags.filter((t) => t.tried).slice(0, 3);
+    return `<h2>Mastery by tag</h2>
+      ${next.length ? `<div class="row" style="margin-bottom:10px"><span class="small">Next best drills:</span>${next.map((t) => `<a class="btn ghost" href="#/sse/drill/any/${t.tag}">${t.tag} (${pct(t.mastery)})</a>`).join('')}</div>` : ''}
+      <details ${window.innerWidth > 760 ? 'open' : ''}><summary class="small">All ${tags.length} tags</summary>
+        <div class="sse-heat" style="margin-top:8px">${tags.map((t) => `<a class="sse-cell t-${tier(t)}" href="#/sse/drill/any/${t.tag}"><span>${t.tag}</span><b>${t.tried ? pct(t.mastery) : '–'}</b></a>`).join('')}</div>
+        <p class="small">Red under 40%, amber under 75%, green from there; a dash means not tried yet. Each is the same weighted average as above, over every attempt with that tag.</p>
+      </details>`;
   }
 
   function browse(el, trackArg, tagArg) {
@@ -343,5 +412,5 @@
     card(el.querySelector('#d-box'), q, { nextText: `Back to ${TRACKS[q.track].toLowerCase()}`, done: () => { location.hash = `#/sse/all/${q.track}`; } });
   }
 
-  QT.sse = { render, TRACKS, INTERVIEW, readAnswer, check, attemptScore, ewma, questionMastery, tagMastery, trackStats, readiness, logAttempt, filtered, queue, allTags, card, schedule, dueList };
+  QT.sse = { render, TRACKS, INTERVIEW, readAnswer, check, attemptScore, ewma, questionMastery, tagMastery, trackStats, readiness, logAttempt, filtered, queue, allTags, card, schedule, dueList, tagTable };
 })();

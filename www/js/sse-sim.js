@@ -14,11 +14,16 @@
   const die = (rnd) => 1 + Math.floor(rnd() * 6);
   const normal = (rnd) => Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd());
 
+  const LIMIT_TEXT = 'a position limit of 2 either way';
   // randomP: the chance a bot is uninformed. sigma: an informed bot's noise, in units of the
-  // current standard deviation.
+  // current standard deviation. repeat: quotes per stage. limit: the largest position allowed, with
+  // a cost of one SD for each trade past it. seconds: time per quote, with a cost of one SD for a
+  // missed quote.
   const LEVELS = {
     1: { name: 'L1: centre on the fair value', about: 'No new information, and every bot is uninformed. Find a sensible mid and width.', reveals: false, randomP: 1, sigma: 0 },
     2: { name: 'L2: update on information', about: 'Information arrives between quotes, and some bots know something. Move your fair value when it does.', reveals: true, randomP: 0.6, sigma: 1 },
+    3: { name: 'L3: informed bots', about: 'Most bots now know the value quite well, so repeated trades in one direction are information. Trade against them carelessly and you get picked off.', reveals: true, randomP: 0.3, sigma: 0.5 },
+    4: { name: 'L4: limits and a clock', about: `As L3, with two quotes at each stage, ${LIMIT_TEXT}, and 5 seconds per quote. Skew your quotes to stay inside the limit.`, reveals: true, randomP: 0.3, sigma: 0.5, limit: 2, seconds: 5, repeat: 2 },
   };
 
   const DECK = Array.from({ length: 52 }, (_, i) => (i % 13) + 1);
@@ -63,7 +68,7 @@
   };
 
   // The stages actually played: with no reveals, three quotes on what's known at the start.
-  const stagesFor = (deal, level) => (LEVELS[level].reveals ? deal.stages : [deal.stages[0], deal.stages[0], deal.stages[0]]);
+  const stagesFor = (deal, level) => (LEVELS[level].reveals ? deal.stages.flatMap((s) => Array(LEVELS[level].repeat || 1).fill(s)) : [deal.stages[0], deal.stages[0], deal.stages[0]]);
 
   // 'buy' (lifts your ask), 'sell' (hits your bid) or null, and whether it was an informed bot.
   function bot(bid, ask, value, stage, level, rnd) {
@@ -73,9 +78,12 @@
   }
 
   // quotes: [{ bid, ask, fair, sd, side, informed }]. If the bot buys, you have sold at your ask.
-  function settle(quotes, value) {
-    let pnl = 0, adverse = 0, pos = 0, inventory = 0, trades = 0;
+  // A missed quote has `missed` set, and no bid or ask.
+  function settle(quotes, value, limit = Infinity) {
+    let pnl = 0, adverse = 0, pos = 0, inventory = 0, trades = 0, fines = 0, breaches = 0;
+    const shown = quotes.filter((q) => !q.missed);
     for (const q of quotes) {
+      if (q.missed) fines += q.sd;
       if (!q.side) continue;
       const gain = q.side === 'buy' ? q.ask - value : value - q.bid;
       pnl += gain;
@@ -83,24 +91,30 @@
       pos += q.side === 'buy' ? -1 : 1;
       inventory = Math.max(inventory, Math.abs(pos));
       trades++;
+      if (Math.abs(pos) > limit) {
+        fines += q.sd;
+        breaches++;
+      }
     }
-    const width = mean(quotes.map((q) => q.ask - q.bid)), penalty = LAMBDA * width;
-    const good = quotes.filter((q) => q.bid <= q.fair + 1e-9 && q.fair <= q.ask + 1e-9 && q.ask - q.bid <= 2 * q.sd + 1e-9).length;
-    return { pnl, width, penalty, score: pnl - penalty, adverse, inventory, trades, position: pos, quality: good / quotes.length };
+    const width = shown.length ? mean(shown.map((q) => q.ask - q.bid)) : 0, penalty = LAMBDA * width;
+    const good = shown.filter((q) => q.bid <= q.fair + 1e-9 && q.fair <= q.ask + 1e-9 && q.ask - q.bid <= 2 * q.sd + 1e-9).length;
+    return { pnl, width, penalty, fines, breaches, missed: quotes.length - shown.length, score: pnl - penalty - fines, adverse, inventory, trades, position: pos, quality: good / quotes.length };
   }
 
   // ---------------------------------------------------------------- the game
   // done(result) runs after the review. Scenario and level are ids.
   function play(box, scenario, level, done, nextText = 'Play again') {
     const S = SCENARIOS[scenario], deal = S.deal(Math.random), stages = stagesFor(deal, level), quotes = [];
-    const said = (q) => (q.side === 'buy' ? `The bot buys from you at ${f(q.ask)}.` : q.side === 'sell' ? `The bot sells to you at ${f(q.bid)}.` : 'No trade.');
+    const L = LEVELS[level];
+    let clockTimer = null;
+    const said = (q) => (q.missed ? 'Too slow: no quote.' : q.side === 'buy' ? `The bot buys from you at ${f(q.ask)}.` : q.side === 'sell' ? `The bot sells to you at ${f(q.bid)}.` : 'No trade.');
     function ask(i) {
       const st = stages[i], pos = quotes.reduce((p, q) => p + (q.side === 'buy' ? -1 : q.side === 'sell' ? 1 : 0), 0);
       box.innerHTML = `
         <div class="card">
-          <div class="q-top"><span class="tag">${LEVELS[level].name}</span><span class="q-score">Quote ${i + 1} of ${stages.length} · position ${pos > 0 ? '+' : ''}${pos}</span></div>
+          <div class="q-top"><span class="tag">${LEVELS[level].name}</span><span class="q-score">Quote ${i + 1} of ${stages.length} · position ${pos > 0 ? '+' : ''}${pos}${L.limit ? ` (limit ${L.limit})` : ''}${L.seconds ? ` · <span class="mono" id="sim-clock"></span>` : ''}</span></div>
           <div class="question">Make a market on ${S.name}.</div>
-          ${quotes.length ? `<ol class="mm-tape">${quotes.map((q) => `<li><span class="mono">${f(q.bid)} – ${f(q.ask)}</span> <span class="say">${said(q)}</span></li>`).join('')}</ol>` : ''}
+          ${quotes.length ? `<ol class="mm-tape">${quotes.map((q) => `<li><span class="mono">${q.missed ? '–' : `${f(q.bid)} – ${f(q.ask)}`}</span> <span class="say">${said(q)}</span></li>`).join('')}</ol>` : ''}
           ${st.text ? `<p class="interviewer">${st.text}</p>` : ''}
           <form class="row" id="sim-q">
             <label>Bid <input type="text" inputmode="decimal" autocomplete="off" id="sim-bid" style="width:110px"></label>
@@ -112,6 +126,27 @@
       const form = box.querySelector('#sim-q'), b = box.querySelector('#sim-bid'), a = box.querySelector('#sim-ask');
       const kp = QT.keypad.attach(form, [b, a], (inp) => (inp === b ? kp.focus(a) : form.requestSubmit()), { keys: '.-' });
       if (!kp) b.focus({ preventScroll: true });
+      const advance = () => {
+        clearInterval(clockTimer);
+        if (i + 1 < stages.length) ask(i + 1);
+        else finish();
+      };
+      if (L.seconds) {
+        const until = Date.now() + L.seconds * 1000, $c = box.querySelector('#sim-clock');
+        const tick = () => {
+          const left = until - Date.now();
+          if ($c) $c.textContent = `${Math.max(0, Math.ceil(left / 1000))} s`;
+          if (left <= 0) {
+            quotes.push({ missed: true, side: null, fair: st.fair, sd: st.sd, text: st.text });
+            advance();
+          }
+        };
+        clearInterval(clockTimer);
+        clockTimer = setInterval(tick, 100);
+        const before = QT.cleanup;
+        QT.cleanup = () => { clearInterval(clockTimer); if (before) before(); };
+        tick();
+      }
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const bid = QT.parseAnswer(b.value), ak = QT.parseAnswer(a.value);
@@ -120,12 +155,11 @@
           return;
         }
         quotes.push({ bid, ask: ak, fair: st.fair, sd: st.sd, text: st.text, ...bot(bid, ak, deal.value, st, level, Math.random) });
-        if (i + 1 < stages.length) ask(i + 1);
-        else finish();
+        advance();
       });
     }
     function finish() {
-      const r = settle(quotes, deal.value);
+      const r = settle(quotes, deal.value, L.limit);
       const st = store.get().sse;
       store.log(st.sims, { scenario, level, score: rnd1(r.score), pnl: rnd1(r.pnl), width: rnd1(r.width), trades: r.trades, quality: rnd1(r.quality) }, 50);
       store.touchDay();
@@ -141,10 +175,12 @@
             <div class="tile"><div class="v">${f(rnd1(r.width))}</div><div class="k">average width</div></div>
             <div class="tile"><div class="v">${r.inventory}</div><div class="k">largest position</div></div>
           </div>
+          ${r.fines ? `<p class="small neg">Fines of ${f(rnd1(r.fines))} taken off: ${r.breaches ? `${r.breaches} trade${r.breaches > 1 ? 's' : ''} past your limit` : ''}${r.breaches && r.missed ? ' and ' : ''}${r.missed ? `${r.missed} missed quote${r.missed > 1 ? 's' : ''}` : ''}. Each costs one SD.</p>` : ''}
           ${quotes.some((q) => q.side && q.informed) ? `<p class="small">P&amp;L against informed bots: <b class="${tone(r.adverse)}">${f(rnd1(r.adverse))}</b>. A large loss here means you aren't updating on the flow.</p>` : ''}
           <div class="table-wrap"><table class="sse-table">
             <thead><tr><th>Known then</th><th class="num">Fair</th><th class="num">Your quote</th><th class="num">Mid vs fair</th><th>Trade</th></tr></thead>
             <tbody>${quotes.map((q) => {
+              if (q.missed) return `<tr><td>${q.text || 'Nothing yet'}</td><td class="num">${f(rnd1(q.fair))}</td><td class="num neg">Missed</td><td class="num">–</td><td>None</td></tr>`;
               const off = (q.bid + q.ask) / 2 - q.fair, outside = q.fair < q.bid || q.fair > q.ask;
               return `<tr><td>${q.text || 'Nothing yet'}</td><td class="num">${f(rnd1(q.fair))}</td><td class="num ${outside ? 'neg' : ''}">${f(q.bid)} – ${f(q.ask)}</td><td class="num">${off > 0 ? '+' : ''}${f(rnd1(off))}</td><td>${q.side ? `${q.side === 'buy' ? 'You sold' : 'You bought'} at ${f(q.side === 'buy' ? q.ask : q.bid)}${q.informed ? ' (informed)' : ''}` : 'None'}</td></tr>`;
             }).join('')}</tbody>

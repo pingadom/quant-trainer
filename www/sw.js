@@ -68,6 +68,7 @@ const ASSETS = [
   'js/sse.js',
   'js/sse-sim.js',
   'js/sse-mock.js',
+  'js/sse-py.js',
   'js/app.js',
   'privacy.html',
   'fonts/plex-sans.woff2',

@@ -805,6 +805,11 @@
         const inf = M.settle([X(4, 6, 'buy', true), X(4, 6, 'buy', false)], 8);
         if (inf.adverse !== -2 || inf.pnl !== -4 || inf.inventory !== 2) fail('sim: adverse selection counts informed trades only');
         if (M.settle([X(4, 6, null, false, 5, 2), X(7, 8, null, false, 5, 2)], 5).quality !== 0.5) fail('sim: quality');
+        const lim = M.settle([X(4, 6, 'sell'), X(4, 6, 'sell'), X(4, 6, 'sell')], 5, 2);
+        if (lim.breaches !== 1 || lim.fines !== 2 || !near(lim.score, 3 - M.LAMBDA * 2 - 2)) fail(`sim: position limit ${JSON.stringify(lim)}`);
+        const gone = M.settle([{ missed: true, side: null, fair: 5, sd: 2 }, X(4, 6, null)], 5);
+        if (gone.missed !== 1 || gone.fines !== 2 || gone.width !== 2 || gone.quality !== 0.5) fail(`sim: missed quote ${JSON.stringify(gone)}`);
+        if (M.settle([{ missed: true, side: null, fair: 5, sd: 2 }], 5).width !== 0) fail('sim: all quotes missed');
         const rng = QT.code ? QT.code.rng(20261106).next : Math.random;
         for (const [id, s] of Object.entries(M.SCENARIOS)) {
           const N = 4000;
@@ -817,7 +822,7 @@
           if (Math.abs(sum / N) > 0.35) fail(`sim ${id}: fair value is biased by ${sum / N}`);
         }
         const d0 = M.SCENARIOS['two-dice'].deal(() => 0.5);
-        if (d0.stages[1].fair !== d0.value - 4 + 3.5 || !near(d0.stages[0].sd, Math.sqrt(35 / 6)) || M.stagesFor(d0, 1).length !== 3 || M.stagesFor(d0, 2).length !== 2) fail('sim: stages');
+        if (d0.stages[1].fair !== d0.value - 4 + 3.5 || !near(d0.stages[0].sd, Math.sqrt(35 / 6)) || M.stagesFor(d0, 1).length !== 3 || M.stagesFor(d0, 2).length !== 2 || M.stagesFor(d0, 3).length !== 2 || M.stagesFor(d0, 4).length !== 4) fail('sim: stages');
         const avg = (w) => {
           let t = 0;
           for (let i = 0; i < 3000; i++) {
@@ -828,6 +833,11 @@
         };
         if (!(avg(1) > avg(4) && avg(1) > avg(0.1))) fail('sim: a one-SD market should beat far too wide and far too tight');
       }
+      for (const [id, d] of Object.entries(QT.ssePy || {})) {
+        if (q(id)?.type !== 'code-task' || !/def run\(\)/.test(d.test) || !/^import numpy/.test(d.starter)) fail(`sse python: ${id}`);
+      }
+      const tt = S.tagTable([]);
+      if (tt.length !== S.allTags().length) fail('sse: tag table');
       if (QT.sseMock) {
         const P = QT.sseMock.draw();
         if (P.prob.length !== 3 || P.stats.length !== 3 || P.project.length !== 2) fail('mock: wrong number of questions');

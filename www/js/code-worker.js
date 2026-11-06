@@ -9,7 +9,7 @@
 //               { job, type: 'end' } | { job, type: 'error', text }
 (function () {
   self.QT = {};
-  importScripts('code-problems.js');
+  importScripts('code-problems.js', 'sse-py.js');
   const C = self.QT.code;
   const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   // The large test passes within this multiple of the reference solution's time on this device.
@@ -71,6 +71,21 @@ def _load(slot, code):
         return json.dumps({'ok': False, 'err': _tb(slot + '.py'), 'stdout': out.text()})
     finally:
         sys.stdout = old
+
+def _drill(test):
+    out, old = _Cap(), sys.stdout
+    res = {}
+    sys.stdout = out
+    try:
+        env = {'solution': _slots['solution']}
+        exec(compile(test, 'tests.py', 'exec'), env)
+        res['cases'] = [[str(n), bool(p), str(d)] for n, p, d in env['run']()]
+    except BaseException:
+        res['err'] = _tb('solution.py')
+    finally:
+        sys.stdout = old
+    res['stdout'] = out.text()
+    return json.dumps(res)
 
 def _run(slot, spec):
     s = json.loads(spec)
@@ -160,8 +175,27 @@ def _run(slot, spec):
     return { head: P.kind === 'cls' ? cut(lines[0][0]) : null, skipped: from - (P.kind === 'fn' ? 0 : 1), lines: shown };
   }
 
+  // A Python drill from the Citadel SSE questions: { job, drill: id, code }.
+  async function drill(m) {
+    await python();
+    post({ type: 'status', text: 'Loading numpy and pandas (about 12 MB the first time)…' });
+    await py.loadPackage(['numpy', 'pandas'], { messageCallback: () => {} });
+    post({ type: 'status', text: 'Running the tests…' });
+    const r = pyLoad('solution', m.code);
+    if (!r.ok) return post({ type: 'error', text: r.err, stdout: r.stdout });
+    post({ type: 'drill', res: JSON.parse(py.globals.get('_drill')(QT.ssePy[m.drill].test)) });
+  }
+
   self.onmessage = async ({ data: m }) => {
     job = m.job;
+    if (m.drill) {
+      try {
+        await drill(m);
+      } catch (err) {
+        post({ type: 'error', text: err && err.message ? err.message : String(err) });
+      }
+      return;
+    }
     const P = C.byId(m.id), lang = m.lang;
     try {
       if (m.mode === 'submit') post({ type: 'status', text: 'Preparing the tests…' });

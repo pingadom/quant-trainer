@@ -7,8 +7,10 @@ of that value, so a typing slip in the content fails CI. Every numeric question 
     node tests/export-sse.js > sse.json && python research/verify_sse.py sse.json
 """
 import argparse
+import html
 import json
 import math
+import re
 import sys
 from fractions import Fraction as Fr
 from itertools import permutations, product
@@ -157,10 +159,31 @@ CHECKS = {
 }
 
 
+def check_drills(drills):
+    """Each drill's hidden tests must pass on the reference in its solution."""
+    try:
+        import pandas  # noqa: F401
+    except ImportError:
+        print('pandas is not installed: skipping the Python drills')
+        return 0
+    fails = 0
+    for d in drills:
+        code = html.unescape(re.search(r'<pre[^>]*>(.*?)</pre>', d['reference'], re.S).group(1))
+        env = {'solution': {}}
+        exec('import numpy as np, pandas as pd\n' + code, env['solution'])
+        exec(d['test'], env)
+        for name, ok, why in env['run']():
+            if not ok:
+                print(f"FAIL {d['id']}: the reference fails \"{name}\": {why}")
+                fails += 1
+    return fails
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('content', help='JSON from tests/export-sse.js')
-    numeric = json.load(open(ap.parse_args().content, encoding='utf8'))
+    data = json.load(open(ap.parse_args().content, encoding='utf8'))
+    numeric = data['numeric']
     fails = 0
     for q in numeric:
         fn = CHECKS.get(q['id'])
@@ -178,7 +201,8 @@ def main():
     for qid in sorted(extra):
         print(f"FAIL {qid}: checked here but not a numeric question")
         fails += 1
-    print(f"{len(numeric)} numeric answers: {'ALL AGREE' if not fails else f'{fails} FAILURES'}")
+    fails += check_drills(data['drills'])
+    print(f"{len(numeric)} numeric answers and {len(data['drills'])} Python drills: {'ALL AGREE' if not fails else f'{fails} FAILURES'}")
     sys.exit(1 if fails else 0)
 
 

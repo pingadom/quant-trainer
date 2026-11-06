@@ -62,7 +62,14 @@
   // The runner is kept between problems so Python only loads once; it is replaced if a test hangs.
   let worker = null, jobs = 0;
   const getWorker = () => (worker ||= new Worker('js/code-worker.js'));
-  const killWorker = () => { if (worker) worker.terminate(); worker = null; };
+  // A message already on its way can still arrive after terminate(), so stop listening first.
+  const killWorker = () => {
+    if (worker) {
+      worker.onmessage = null;
+      worker.terminate();
+    }
+    worker = null;
+  };
 
   function problem(el, P) {
     let lang = state().lang, busy = false, watchdog = null, saveTimer = null, hints = 0, escaped = false;
@@ -265,7 +272,7 @@
       };
       const w = getWorker();
       w.onmessage = ({ data: m }) => {
-        if (m.job !== job) return;
+        if (m.job !== job || !document.contains(ed)) return;
         if (m.type === 'status') {
           status.textContent = m.text;
           arm(180000);
