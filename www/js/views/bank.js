@@ -5,7 +5,7 @@
     const n = Math.min(5, QT.bank.filter((b) => b.parts && (!firm || b.firm === firm)).length);
     return firm && n >= 3
       ? `<a class="btn" href="#/mock/${firm}">Mock interview: ${F.name} (${n} questions)</a>`
-      : `<a class="btn" href="#/mock">Mock interview (5 questions${firm ? ' from all firms' : ''})</a>`;
+      : `<a class="btn" href="#/mock/all">Mock interview (5 questions${firm ? ' from all firms' : ''})</a>`;
   }
 
   const U = QT.ui;
@@ -44,7 +44,9 @@
   const toggleMark = (id, mark) => U.setBankMark(id, U.bankStatus(QT.bankById(id)) === mark ? 'todo' : mark);
 
   function bank(el, firmArg, filterArg) {
-    const firm = knownFirm(firmArg);
+    // Plain "Interview questions" opens on the firm you're preparing for; "all" shows every firm.
+    const firm = firmArg === undefined || firmArg === '' ? U.targetFirm() || undefined : knownFirm(firmArg);
+    const target = U.targetFirm();
     const filter = Object.prototype.hasOwnProperty.call(FILTERS, filterArg) ? filterArg : 'all';
     const scope = QT.bank.filter((b) => !firm || b.firm === firm);
     const list = filter === 'all' ? scope : scope.filter((b) => U.bankStatus(b) === filter);
@@ -54,9 +56,14 @@
     el.innerHTML = `
       <h1>Interview questions</h1>
       <p class="lede">Questions candidates report being asked at trading firms, rewritten in our own words with worked solutions and a link to where each was reported. Treat attributions as candidate reports, not official material, and expect interviewers to change the numbers. Each firm also has a <a href="firms/">plain guide page</a> to read or share.</p>
-      <div class="chips filter">
-        <a class="chip ${firm ? '' : 'on'}" href="#/bank/all/${filter}">All firms (${U.bankCounts().done}/${QT.bank.length})</a>
-        ${Object.entries(QT.firms).map(([k, v]) => { const qs = QT.bank.filter((b) => b.firm === k); return qs.length ? `<a class="chip ${firm === k ? 'on' : ''}" href="#/bank/${k}/${filter}">${v.name} (${U.bankCounts(qs).done}/${qs.length})</a>` : ''; }).join('')}
+      <div class="firm-pick">
+        <label for="firm-sel">Firm</label>
+        <select id="firm-sel">
+          <option value="all">All firms (${U.bankCounts().done}/${QT.bank.length} done)</option>
+          ${Object.entries(QT.firms).map(([k, v]) => { const qs = QT.bank.filter((b) => b.firm === k); return qs.length ? `<option value="${k}" ${firm === k ? 'selected' : ''}>${v.name} (${U.bankCounts(qs).done}/${qs.length} done)</option>` : ''; }).join('')}
+        </select>
+        ${firm ? `<a class="chip chip-btn" href="#/bank/all/${filter}">All firms</a>` : ''}
+        ${target && target !== firm ? `<a class="chip chip-btn" href="#/bank/${target}/${filter}">Your firm: ${QT.firms[target].name}</a>` : ''}
       </div>
       ${F ? `<details class="card intel" ${window.innerWidth > 760 ? 'open' : ''}><summary><b>How ${F.name} interviews</b> (as reported)</summary>
         <ul>${F.process.map((x) => `<li>${x}</li>`).join('')}</ul>
@@ -81,6 +88,12 @@
             </a>
           </div>`; }).join('') : `<p class="small">${filter === 'unsure' ? 'Nothing flagged unsure.' : filter === 'done' ? 'Nothing ticked off yet.' : 'Nothing left to do here.'} <a href="${base}/all">Show all</a></p>`}
       </div>`;
+    el.querySelector('#firm-sel').addEventListener('change', (e) => {
+      const k = e.target.value;
+      // Choosing a firm makes it your target (unless your interview plan names one).
+      if (k !== 'all' && !QT.store.get().plan) U.setTargetFirm(k);
+      location.hash = `#/bank/${k}/${filter}`;
+    });
     el.querySelector('#qlist').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-mark]');
       if (!btn) return;
@@ -158,11 +171,13 @@
   }
 
   function mock(el, firmArg) {
-    const firm = knownFirm(firmArg);
+    // Plain "Mock interview" uses your target firm when it has enough numeric questions.
+    const tf = firmArg === undefined ? U.targetFirm() : null;
+    const firm = knownFirm(firmArg) ?? (tf && QT.bank.filter((b) => b.parts && b.firm === tf).length >= 3 ? tf : undefined);
     const pool = QT.bank.filter((b) => b.parts && (!firm || b.firm === firm));
     const pick = QT.rand.shuffle(pool).slice(0, 5);
     if (!pick.length) {
-      el.innerHTML = `<a class="back" href="#/bank">← Interview questions</a><h1>Mock interview</h1><div class="card"><p style="margin-top:0">There are no numeric questions for this firm yet.</p><a class="btn" href="#/mock">Mock interview with all firms</a></div>`;
+      el.innerHTML = `<a class="back" href="#/bank">← Interview questions</a><h1>Mock interview</h1><div class="card"><p style="margin-top:0">There are no numeric questions for this firm yet.</p><a class="btn" href="#/mock/all">Mock interview with all firms</a></div>`;
       return;
     }
     const start = Date.now();

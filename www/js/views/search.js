@@ -15,7 +15,7 @@
   const PAGES = [
     ['#/plan', 'Interview plan', 'daily checklist countdown to your interview date for one firm'],
     ['#/daily', 'Daily challenge', 'same 5 questions for everyone today shareable result streak'],
-    ['#/weak', 'Weak spots', 'adaptive learner weakest areas skill estimate targeted practice mastery'],
+    ['#/weak', 'Weak-spot training', 'weak spots adaptive learner weakest areas skill estimate targeted practice mastery'],
     ['#/coach', 'Coach', 'what to practise next skill map diagnostic weak spots'],
     ['#/progress', 'Progress', 'charts accuracy speed scores history'],
     ['#/review', 'Mixed practice', 'questions from every topic adaptive'],

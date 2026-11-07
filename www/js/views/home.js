@@ -37,6 +37,24 @@
     return `<a class="card shortcut primary daily-card" href="#/plan"><b>${name} interview ${st.left === 0 ? 'today' : st.left === 1 ? 'tomorrow' : `in ${st.left} days`}</b><span>Today's prep: ${st.done}/${st.tasks.length} done</span></a>`;
   }
 
+  // Your bests in the timed arithmetic games you've played, e.g. "Zetamac 41 · 60 in 6: 23 net".
+  function mentalBests(s) {
+    const m = s.mental, best = (k) => m[k]?.best ?? null, out = [];
+    if (best('zetamac') !== null) out.push(`Zetamac best ${QT.flair.flap(best('zetamac'))}`);
+    if (QT.mental.best80() !== null) out.push(`80 in 8: ${QT.flair.flap(QT.mental.best80())} net`);
+    if (best('ft60') !== null) out.push(`60 in 6: ${QT.flair.flap(best('ft60'))} net`);
+    return out.join(' · ');
+  }
+
+  // Progress lives in this browser only. After a week of practice with no backup in a month (and
+  // no automatic backup file), suggest one. The Android app keeps its own durable copy.
+  function backupNudge(s) {
+    if (s.demo || QT.platform.native || s.days.length < 7) return '';
+    if (QT.backupFile && QT.backupFile.status() === 'on') return '';
+    if (s.lastExport && Date.now() - s.lastExport < 30 * 864e5) return '';
+    return `<p class="small backup-nudge">Your progress is saved in this browser only${s.lastExport ? ', and your last backup is over a month old' : ''}. <a href="#/more">Export a backup</a> so you can't lose ${s.days.length} days of practice.</p>`;
+  }
+
   function home(el) {
     const s = store.get();
     const attempts = Object.values(s.topics).reduce((a, t) => a + t.attempts, 0);
@@ -53,12 +71,16 @@
           <div class="eyebrow">Welcome</div>
           <h1>Get ready for quant trading interviews</h1>
           <p>Probability, statistics, mental maths and market making, plus real questions candidates report from firms like Jane Street, SIG and Optiver.</p>
-          <a class="btn btn-lg" href="#/coach/diagnostic">Start with a 15-minute diagnostic</a>
-          <a class="hero-alt" href="#/review">or jump straight into practice →</a>
-          <p class="small" style="margin:14px 0 0">New here? <a href="#/tour">Take the 1-minute tour</a>, or learn from the basics up in the <a href="#/handbook">handbook</a>.</p>
+          <h2 class="starts-head">Where do you want to start?</h2>
+          <div class="starts">
+            <a class="card shortcut primary" href="#/review"><b>Try a question</b><span>Jump straight in. The coach learns from your first answer.</span></a>
+            <a class="card shortcut" href="#/plan"><b>Plan for an interview</b><span>Pick the firm and date for a daily checklist and a countdown.</span></a>
+            <a class="card shortcut" href="#/handbook"><b>Learn from the beginning</b><span>The handbook: a course from the basics up.</span></a>
+            <a class="card shortcut" href="#/coach/diagnostic"><b>Find your gaps</b><span>A 15-minute diagnostic, one question from each topic.</span></a>
+          </div>
+          <div class="row" style="margin-top:16px"><button type="button" class="ghost" id="demo">Explore with sample data</button><a href="#/tour">Take the 1-minute tour</a></div>
         </div>
         ${QT.plan.todayStatus() ? planCard() : ''}
-        <p class="small">Just looking around? <button type="button" class="link" id="demo">See it with sample data</button> to explore the coach and skill map without practising first.</p>
         <h2>How it works</h2>
         <ol class="steps">
           <li><b>Diagnose.</b> One question from each of the ${QT.topics.length} topics shows where you stand.</li>
@@ -99,15 +121,16 @@
       <h2>Your progress <a class="h-link" href="#/progress">Charts →</a></h2>
       <div class="tiles">
         <a class="tile" href="#/coach"><div class="v">${strong}<span class="of">/${QT.coach.allIds().length}</span></div><div class="k">skills strong</div></a>
-        <div class="tile"><div class="v">${attempts}</div><div class="k">problems solved</div></div>
-        <div class="tile"><div class="v">${attempts ? U.pctStr(correct / attempts) : '–'}</div><div class="k">accuracy</div></div>
+        <div class="tile"><div class="v">${attempts}</div><div class="k">topic questions answered</div></div>
+        <div class="tile"><div class="v">${attempts ? U.pctStr(correct / attempts) : '–'}</div><div class="k">accuracy, all time</div></div>
         <div class="tile"><div class="v">${streak}</div><div class="k">day streak</div></div>
       </div>
 
+      ${backupNudge(s)}
       <h2>Keep sharp</h2>
       <div class="shortcuts">
         <a class="card shortcut" href="#/bank"><b>Interview questions</b><span>${U.bankDone()}/${QT.bank.length} done${U.bankCounts().unsure ? ` · ${U.bankCounts().unsure} unsure` : ''} · mock interviews</span></a>
-        <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${QT.mental.best80() !== null ? `80-in-8 best ${QT.flair.flap(QT.mental.best80())} net` : 'Not tried yet'}</span></a>
+        <a class="card shortcut" href="#/mental"><b>Mental maths</b><span>${mentalBests(s) || 'Not tried yet'}</span></a>
         <a class="card shortcut" href="#/figgie"><b>Figgie</b><span>${s.figgie.games ? `${s.figgie.games} games · avg P&amp;L ${f(s.figgie.total / s.figgie.games)}` : "Jane Street's trading card game"}</span></a>
         <a class="card shortcut" href="#/quote"><b>Make me a market</b><span>${s.quote.n ? `${Math.round((100 * s.quote.hits) / s.quote.n)}% of final markets right` : 'The live interview format'}</span></a>
         <a class="card shortcut" href="#/kelly"><b>Bet sizing</b><span>${s.kelly.best !== null ? `best sizing score ${Math.round(s.kelly.best * 100)}%` : 'How much would you stake?'}</span></a>

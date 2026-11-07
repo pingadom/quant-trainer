@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.43.0
+
+A redesign of how you find your way around, from a review of every screen and an outside UI/UX review.
+
+- **A shorter sidebar.** Coach, Interview plan and Daily challenge sit at the top. Learn, Practise, Interview prep and Trading games fold away; the one holding the page you're on opens by itself, and any you open stay open. Progress, Roadmap and Settings sit at the bottom.
+- **Clearer names:** "Practise by topic" and "Read topic guides" (were Topics and Topic guides), "Weak-spot training" (was Weak spots, now under Practise), "Market-making sim" (was Market making, beside Make me a market).
+- **First visit:** four ways to start (try a question, plan for an interview, learn from the beginning, or the 15-minute diagnostic) and a visible "Explore with sample data" button.
+- **Your target firm:** the firm in your interview plan, or the last one you picked in Interview questions. Interview questions, Mock interview, the phone-screen mock and the plan form start on it.
+- **Interview questions:** a firm drop-down replaces the row of 20+ firm chips, with a shortcut to your firm.
+- **More (phone):** recently visited screens first, then every section in a fold-out group of compact rows.
+- **Coach:** filter the skill map to Weak, Shaky, Strong, Learning or Not started. Error habits show each kind of slip as a share of your recent mistakes.
+- **Home:** "topic questions answered" and "accuracy, all time" (the tile said "problems solved" but counted every attempt). The Mental maths card shows your Zetamac, 80-in-8 and 60-in-6 bests. A reminder to export a backup after a week of practice with none in the past month.
+- **Easier to read and tap:** body text 16px (was 15px) and small text 14px; back links, fold-out headings and the "Charts" link have bigger tap targets.
+- **Accessibility:** after moving to another screen, keyboard and screen-reader focus goes to its heading. The Stats lab's controls are labelled.
+- **Fixes:** the mistakes count on the Practice page's "Mistakes to review" card was grey on red and unreadable. The More page was missing Weak-spot training and described Mental maths without 60 in 6. The sample-data profile now spreads its answers over the streak, so the week's accuracy candles show. New README screenshots.
+
 ## 0.42.0
 
 - **Pacing chart after every timed game:** Zetamac (including challenges and single-operation games), 80 in 8, 60 in 6 and the rhythm drill.

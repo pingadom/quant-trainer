@@ -70,8 +70,8 @@
       <div class="card">
         <p class="small">Draw many samples of size n, take each sample's mean, and plot the histogram of those means. The red curve is the CLT's normal approximation N(μ, σ²/n). Try the skewed distributions with small n.</p>
         <div class="controls">
-          <div><label>Distribution</label><select id="clt-d">${Object.entries(DISTS).map(([k, d]) => `<option value="${k}">${d.label}</option>`).join('')}</select></div>
-          <div><label>Sample size n = <b id="clt-nv">1</b></label><input type="range" id="clt-n" min="1" max="100" value="1"></div>
+          <div><label for="clt-d">Distribution</label><select id="clt-d">${Object.entries(DISTS).map(([k, d]) => `<option value="${k}">${d.label}</option>`).join('')}</select></div>
+          <div><label for="clt-n">Sample size n = <b id="clt-nv">1</b></label><input type="range" id="clt-n" min="1" max="100" value="1"></div>
         </div>
         <canvas id="clt-c"></canvas>
         <div class="stats" id="clt-s"></div>
@@ -81,8 +81,8 @@
       <div class="card">
         <p class="small">Simulate one year of daily prices, S<sub>t+1</sub> = S<sub>t</sub>·exp((μ − σ²/2)Δt + σ√Δt·Z). The <b>mean</b> terminal price grows at e<sup>μ</sup>, but the <b>median</b> path grows only at e<sup>μ−σ²/2</sup>. Raise σ and watch most paths lose money while the mean still looks good.</p>
         <div class="controls">
-          <div><label>Drift μ = <b id="gbm-mv">8%</b></label><input type="range" id="gbm-m" min="-20" max="40" value="8"></div>
-          <div><label>Volatility σ = <b id="gbm-sv">30%</b></label><input type="range" id="gbm-s" min="5" max="120" value="30"></div>
+          <div><label for="gbm-m">Drift μ = <b id="gbm-mv">8%</b></label><input type="range" id="gbm-m" min="-20" max="40" value="8"></div>
+          <div><label for="gbm-s">Volatility σ = <b id="gbm-sv">30%</b></label><input type="range" id="gbm-s" min="5" max="120" value="30"></div>
           <div><button id="gbm-go" class="ghost">Resimulate</button></div>
         </div>
         <canvas id="gbm-c"></canvas>

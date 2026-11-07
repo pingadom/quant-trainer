@@ -39,6 +39,9 @@
       const d = new Date(now - i * DAY);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     });
+    // The answers above were all stamped "now": spread them over the streak, oldest first, so
+    // the week's accuracy candles on the home screen have something to show.
+    (s.log || []).forEach((x, i, a) => { x.t = now - Math.round(((a.length - 1 - i) / a.length) * 8.6 * DAY); });
     // Histories for the progress charts: a learner who is slowly improving, with noise.
     const ago = (i, n) => new Date(now - (n - i) * DAY * 0.8).toISOString();
     const trend = (n, from, to, noise) => Array.from({ length: n }, (_, i) => from + ((to - from) * i) / (n - 1) + (rnd() - 0.5) * noise);

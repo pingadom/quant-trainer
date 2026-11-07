@@ -84,6 +84,18 @@
     }
   }
 
+  // ---- target firm ----
+  // The firm you're preparing for: your interview plan's firm, otherwise the last firm you chose
+  // in the question bank. Screens that can be about one firm start there.
+  const FIRM_KEY = 'qt-target-firm';
+  const hasQs = (k) => !!k && k !== 'common' && Object.prototype.hasOwnProperty.call(QT.firms, k) && QT.bank.some((b) => b.firm === k);
+  function targetFirm() {
+    const p = QT.store.get().plan;
+    if (p && hasQs(p.firm)) return p.firm;
+    try { const k = localStorage.getItem(FIRM_KEY); return hasQs(k) ? k : null; } catch { return null; }
+  }
+  const setTargetFirm = (k) => { try { if (hasQs(k)) localStorage.setItem(FIRM_KEY, k); else localStorage.removeItem(FIRM_KEY); } catch { /* storage blocked */ } };
+
   // ---- cards ----
   // Skill status uses the reserved status colours, always paired with an icon and a label.
   const STATUS = {
@@ -257,5 +269,5 @@
     next();
   }
 
-  QT.ui = { TRACKS, pctStr, esc, caseProgress, casesDone, bankProgress, bankDone, bankStatus, setBankMark, bankCounts, recordBank, hintBox, wireHints, updateBadges, STATUS, recCard, skillChip, topicCard, caseCard, questionCard };
+  QT.ui = { targetFirm, setTargetFirm, TRACKS, pctStr, esc, caseProgress, casesDone, bankProgress, bankDone, bankStatus, setBankMark, bankCounts, recordBank, hintBox, wireHints, updateBadges, STATUS, recCard, skillChip, topicCard, caseCard, questionCard };
 })();

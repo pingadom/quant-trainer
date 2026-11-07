@@ -8,7 +8,7 @@
     const recs = QT.coach.recommend();
     const ids = QT.coach.allIds(), counts = {};
     ids.forEach((id) => { const s = QT.coach.stat(id).status; counts[s] = (counts[s] || 0) + 1; });
-    const habits = QT.coach.habits(50), focus = QT.coach.focus().map((id) => QT.coach.parse(id).name);
+    const habits = QT.coach.habits(50), nErr = Math.min(store.get().errors.length, 50), focus = QT.coach.focus().map((id) => QT.coach.parse(id).name);
     const fresh = (counts.unseen || 0) === ids.length;
 
     el.innerHTML = `
@@ -25,20 +25,33 @@
       <h2>Error habits</h2>
       ${habits.length ? `<div class="card">${habits.map((h) => `
         <div class="habit">
-          <div class="habit-row"><span>${h.label}</span><span class="mono">${h.n}</span></div>
-          <div class="bar"><i style="width:${Math.round((100 * h.n) / habits[0].n)}%"></i></div>
+          <div class="habit-row"><span>${h.label}</span><span class="mono">${h.n} · ${Math.round((100 * h.n) / nErr)}%</span></div>
+          <div class="bar" role="img" aria-label="${Math.round((100 * h.n) / nErr)}% of your recent mistakes"><i style="width:${Math.round((100 * h.n) / nErr)}%"></i></div>
           <p class="small">${h.advice}</p>
-        </div>`).join('')}<p class="small">From your last ${Math.min(store.get().errors.length, 50)} mistakes.</p></div>`
+        </div>`).join('')}<p class="small">Share of your last ${nErr} mistakes. Slips that fit no pattern aren't listed.</p></div>`
       : `<div class="card"><p class="small" style="margin:0">No mistakes yet. When you get one wrong, I'll work out what kind of slip it was: a complement mix-up, % vs decimal, a factor of 2, variance vs SD, rounding, and so on.</p></div>`}
 
       <h2>Skill map</h2>
-      <p class="small">Each of the ${ids.length} skills, by your recent accuracy. Tap one to drill it.</p>
-      <div class="legend" role="list">${Object.entries(U.STATUS).map(([k, v]) => `<span class="sk st-${k}" role="listitem"><i aria-hidden="true">${v.icon}</i>${v.label} · ${counts[k] || 0}</span>`).join('')}</div>
+      <p class="small">Each of the ${ids.length} skills, by your recent accuracy. Tap one to drill it, or show one kind only:</p>
+      <div class="legend skill-filter" role="group" aria-label="Show skills">${Object.entries(U.STATUS).map(([k, v]) => `<button type="button" class="sk st-${k}" data-show="${k}" aria-pressed="false"${counts[k] ? '' : ' disabled'}><i aria-hidden="true">${v.icon}</i>${v.label} · ${counts[k] || 0}</button>`).join('')}</div>
+      <div class="skill-map">
       ${QT.topics.map((t) => `
         <div class="skill-topic">
           <h3><a href="#/topic/${t.id}">${t.name}</a></h3>
           <div class="skill-chips">${t.skills.map((_, gi) => U.skillChip(t, gi)).join('')}</div>
-        </div>`).join('')}`;
+        </div>`).join('')}
+      </div>`;
+    // Pressing a status shows only skills with it; pressing it again shows them all.
+    const map = el.querySelector('.skill-map'), btns = el.querySelectorAll('[data-show]');
+    btns.forEach((b) => b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      btns.forEach((x) => x.setAttribute('aria-pressed', String(on && x === b)));
+      map.querySelectorAll('.skill-topic').forEach((t) => {
+        let any = false;
+        t.querySelectorAll('.sk').forEach((c) => { const hit = !on || c.classList.contains(`st-${b.dataset.show}`); c.hidden = !hit; any ||= hit; });
+        t.hidden = !any;
+      });
+    }));
   }
 
   function session(el) {

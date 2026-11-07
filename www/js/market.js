@@ -9,7 +9,7 @@
   function render(el) {
     const m = store.get().market;
     el.innerHTML = `
-      <h1>Market making</h1>
+      <h1>Market-making simulator</h1>
       <p class="lede">Five fair dice are rolled face down. You make a market on their <b>sum</b>. Each round you quote a bid and an ask (width at most ${MAX_WIDTH}). Two traders may deal with you:
       an <b>informed</b> trader who has peeked at up to two hidden dice and trades only when your price is wrong, and a <b>noise</b> trader who buys or sells at random.
       After each round one die is revealed. At the end the contract settles at the true sum.</p>

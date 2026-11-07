@@ -214,7 +214,7 @@
   // ---------------------------------------------------------------- the run
   function render(el, a1, a2) {
     if (a1 === 'part' && PARTS.some((p) => p.id === a2)) return run(el, null, [a2]);
-    const firm = a1 && Object.prototype.hasOwnProperty.call(QT.firms, a1) ? a1 : null;
+    const firm = a1 && Object.prototype.hasOwnProperty.call(QT.firms, a1) ? a1 : a1 === undefined ? QT.ui.targetFirm() : null;
     if (a2 === 'go') return run(el, firm, PARTS.map((p) => p.id));
     const runs = store.get().screen.runs, F = firm && QT.firms[firm];
     el.innerHTML = `

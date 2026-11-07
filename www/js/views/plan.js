@@ -136,7 +136,7 @@
       <p class="lede">Tell it which firm and when. You'll get a short checklist for each day until then, weighted to what that firm is reported to test, and a countdown on the home screen.</p>
       <form class="card" id="plan-form">
         <label for="pf-firm">Firm</label>
-        <select id="pf-firm" style="display:block;margin:6px 0 14px">${firms().map(([k, v]) => `<option value="${k}" ${p?.firm === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select>
+        <select id="pf-firm" style="display:block;margin:6px 0 14px">${firms().map(([k, v]) => `<option value="${k}" ${(p ? p.firm : QT.ui.targetFirm()) === k ? 'selected' : ''}>${v.name}</option>`).join('')}</select>
         <label for="pf-date">Interview date</label>
         <input type="date" id="pf-date" min="${min}" value="${p?.date || QT.dayKey(new Date(Date.now() + 7 * DAY))}" style="display:block;margin:6px 0 14px">
         <button>${p ? 'Update plan' : 'Make my plan'}</button>

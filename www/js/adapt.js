@@ -127,7 +127,7 @@
     const rows = ranked(), firm = planFirm(), a = st();
     const focus = rows.filter((r) => r.e.status !== 'strong').slice(0, 3);
     el.innerHTML = `
-      <h1>Weak spots</h1>
+      <h1>Weak-spot training</h1>
       <p class="lede">One estimate per interview skill, pooled from everything you've answered in Theo: topic drills, interview questions, handbook checks, mental maths and market making. Sessions train the weakest areas and adjust to you as you go.</p>
       <div class="card rec">
         <div class="rec-body"><b>${SESSION}-question session</b><p class="small">${focus.length ? `Focus: ${focus.map((r) => esc(r.A.name)).join(', ')}.` : 'Everything looks strong: this mixes in interview questions to keep it that way.'}${firm ? ` Weighted towards what ${esc(QT.firms[firm]?.name || firm)} asks.` : ''}</p></div>
@@ -153,7 +153,7 @@
     const level = {}, streak = {}, rested = new Set(), log = [];
     let n = 0, last = null;
     el.innerHTML = `
-      <a class="back" href="#/weak">← Weak spots</a>
+      <a class="back" href="#/weak">← Weak-spot training</a>
       <h1>${only ? esc(byId(only).name) : 'Weak-spot session'}</h1>
       <div class="session"><span id="ws-area"></span><span class="mono" id="ws-n"></span></div>
       <div id="ws-box"></div>`;

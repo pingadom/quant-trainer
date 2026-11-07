@@ -2,57 +2,65 @@
 (function () {
   const store = QT.store;
 
+  // Every section, grouped as in the sidebar. `route` keys the Recent list (app.js records visits).
+  const GROUPS = () => [
+    { id: 'prep', name: 'Your prep', items: [
+      { route: 'coach', href: '#/coach', name: 'Coach', desc: 'What to practise next, your skill map and the diagnostic' },
+      { route: 'plan', href: '#/plan', name: 'Interview plan', desc: "A daily checklist up to your interview, for the firm you're seeing" },
+      { route: 'daily', href: '#/daily', name: 'Daily challenge', desc: 'The same 5 questions for everyone today' },
+      { route: 'progress', href: '#/progress', name: 'Progress', desc: 'Charts of your accuracy, speed and scores over time' },
+      { route: 'roadmap', href: '#/roadmap', name: 'Roadmap', desc: 'Stages, books and milestones' },
+    ] },
+    { id: 'learn', name: 'Learn', items: [
+      { route: 'handbook', href: '#/handbook', name: 'Handbook', desc: 'A full course from the basics up, with homework and exams' },
+      { route: 'practice', href: '#/practice', name: 'Practise by topic', desc: `Formula sheets and endless questions in ${QT.topics.length} topics` },
+      { route: 'flashcards', href: '#/flashcards', name: 'Formula cards', desc: `${QT.flashcards.CARDS.length} formulas to know cold, on a spaced schedule` },
+      { route: 'tricks', href: '#/tricks', name: 'Speed tricks', desc: `${QT.tricks.length} guides to faster arithmetic, each with a drill` },
+      { route: 'cases', href: '#/cases', name: 'Case studies', desc: 'Real market events as statistics lessons' },
+      { route: 'lab', href: '#/lab', name: 'Stats lab', desc: 'CLT and volatility-drag simulations' },
+      { href: 'topics/', name: 'Read topic guides', desc: 'Key results and a worked example of every question type, as plain pages' },
+    ] },
+    { id: 'practise', name: 'Practise', items: [
+      { route: 'review', href: '#/review', name: 'Mixed practice', desc: 'Questions picked for you across every topic' },
+      { route: 'mistakes', href: '#/mistakes', name: 'Mistakes to review', desc: 'Wrong answers coming back on a schedule' },
+      { route: 'weak', href: '#/weak', name: 'Weak-spot training', desc: 'Your accuracy in each interview skill area, with a session for the weakest' },
+      { route: 'mental', href: '#/mental', name: 'Mental maths', desc: 'Zetamac, 80 in 8, 60 in 6 (Flow Traders), flow training and speed reps' },
+      { route: 'oa', href: '#/oa', name: 'Online tests', desc: 'Number sequences, digit span and running totals, timed' },
+      { route: 'code', href: '#/code', name: 'Coding (SWE)', desc: 'Optiver software engineering problems and a CS knowledge quiz' },
+    ] },
+    { id: 'interviews', name: 'Interview prep', items: [
+      { route: 'bank', href: '#/bank', name: 'Interview questions', desc: 'Questions candidates report, by firm, with sources' },
+      { route: 'mock', href: '#/mock', name: 'Mock interview', desc: 'Five questions against the clock' },
+      { route: 'screen', href: '#/screen', name: 'Phone-screen mock', desc: 'A full 45-minute first round, out loud' },
+      { route: 'talk', href: '#/talk', name: 'Think aloud', desc: 'Answer out loud, record yourself, review' },
+      { route: 'stories', href: '#/stories', name: 'Stories', desc: 'Write and rehearse your behavioural answers' },
+      { route: 'sse', href: '#/sse', name: 'Citadel SSE prep', desc: 'Study plan for the Semi-Systematic Equities phone screen' },
+      { href: 'firms/', name: 'Firm guides', desc: "Each firm's process and reported questions, as plain pages" },
+    ] },
+    { id: 'games', name: 'Trading games', items: [
+      { route: 'figgie', href: '#/figgie', name: 'Figgie', desc: "Jane Street's card trading game, against three bots" },
+      { route: 'quote', href: '#/quote', name: 'Make me a market', desc: 'The interview format: quote two-sided prices and the interviewer trades against you' },
+      { route: 'market', href: '#/market', name: 'Market-making sim', desc: 'Quote on hidden dice against informed flow' },
+      { route: 'kelly', href: '#/kelly', name: 'Bet sizing', desc: 'How much to stake: the Kelly criterion in practice' },
+      { route: 'estimate', href: '#/estimate', name: 'Estimation & calibration', desc: 'Quote ranges on unknown quantities' },
+    ] },
+  ];
+  const itemFor = (k) => GROUPS().flatMap((g) => g.items).find((it) => it.route === k);
+  // Which groups you've unfolded, remembered on this device.
+  const GROUP_KEY = 'qt-more-open';
+  const openGroups = () => { try { return JSON.parse(localStorage.getItem(GROUP_KEY) || '{}') || {}; } catch { return {}; } };
+
   function more(el) {
     let pref = 'auto';
     try { pref = localStorage.getItem('qt-keypad') || 'auto'; } catch { /* storage blocked: use default */ }
+    const open = openGroups(), recent = QT.recentRoutes().map(itemFor).filter(Boolean).slice(0, 4);
+    const row = (it) => `<a class="mrow" href="${it.href}"><b>${it.name}</b><span class="small">${it.desc}</span></a>`;
     el.innerHTML = `
       <h1>More</h1>
-      <p class="lede">Everything in the app, grouped the same way as the sidebar.</p>
       <a class="card search-entry" href="#/search"><b>Search</b><span class="small">Find any interview question, topic, formula or trick</span></a>
-      <h2 class="menu-head">My prep</h2>
-      <div class="menu">
-        <a class="card" href="#/plan"><b>Interview plan</b><span class="small">A daily checklist up to your interview, for the firm you're seeing</span></a>
-        <a class="card" href="#/daily"><b>Daily challenge</b><span class="small">The same 5 questions for everyone today, with a shareable result</span></a>
-        <a class="card" href="#/coach"><b>Coach</b><span class="small">What to practise next, your skill map and the diagnostic</span></a>
-        <a class="card" href="#/progress"><b>Progress</b><span class="small">Charts of your accuracy, speed and scores over time</span></a>
-        <a class="card" href="#/roadmap"><b>Roadmap</b><span class="small">Stages, books and milestones</span></a>
-      </div>
-      <h2 class="menu-head">Learn</h2>
-      <div class="menu">
-        <a class="card" href="#/practice"><b>Topics</b><span class="small">Formula sheets and endless questions in ${QT.topics.length} topics</span></a>
-        <a class="card" href="#/handbook"><b>Handbook</b><span class="small">A full course from the basics up: worked examples, diagrams, tools, homework and exams</span></a>
-        <a class="card" href="#/flashcards"><b>Formula cards</b><span class="small">${QT.flashcards.CARDS.length} formulas to know cold, on a spaced schedule</span></a>
-        <a class="card" href="#/tricks"><b>Speed tricks</b><span class="small">${QT.tricks.length} guides to faster arithmetic, each with a drill</span></a>
-        <a class="card" href="#/cases"><b>Case studies</b><span class="small">Real market events as statistics lessons</span></a>
-        <a class="card" href="topics/"><b>Topic guides</b><span class="small">Key results and a worked example of every question type, as plain pages to read or share</span></a>
-        <a class="card" href="#/lab"><b>Stats lab</b><span class="small">CLT and volatility-drag simulations</span></a>
-      </div>
-      <h2 class="menu-head">Practise</h2>
-      <div class="menu">
-        <a class="card" href="#/review"><b>Mixed practice</b><span class="small">Questions picked for you across every topic</span></a>
-        <a class="card" href="#/mistakes"><b>Mistakes to review</b><span class="small">Wrong answers coming back on a schedule</span></a>
-        <a class="card" href="#/mental"><b>Mental maths</b><span class="small">80 in 8 (multiple choice or typed), Zetamac and speed reps</span></a>
-        <a class="card" href="#/oa"><b>Online tests</b><span class="small">Number sequences, digit span and running totals, timed</span></a>
-        <a class="card" href="#/code"><b>Coding (SWE)</b><span class="small">Optiver software engineering problems, run in Python or JavaScript, and a CS knowledge quiz</span></a>
-      </div>
-      <h2 class="menu-head">Interviews</h2>
-      <div class="menu">
-        <a class="card" href="#/bank"><b>Interview questions</b><span class="small">Questions candidates report, by firm, with sources</span></a>
-        <a class="card" href="#/sse"><b>Citadel SSE prep</b><span class="small">Study plan for the Semi-Systematic Equities phone screen: statistics, equity quant, probability and more</span></a>
-        <a class="card" href="#/mock"><b>Mock interview</b><span class="small">Five questions against the clock</span></a>
-        <a class="card" href="#/screen"><b>Phone-screen mock</b><span class="small">A full 45-minute first round: intro, mental maths, probability, market making, behavioural</span></a>
-        <a class="card" href="#/stories"><b>Stories</b><span class="small">Write and rehearse your behavioural answers</span></a>
-        <a class="card" href="firms/"><b>Firm guides</b><span class="small">Each firm's process and reported questions, as plain pages to read or share</span></a>
-        <a class="card" href="#/talk"><b>Think aloud</b><span class="small">Answer out loud, record yourself, review</span></a>
-      </div>
-      <h2 class="menu-head">Trading games</h2>
-      <div class="menu">
-        <a class="card" href="#/figgie"><b>Figgie</b><span class="small">Jane Street's card trading game, against three bots</span></a>
-        <a class="card" href="#/quote"><b>Make me a market</b><span class="small">Quote two-sided prices; the interviewer trades against you</span></a>
-        <a class="card" href="#/market"><b>Market making</b><span class="small">Quote on hidden dice against informed flow</span></a>
-        <a class="card" href="#/kelly"><b>Bet sizing</b><span class="small">How much to stake: the Kelly criterion in practice</span></a>
-        <a class="card" href="#/estimate"><b>Estimation &amp; calibration</b><span class="small">Quote ranges on unknown quantities</span></a>
-      </div>
+      ${recent.length ? `<h2 class="menu-head">Recent</h2><div class="card mlist">${recent.map(row).join('')}</div>` : ''}
+      <h2 class="menu-head">Everything</h2>
+      ${GROUPS().map((g) => `<details class="card mgroup" data-g="${g.id}"${open[g.id] ? ' open' : ''}><summary><b>${g.name}</b> <span class="small">${g.items.map((it) => it.name).slice(0, 3).join(', ')}…</span></summary><div class="mlist">${g.items.map(row).join('')}</div></details>`).join('')}
 
       <div id="install"></div>
 
@@ -100,6 +108,11 @@
     drawInstall();
     document.addEventListener('qt:installable', drawInstall, { once: true });
 
+    el.querySelectorAll('.mgroup').forEach((d) => d.addEventListener('toggle', () => {
+      const o = openGroups();
+      o[d.dataset.g] = d.open;
+      try { localStorage.setItem(GROUP_KEY, JSON.stringify(o)); } catch { /* storage blocked */ }
+    }));
     el.querySelector('#kp').addEventListener('change', (e) => {
       try { localStorage.setItem('qt-keypad', e.target.value); } catch { /* storage blocked */ }
     });

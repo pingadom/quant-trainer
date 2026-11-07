@@ -22,10 +22,11 @@ const skip = async (page) => {
   await page.getByRole('button', { name: 'Next question →' }).click();
 };
 
-test('first visit offers one clear first step', async ({ page }) => {
+test('first visit offers a few clear ways to start', async ({ page }) => {
   await page.goto('./');
   await expect(page.getByRole('heading', { level: 1, name: 'Get ready for quant trading interviews' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Start with a 15-minute diagnostic' })).toBeVisible();
+  for (const name of [/Try a question/, /Plan for an interview/, /Learn from the beginning/, /Find your gaps/]) await expect(page.getByRole('link', { name })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Explore with sample data' })).toBeVisible();
 });
 
 test('every screen renders a heading', async ({ page }) => {
@@ -738,4 +739,47 @@ test('flow training: a method drill shows the steps, then times you, and the tab
   await page.goto('./#/mental/flow');
   await expect(page.locator('.flow-table')).toContainText('Subtracting a number ending in 8 or 9');
   await expect(page.locator('.flow-table tr', { hasText: 'ending in 8 or 9' }).nth(1).locator('td').nth(2)).toHaveText('10');
+});
+
+test('target firm: the one you pick in Interview questions carries to the bank, mock and plan form', async ({ page }) => {
+  await page.goto('./#/bank');
+  await page.locator('#firm-sel').selectOption('citadel');
+  await expect(page).toHaveURL(/#\/bank\/citadel\/all$/);
+  await page.goto('./#/bank');
+  await expect(page.locator('#firm-sel')).toHaveValue('citadel');
+  await page.locator('#firm-sel').selectOption('all');
+  await expect(page.getByRole('link', { name: 'Your firm: Citadel' })).toBeVisible();
+  await page.goto('./#/plan');
+  await expect(page.getByLabel('Firm')).toHaveValue('citadel');
+});
+
+test('coach: the skill map shows one status at a time', async ({ page }) => {
+  await page.goto('./?demo#/coach');
+  const all = await page.locator('.skill-map .sk').count();
+  await page.locator('[data-show="weak"]').click();
+  await expect(page.locator('[data-show="weak"]')).toHaveAttribute('aria-pressed', 'true');
+  const shown = await page.locator('.skill-map .sk:visible').count();
+  expect(shown).toBeGreaterThan(0);
+  expect(shown).toBeLessThan(all);
+  expect(await page.locator('.skill-map .sk:visible:not(.st-weak)').count()).toBe(0);
+  await page.locator('[data-show="weak"]').click();
+  await expect(page.locator('.skill-map .sk:visible')).toHaveCount(all);
+});
+
+test('navigation: sidebar sections start folded, and the open screen gets focus on its heading', async ({ page, isMobile }) => {
+  await page.goto('./#/');
+  if (!isMobile) {
+    await expect(page.locator('.nav-sec[open]')).toHaveCount(0);
+    await page.goto('./#/mental');
+    await expect(page.locator('.nav-sec[data-sec="practise"]')).toHaveAttribute('open', '');
+    await page.locator('.nav a[href="#/figgie"]').evaluate((a) => a.closest('details').querySelector('summary').click());
+    await page.locator('.nav a[href="#/figgie"]').click();
+    await expect(page.locator('.nav-sec[data-sec="practise"]')).not.toHaveAttribute('open', '');
+    await expect(page.locator('main h1')).toBeFocused();
+  } else {
+    await page.goto('./#/mental');
+  }
+  await page.goto('./#/more');
+  await expect(page.getByRole('heading', { level: 2, name: 'Recent' })).toBeVisible();
+  await expect(page.locator('.mlist .mrow').first()).toContainText(isMobile ? 'Mental maths' : 'Figgie');
 });

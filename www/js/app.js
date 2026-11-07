@@ -25,8 +25,8 @@
   const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', drill: 'coach', appearance: 'more', tour: '' };
   // Phone tabs: Home · Coach (my prep) · Practice (learn and practise) · Interviews · More (games, settings).
   const TAB_PARENT = {
-    plan: 'coach', weak: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
-    topic: 'practice', handbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
+    plan: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
+    weak: 'practice', topic: 'practice', handbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
     iq: 'bank', sse: 'bank', mock: 'bank', talk: 'bank', screen: 'bank', stories: 'bank',
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',
   };
@@ -39,6 +39,18 @@
     }
   };
 
+  // The last few screens visited, for the "Recent" list on the More page.
+  const RECENT_KEY = 'qt-recent', NOT_RECENT = ['', 'more', 'search', 'tour', 'appearance'];
+  function remember(key) {
+    if (NOT_RECENT.includes(key) || !Object.prototype.hasOwnProperty.call(routes, key)) return;
+    try {
+      const list = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').filter((k) => k !== key && typeof k === 'string');
+      localStorage.setItem(RECENT_KEY, JSON.stringify([key, ...list].slice(0, 6)));
+    } catch { /* storage blocked */ }
+  }
+  QT.recentRoutes = () => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').filter((k) => typeof k === 'string'); } catch { return []; } };
+
+  let firstRoute = true;
   function route() {
     if (QT.cleanup) QT.cleanup(); // stop timers etc. left by the previous screen
     QT.cleanup = null;
@@ -63,14 +75,22 @@
     }
     const navKey = NAV_PARENT[key] ?? key, tabKey = TAB_PARENT[key] ?? key;
     document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
-    // The section holding the current page is always open.
-    document.querySelector('.nav a.active')?.closest('details.nav-sec')?.setAttribute('open', '');
+    // The section holding the current page is open, as are any you opened yourself; the rest fold.
+    document.querySelectorAll('details.nav-sec').forEach((d) => { d.open = !!opened[d.dataset.sec] || !!d.querySelector('a.active'); });
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));
     QT.ui.updateBadges();
     QT.flair.ticker();
     const h1 = main.querySelector('h1');
     document.title = key && h1 ? `${h1.textContent} · Theo` : 'Theo · Quant trading interview practice';
     window.scrollTo(0, 0);
+    // After moving to another screen, put keyboard and screen-reader focus on its heading, unless
+    // the screen already focused something itself (an answer box, say).
+    if (!firstRoute && h1 && !main.contains(document.activeElement)) {
+      h1.setAttribute('tabindex', '-1');
+      h1.focus({ preventScroll: true });
+    }
+    firstRoute = false;
+    remember(key);
     QT.platform.track();
   }
   QT.route = route;
@@ -100,15 +120,16 @@
     history.replaceState(null, '', location.pathname + location.hash); // so "Start my own" sticks after a reload
   }
 
-  // Sidebar sections fold open or shut; remember each one's state on this device.
-  const NAV_KEY = 'qt-nav';
-  let folded = {};
-  try { folded = JSON.parse(localStorage.getItem(NAV_KEY) || '{}') || {}; } catch { /* storage blocked */ }
+  // Sidebar sections start folded so the sidebar stays short; the one holding the current page
+  // opens by itself. Sections you open or close by hand are remembered on this device.
+  const NAV_KEY = 'qt-nav-open';
+  let opened = {};
+  try { opened = JSON.parse(localStorage.getItem(NAV_KEY) || '{}') || {}; } catch { /* storage blocked */ }
   document.querySelectorAll('details.nav-sec').forEach((d) => {
-    if (folded[d.dataset.sec]) d.removeAttribute('open');
-    d.addEventListener('toggle', () => {
-      folded[d.dataset.sec] = !d.open;
-      try { localStorage.setItem(NAV_KEY, JSON.stringify(folded)); } catch { /* storage blocked */ }
+    if (opened[d.dataset.sec]) d.setAttribute('open', '');
+    d.querySelector('summary').addEventListener('click', () => {
+      opened[d.dataset.sec] = !d.open; // the click is about to flip it
+      try { localStorage.setItem(NAV_KEY, JSON.stringify(opened)); } catch { /* storage blocked */ }
     });
   });
 
