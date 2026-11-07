@@ -281,7 +281,7 @@ test('Zetamac challenge link: same questions as the sender, with the score to be
 
 test('speed-trick lesson and drill', async ({ page }) => {
   await page.goto('./#/tricks');
-  await expect(page.locator('.topic-card')).toHaveCount(20);
+  await expect(page.locator('.topic-card')).toHaveCount(await page.evaluate(() => QT.tricks.length));
   await page.getByRole('link', { name: /Multiplying numbers near 100/ }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Multiplying numbers near 100');
   for (let i = 0; i < 10; i++) await skip(page);
