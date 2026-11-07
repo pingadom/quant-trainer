@@ -43,6 +43,14 @@
     <button type="button" class="qmark unsure" data-mark="unsure" data-id="${b.id}" aria-pressed="${s === 'unsure'}" title="${s === 'unsure' ? 'Unsure: press to clear' : 'Flag as unsure, to come back to'}" aria-label="Unsure">?</button>`;
   const toggleMark = (id, mark) => U.setBankMark(id, U.bankStatus(QT.bankById(id)) === mark ? 'todo' : mark);
 
+  // Search, topic and difficulty filters for the list, kept while you tick questions off. The list
+  // shows PAGE questions at a time.
+  const PAGE = 60;
+  const view = { key: '', q: '', cat: '', lvl: '', limit: PAGE };
+  const norm = (t) => t.toLowerCase().replace(/<[^>]+>/g, ' ');
+  const matches = (b) => (!view.cat || b.cat === view.cat) && (!view.lvl || b.role === view.lvl)
+    && (!view.q || norm(`${b.q} ${b.title || ''} ${b.cat} ${(b.parts || []).map((x) => x.q).join(' ')} ${QT.firms[b.firm].name}`).includes(view.q.toLowerCase().trim()));
+
   function bank(el, firmArg, filterArg) {
     // Plain "Interview questions" opens on the firm you're preparing for; "all" shows every firm.
     const firm = firmArg === undefined || firmArg === '' ? U.targetFirm() || undefined : knownFirm(firmArg);
@@ -50,12 +58,17 @@
     const filter = Object.prototype.hasOwnProperty.call(FILTERS, filterArg) ? filterArg : 'all';
     const scope = QT.bank.filter((b) => !firm || b.firm === firm);
     const list = filter === 'all' ? scope : scope.filter((b) => U.bankStatus(b) === filter);
+    const key = `${firmArg}/${filterArg}`;
+    if (view.key !== key) { view.key = key; view.limit = PAGE; }
+    const cats = [...new Set(scope.map((b) => b.cat))].sort();
+    if (view.cat && !cats.includes(view.cat)) view.cat = '';
+    const hasLevels = scope.some((b) => b.firm === 'library');
     const F = firm && QT.firms[firm];
     const c = U.bankCounts(scope), base = `#/bank/${firm || 'all'}`;
     const pct = (n) => (scope.length ? (100 * n) / scope.length : 0);
     el.innerHTML = `
       <h1>Interview questions</h1>
-      <p class="lede">Questions candidates report being asked at trading firms, rewritten in our own words with worked solutions and a link to where each was reported. Treat attributions as candidate reports, not official material, and expect interviewers to change the numbers. Each firm also has a <a href="firms/">plain guide page</a> to read or share.</p>
+      <p class="lede">Questions candidates report being asked at trading firms, plus a large <a href="#/bank/library">question library</a> of general puzzles, all rewritten in our own words with hints, worked solutions and a link to the source. Treat firm attributions as candidate reports, not official material, and expect interviewers to change the numbers. Each firm also has a <a href="firms/">plain guide page</a> to read or share.</p>
       <div class="firm-pick">
         <label for="firm-sel">Firm</label>
         <select id="firm-sel">
@@ -65,10 +78,10 @@
         ${firm ? `<a class="chip chip-btn" href="#/bank/all/${filter}">All firms</a>` : ''}
         ${target && target !== firm ? `<a class="chip chip-btn" href="#/bank/${target}/${filter}">Your firm: ${QT.firms[target].name}</a>` : ''}
       </div>
-      ${F ? `<details class="card intel" ${window.innerWidth > 760 ? 'open' : ''}><summary><b>How ${F.name} interviews</b> (as reported)</summary>
+      ${F ? `<details class="card intel" ${window.innerWidth > 760 ? 'open' : ''}><summary>${firm === 'library' ? '<b>About the question library</b>' : `<b>How ${F.name} interviews</b> (as reported)`}</summary>
         <ul>${F.process.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: ${F.sources.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(' · ')}</p></details>` : ''}
-      <div class="row" style="margin:14px 0">${mockLink(firm, F)}${firm ? ` <a class="btn ghost" href="#/screen/${firm}">Phone-screen mock (45 min)</a>` : ''}</div>
+      <div class="row" style="margin:14px 0">${mockLink(firm, F)}${firm && firm !== 'library' ? ` <a class="btn ghost" href="#/screen/${firm}">Phone-screen mock (45 min)</a>` : ''}</div>
       <div class="bank-progress card">
         <div class="row" style="justify-content:space-between"><b>${c.done} of ${scope.length} done${F ? ` at ${F.name}` : ''}</b><span class="small">${c.unsure ? `${c.unsure} unsure · ` : ''}${c.todo} to do</span></div>
         <div class="bar stack" role="progressbar" aria-label="Questions done" aria-valuenow="${Math.round(pct(c.done))}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct(c.done)}%"></i><i class="unsure" style="width:${pct(c.unsure)}%"></i></div>
@@ -77,17 +90,43 @@
       <div class="chips filter" role="group" aria-label="Show">
         ${Object.entries(FILTERS).map(([k, label]) => `<a class="chip ${filter === k ? 'on' : ''}" href="${base}/${k}">${label} (${k === 'all' ? scope.length : c[k]})</a>`).join('')}
       </div>
-      <div class="qlist" id="qlist">
-        ${list.length ? list.map((b) => { const p = U.bankProgress(b), s = U.bankStatus(b); return `
+      <div class="bank-find">
+        <input type="search" id="bank-q" placeholder="Search questions" aria-label="Search these questions" value="${QT.escapeHtml(view.q)}">
+        <select id="bank-cat" aria-label="Topic"><option value="">All topics</option>${cats.map((k) => `<option value="${QT.escapeHtml(k)}" ${view.cat === k ? 'selected' : ''}>${k} (${list.filter((b) => b.cat === k).length})</option>`).join('')}</select>
+        ${hasLevels ? `<select id="bank-lvl" aria-label="Difficulty"><option value="">Any difficulty</option>${['Easy', 'Medium', 'Hard'].map((k) => `<option ${view.lvl === k ? 'selected' : ''}>${k}</option>`).join('')}</select>` : ''}
+        <span class="small" id="bank-count" aria-live="polite"></span>
+      </div>
+      <div class="qlist" id="qlist"></div>
+      <div id="bank-more"></div>`;
+    const rowHtml = (b) => { const p = U.bankProgress(b), s = U.bankStatus(b); return `
           <div class="qrow s-${s}">
             <div class="qmarks">${markButtons(b, s)}</div>
             <a class="card qitem" href="#/iq/${b.id}">
-              <div class="row" style="gap:6px">${firmBadge(b)}<span class="small">${b.role} · ${b.stage} · ${b.cat}</span>${b.kind === 'guide' ? '<span class="chip">practice question</span>' : ''}${s !== 'todo' ? `<span class="status-tag ${s}">${MARK_LABEL[s]}</span>` : ''}</div>
+              <div class="row" style="gap:6px">${firmBadge(b)}<span class="small">${b.role} · ${b.stage} · ${b.cat}</span>${b.kind === 'guide' && b.firm !== 'library' ? '<span class="chip">practice question</span>' : ''}${s !== 'todo' ? `<span class="status-tag ${s}">${MARK_LABEL[s]}</span>` : ''}</div>
               <div class="qtext">${plain(b.q)}</div>
               <div class="meta"><span>${b.open ? 'open-ended' : `${b.parts.length} part${b.parts.length > 1 ? 's' : ''}`}</span><span>${p.answered ? `${p.right}/${p.total} right` : ''}</span></div>
             </a>
-          </div>`; }).join('') : `<p class="small">${filter === 'unsure' ? 'Nothing flagged unsure.' : filter === 'done' ? 'Nothing ticked off yet.' : 'Nothing left to do here.'} <a href="${base}/all">Show all</a></p>`}
-      </div>`;
+          </div>`; };
+    const empty = `<p class="small">${filter === 'unsure' ? 'Nothing flagged unsure.' : filter === 'done' ? 'Nothing ticked off yet.' : 'Nothing left to do here.'} <a href="${base}/all">Show all</a></p>`;
+    const drawList = () => {
+      const shown = list.filter(matches), page = shown.slice(0, view.limit);
+      el.querySelector('#qlist').innerHTML = !list.length ? empty : page.length ? page.map(rowHtml).join('') : '<p class="small">No questions match. Try another search or topic.</p>';
+      el.querySelector('#bank-count').textContent = list.length && shown.length !== list.length ? `${shown.length} of ${list.length} match` : '';
+      el.querySelector('#bank-more').innerHTML = shown.length > page.length ? `<div class="row" style="margin-top:14px"><button type="button" class="ghost" id="bank-more-btn">Show ${Math.min(PAGE, shown.length - page.length)} more</button><span class="small">${page.length} of ${shown.length} shown</span></div>` : '';
+    };
+    drawList();
+    let typing = null;
+    el.querySelector('#bank-q').addEventListener('input', (e) => {
+      clearTimeout(typing);
+      typing = setTimeout(() => { view.q = e.target.value; view.limit = PAGE; drawList(); }, 150);
+    });
+    el.querySelector('#bank-cat').addEventListener('change', (e) => { view.cat = e.target.value; view.limit = PAGE; drawList(); });
+    el.querySelector('#bank-lvl')?.addEventListener('change', (e) => { view.lvl = e.target.value; view.limit = PAGE; drawList(); });
+    el.querySelector('#bank-more').addEventListener('click', (e) => {
+      if (!e.target.closest('#bank-more-btn')) return;
+      view.limit += PAGE;
+      drawList();
+    });
     el.querySelector('#firm-sel').addEventListener('change', (e) => {
       const k = e.target.value;
       // Choosing a firm makes it your target (unless your interview plan names one).
@@ -111,7 +150,7 @@
     const same = QT.bank.filter((x) => x.firm === b.firm), next = same[(same.indexOf(b) + 1) % same.length];
     el.innerHTML = `
       <a class="back" href="#/bank/${b.firm}">← ${QT.firms[b.firm].name} questions</a>
-      <h1 class="q-title">${QT.firms[b.firm].name}: ${b.cat}</h1>
+      <h1 class="q-title">${b.title ? QT.escapeHtml(b.title) : `${QT.firms[b.firm].name}: ${b.cat}`}</h1>
       <div class="row" style="gap:6px;margin-bottom:6px"><span class="small">${b.role} · ${b.stage}</span></div>
       <p class="small">${b.kind === 'reported' ? 'Reported by a candidate' : 'Practice question in a common interview format (not reported from one firm)'} · source: <a href="${b.src[1]}" target="_blank" rel="noopener">${b.src[0]}</a></p>
       <div class="qstatus" id="qstatus"></div>

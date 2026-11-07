@@ -515,6 +515,8 @@
   };
 
   for (const b of QT.bank) {
+    // Question-library entries carry their hints inline (bank-library.js).
+    if (b.firm === 'library' && !HINTS[b.id]) HINTS[b.id] = b.parts ? b.parts.map((p) => p.h || []) : [b.open.h || []];
     const h = HINTS[b.id] || [];
     (b.parts || []).forEach((p, i) => { p.hints = h[i] || []; });
     if (b.open) b.open.hints = h[0] || [];

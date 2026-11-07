@@ -899,6 +899,14 @@ for ch_, vals in ANSWERS.items():
         record(f"hb.{ch_}.{key_}", v, "handbook")
 
 
+# The question library (bank-lib-*.js): see verify_library.py.
+from verify_library import ANSWERS as LIBRARY  # noqa: E402
+
+for key_, v in LIBRARY.items():
+    record(key_, v, "question library")
+LIBRARY_PREFIXES = ("bs-", "ep-", "xy-", "ah-", "qf-")
+
+
 # ---------------------------------------------------------------- report
 def main():
     if hasattr(sys.stdout, "reconfigure"):
@@ -925,9 +933,9 @@ def main():
         unverified = sorted(set(js) - set(R))
         print(f"\n{len(R) - bad}/{len(R)} values agree with the app.", f"Not independently derived (rules of thumb or trivial arithmetic): {', '.join(unverified)}" if unverified else "")
         # Every answer in the handbook must have its own derivation.
-        missing = [k for k in unverified if k.startswith("hb.")]
+        missing = [k for k in unverified if k.startswith("hb.") or k.startswith(LIBRARY_PREFIXES)]
         if missing:
-            print(f"Handbook answers with no independent derivation: {', '.join(missing)}")
+            print(f"Handbook or library answers with no independent derivation: {', '.join(missing)}")
             bad += len(missing)
     sys.exit(1 if bad else 0)
 

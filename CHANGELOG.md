@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.46.0
+
+- **Question library**, a large general bank in Interview questions (Firm → Question library). It starts with 102 puzzles from BrainStellar's collection: probability, expected value, Markov chains, random walks, game theory, combinatorics and logic, from easy to hard. More collections follow.
+  - Each is rewritten in our own words with hints that build up step by step and a worked solution (key idea, steps, a check, the common trap), and links to its source. Puzzles Theo already had come in as variants with new numbers (three bullets, seven pirates, Monty Hall with four doors, a thousand bulbs, three eggs, the boy born on a Tuesday, …).
+  - Every numeric answer is derived a second, independent way in Python, and CI fails if one disagrees.
+- **Search and filters in Interview questions:** search the text, filter by topic and difficulty, and load 60 questions at a time.
+
 ## 0.45.0
 
 - **The pacing chart is now a line of points.** After Zetamac, 80 in 8, 60 in 6 and the rhythm drill, each answer is a point at the moment you gave it, at the score you were on pace for then: your score so far scaled up to the full time (in 80 in 8 and 60 in 6, net of wrong answers and capped at the questions there are). A stall shows as a drop and a wrong answer as a hollow red ring; your previous best is a dashed line. Point at, tap or arrow-key along the line to see each answer, its time and the pace it left you on. A new note gives your best pace, the last moment you held it, and your final score. The first few seconds are left off, since one quick answer extrapolates to a silly score.

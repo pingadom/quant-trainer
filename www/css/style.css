@@ -1165,3 +1165,8 @@ main[data-page='mental'] .grid > .card:nth-child(-n + 2) > :is(button, .btn):las
 .topic-card .small { margin-bottom: 10px; }
 /* drop-downs read as controls, not as code */
 select { font-family: var(--body); }
+
+/* question bank: search and filters above the list */
+.bank-find { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 0 0 12px; }
+.bank-find input[type='search'] { flex: 1 1 220px; min-width: 0; font-family: var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-height: 40px; font-size: 16px; }
+.bank-find select { min-height: 40px; max-width: 100%; }

@@ -1184,6 +1184,8 @@
     <p class="sol-trap"><b>Trap.</b> ${trap}</p>` : ''}`;
 
   for (const b of QT.bank) {
+    // Question-library entries carry their worked solutions inline (bank-library.js).
+    if (b.firm === 'library' && b.parts && !SOLUTIONS[b.id]) SOLUTIONS[b.id] = b.parts.map((p) => p.s);
     (b.parts || []).forEach((p, i) => {
       const s = SOLUTIONS[b.id]?.[i];
       if (s) p.sol = render(s);
