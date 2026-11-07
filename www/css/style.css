@@ -996,7 +996,9 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .sse-list a:hover { border-color: var(--accent); }
 .sse-heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .sse-cell { display: flex; justify-content: space-between; gap: 8px; padding: 5px 9px; border: 1px solid var(--line); border-left-width: 5px; border-radius: 6px; background: var(--panel); color: var(--ink); text-decoration: none; font-size: 0.82rem; }
-.sse-cell b { font-family: var(--mono); font-weight: 600; }
+.sse-cell b { font-family: var(--mono); font-weight: 600; flex: none; }
+.sse-cell { min-width: 0; }
+.sse-cell span { min-width: 0; overflow-wrap: anywhere; }
 .sse-cell.t-low { border-left-color: var(--bad); }
 .sse-cell.t-mid { border-left-color: #b8860b; }
 .sse-cell.t-high { border-left-color: var(--ok); }
@@ -1093,3 +1095,73 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .ft-all summary { cursor: pointer; font-weight: 600; }
 .ft-all td.mono { white-space: nowrap; }
 .ft-mc .fr { font-size: 0.85em; }
+
+/* ==== desktop polish ====
+   Depth on cards, a lift on anything you can click, sidebar icons, and wider overview screens on
+   big monitors (app.js marks them .wide-page). Reading and question screens keep their measure. */
+:root { --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.035); --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.06), 0 10px 24px rgba(0, 0, 0, 0.08); }
+.card, .tile, .hero { box-shadow: var(--shadow); }
+.card .card, .card .tile { box-shadow: none; }
+a.card, a.tile, .qitem, .topic-card, .mrow { transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease; }
+@media (hover: hover) {
+  a.card:hover, a.tile:hover, .qitem:hover, .topic-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-lift); border-color: var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) { a.card:hover, a.tile:hover, .qitem:hover, .topic-card:hover { transform: none; } }
+
+/* sidebar */
+@media (min-width: 761px) { .shell { grid-template-columns: 240px 1fr; } }
+.nav { padding: 18px 12px 14px; gap: 1px; }
+.brand { font-size: 1.45rem; padding: 2px 10px 16px; }
+.nav a, .nav-sec > summary { display: flex; align-items: center; gap: 10px; }
+.nav > a, .nav-foot a, .nav-sec > summary { font-weight: 500; }
+.nav .ni { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.nav .ni .dot { fill: currentColor; stroke: none; }
+.nav-sec > summary { color: var(--muted); }
+.nav-sec > summary > span { display: flex; align-items: center; gap: 10px; }
+.nav-sec[open] > summary { color: var(--ink); }
+.nav-sec > a { padding: 6px 10px 6px 38px; font-size: 0.94rem; }
+.nav-search kbd { margin-left: auto; }
+.nav-coach > span { display: flex; flex-direction: column; line-height: 1.25; }
+.nav a.active .ni { stroke-width: 2; }
+
+/* home dashboard: one column on small screens (top, side, bottom); two on big ones */
+.home-grid { display: grid; grid-template-areas: 'top' 'side' 'bottom'; column-gap: 28px; }
+.home-main { grid-area: top; min-width: 0; }
+.home-side { grid-area: side; display: flex; flex-direction: column; gap: 12px; margin-top: 18px; min-width: 0; }
+.home-more { grid-area: bottom; min-width: 0; }
+.home-side .daily-card { margin: 0; }
+.side-card h2 { margin: 0 0 12px; font-size: 1.05rem; }
+.tiles-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.side-card .tile { background: var(--panel-2); border-color: transparent; padding: 12px 14px; }
+.side-card .tile .v { font-size: 1.35rem; }
+.side-card .week { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.home-side .backup-nudge { margin: 0; }
+.more-link { margin: 10px 0 0; }
+
+@media (min-width: 1280px) {
+  main { padding: 36px 48px 80px; }
+  main.wide-page { max-width: 1240px; }
+  h1 { font-size: 2.15rem; }
+  .lede { font-size: 1.04rem; }
+  .home-grid { grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: 'top side' 'bottom side'; align-items: start; }
+  .home-side { margin-top: 0; position: sticky; top: 48px; }
+  .home-main > .upnext:first-child { margin-top: 0; }
+  /* the three timed games side by side */
+  /* 80 in 8 and 60 in 6 side by side; Zetamac, with its extra options, across the full width */
+  main[data-page='mental'] .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main[data-page='mental'] .grid > .card.wide:nth-child(-n + 2) { grid-column: auto; }
+  /* interview questions in two columns */
+  main[data-page='bank'] .qlist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main[data-page='coach'] .recs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wide-page .heatmap { max-width: 640px; }
+  main[data-page='handbook'].wide-page .hb-chapters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* game cards in the Mental maths grid: the Start button sits at the bottom of each */
+main[data-page='mental'] .grid > .card:nth-child(-n + 2) { display: flex; flex-direction: column; }
+main[data-page='mental'] .grid > .card:nth-child(-n + 2) > :is(button, .btn):last-child { margin-top: auto; align-self: flex-start; }
+/* topic cards: the accuracy bar lines up along the bottom of each row */
+.topic-card { display: flex; flex-direction: column; }
+.topic-card .bar { margin-top: auto; }
+.topic-card .small { margin-bottom: 10px; }
+/* drop-downs read as controls, not as code */
+select { font-family: var(--body); }

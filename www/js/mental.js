@@ -57,9 +57,11 @@
     el.innerHTML = `
       <h1>Mental maths</h1>
       <p class="lede">Market-making firms screen with fast arithmetic tests. Speed comes from practice plus a handful of tricks you can learn in an afternoon.</p>
-      <a class="card shortcut primary" href="#/tricks" style="margin-bottom:16px"><b>Learn the speed tricks →</b><span>${(QT.tricks || []).length} short guides (squaring, near-100 multiplication, fractions, last-digit checks, guessing strategy…) each with a practice drill</span></a>
+      <div class="shortcuts two">
+        <a class="card shortcut primary" href="#/tricks"><b>Learn the speed tricks →</b><span>${(QT.tricks || []).length} short guides (squaring, near-100 multiplication, fractions, last-digit checks, guessing strategy…) each with a practice drill</span></a>
+        <a class="card shortcut" href="#/mental/flow"><b>Flow training for + and − →</b><span>Find the sums that drop you into slow, step-by-step mode, then a rhythm drill and method drills to make them automatic</span></a>
+      </div>
       ${repsCard()}
-      <a class="card shortcut" href="#/mental/flow" style="margin-bottom:16px"><b>Flow training for + and − →</b><span>Find the sums that drop you into slow, step-by-step mode, then a rhythm drill and method drills to make them automatic</span></a>
       <div class="grid">
         <div class="card wide">
           <h3>${MODES.full.label}</h3>

@@ -31,7 +31,7 @@
   // Countdown to an interview with today's prep progress, or an invitation to make a plan.
   function planCard() {
     const st = QT.plan.todayStatus();
-    if (!st) return `<p class="small" style="margin:14px 0 0">Interview coming up? <a href="#/plan">Make a prep plan</a> for the firm and date.</p>`;
+    if (!st) return `<a class="card shortcut daily-card" href="#/plan"><b>Interview coming up?</b><span>Make a prep plan for the firm and date: a daily checklist and a countdown.</span></a>`;
     const name = QT.firms[st.p.firm]?.name || st.p.firm;
     if (st.left < 0) return `<a class="card shortcut daily-card" href="#/plan"><b>How did ${name} go?</b><span>Add the questions you were asked</span></a>`;
     return `<a class="card shortcut primary daily-card" href="#/plan"><b>${name} interview ${st.left === 0 ? 'today' : st.left === 1 ? 'tomorrow' : `in ${st.left} days`}</b><span>Today's prep: ${st.done}/${st.tasks.length} done</span></a>`;
@@ -100,10 +100,11 @@
     el.innerHTML = `
       <div class="greet">
         <div><div class="eyebrow">${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>${hello}</h1></div>
-        ${s.log.length ? `<div class="week">${candles(s.log)}<span class="small mono">accuracy, last 7 days</span></div>` : ''}
       </div>
       <p class="lede">${streak > 1 ? `${streak}-day streak. Keep it going.` : streak === 1 ? 'You practised today. Nice.' : 'Pick up where you left off.'}</p>
 
+      <div class="home-grid">
+      <div class="home-main">
       ${top ? `<div class="card upnext">
         <div class="eyebrow">Up next</div>
         <h2>${top.title}</h2>
@@ -113,20 +114,27 @@
       </div>` : ''}
 
       ${more.length ? `<h2>Also recommended</h2><div class="recs">${more.slice(0, 2).map(U.recCard).join('')}</div>
-      <p><a href="#/coach">See your full coaching plan →</a></p>` : ''}
+      <p class="more-link"><a href="#/coach">See your full coaching plan →</a></p>` : ''}
+      </div>
 
+      <aside class="home-side" aria-label="Today and your progress">
       ${planCard()}
       <a class="card shortcut${today?.done ? '' : ' primary'} daily-card" href="#/daily"><b>Daily challenge${today?.done ? `: ${today.r.filter(Boolean).length}/5 today ✓` : ''}</b><span>${today?.done ? 'Done for today. Share your result or come back tomorrow.' : `5 questions, the same for everyone today${dstreak ? ` · ${dstreak}-day streak` : ''}`}</span></a>
 
-      <h2>Your progress <a class="h-link" href="#/progress">Charts →</a></h2>
-      <div class="tiles">
-        <a class="tile" href="#/coach"><div class="v">${strong}<span class="of">/${QT.coach.allIds().length}</span></div><div class="k">skills strong</div></a>
-        <div class="tile"><div class="v">${attempts}</div><div class="k">topic questions answered</div></div>
-        <div class="tile"><div class="v">${attempts ? U.pctStr(correct / attempts) : '–'}</div><div class="k">accuracy, all time</div></div>
-        <div class="tile"><div class="v">${streak}</div><div class="k">day streak</div></div>
-      </div>
-
+      <section class="card side-card">
+        <h2>Your progress <a class="h-link" href="#/progress">Charts →</a></h2>
+        <div class="tiles tiles-2">
+          <a class="tile" href="#/coach"><div class="v">${strong}<span class="of">/${QT.coach.allIds().length}</span></div><div class="k">skills strong</div></a>
+          <div class="tile"><div class="v">${attempts}</div><div class="k">topic questions answered</div></div>
+          <div class="tile"><div class="v">${attempts ? U.pctStr(correct / attempts) : '–'}</div><div class="k">accuracy, all time</div></div>
+          <div class="tile"><div class="v">${streak}</div><div class="k">day streak</div></div>
+        </div>
+        ${s.log.length ? `<div class="week"><span class="small">Accuracy, last 7 days</span>${candles(s.log)}</div>` : ''}
+      </section>
       ${backupNudge(s)}
+      </aside>
+
+      <div class="home-more">
       <h2>Keep sharp</h2>
       <div class="shortcuts">
         <a class="card shortcut" href="#/bank"><b>Interview questions</b><span>${U.bankDone()}/${QT.bank.length} done${U.bankCounts().unsure ? ` · ${U.bankCounts().unsure} unsure` : ''} · mock interviews</span></a>
@@ -138,6 +146,8 @@
         <a class="card shortcut" href="#/estimate"><b>Estimation</b><span>${s.estimate.n ? `${Math.round((100 * s.estimate.hits) / s.estimate.n)}% of ranges correct` : 'Not tried yet'}</span></a>
         ${featured ? `<a class="card shortcut" href="#/case/${featured.id}"><b>Case of the day</b><span>${featured.title} (${featured.year})</span></a>` : ''}
         <a class="card shortcut" href="#/roadmap"><b>Roadmap</b><span>Books, projects and milestones</span></a>
+      </div>
+      </div>
       </div>`;
   }
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.44.0
+
+A visual polish pass, aimed at using Theo on a computer.
+
+- **Wider screens are used properly.** On a monitor 1280px or wider, overview screens (Home, Coach, Practice, Mental maths, Interview questions, Handbook, Progress and others) widen to 1240px. Reading and question screens keep a comfortable line length.
+- **Home is a dashboard on a computer:** what to do next on the left; your plan, the daily challenge, your progress and this week's accuracy in a column on the right that stays in view as you scroll.
+- **Sidebar icons** for every main section, a larger wordmark, and sections that line up under their icons.
+- **Depth and feedback:** cards have a soft shadow, and anything you can click lifts slightly when you point at it (not with reduced motion).
+- **Two-column layouts** for Interview questions, the Coach's recommendations and the Handbook's chapter list; 80 in 8 and 60 in 6 side by side on Mental maths, with the speed-trick and flow-training links side by side above them.
+- **Smaller touches:** bigger page headings on a computer, topic cards with their accuracy bars lined up, drop-downs in the body font rather than the code font, and a "Make a prep plan" card in place of a line of small text.
+
 ## 0.43.0
 
 A redesign of how you find your way around, from a review of every screen and an outside UI/UX review.

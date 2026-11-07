@@ -31,6 +31,8 @@
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',
   };
 
+  const WIDE = ['', 'coach', 'practice', 'mental', 'bank', 'more', 'progress', 'cases', 'tricks', 'handbook', 'code', 'sse', 'weak', 'oa', 'roadmap', 'search', 'flashcards', 'screen', 'stories', 'mistakes'];
+
   const decode = (s) => {
     try {
       return decodeURIComponent(s);
@@ -57,6 +59,10 @@
     const [name = '', ...args] = location.hash.replace(/^#\/?/, '').split('/');
     // Own properties only: `name in routes` would also match "toString", "constructor", …
     const key = Object.prototype.hasOwnProperty.call(routes, name) ? name : '';
+    // Overview screens use the full width of a big monitor; reading and question screens keep a
+    // comfortable line length (style.css keys off this).
+    main.dataset.page = key || 'home';
+    main.classList.toggle('wide-page', WIDE.includes(key) && (args.length === 0 || key === 'bank'));
     try {
       routes[key](main, ...args.map(decode));
     } catch (err) {
