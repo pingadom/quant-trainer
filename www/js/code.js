@@ -65,7 +65,7 @@
   // A message already on its way can still arrive after terminate(), so stop listening first.
   const killWorker = () => {
     if (worker) {
-      worker.onmessage = null;
+      worker.onmessage = worker.onerror = null;
       worker.terminate();
     }
     worker = null;
@@ -287,7 +287,11 @@
         } else if (m.type === 'end') finish();
         else if (m.type === 'error') finish(m.text, m.stdout);
       };
-      w.onerror = (e) => { e.preventDefault(); killWorker(); finish('The code runner failed to start. Reload the page and try again.'); };
+      w.onerror = (e) => {
+        e.preventDefault();
+        killWorker();
+        if (document.contains(ed)) finish('The code runner failed to start. Reload the page and try again.');
+      };
       w.postMessage({ job, id: P.id, lang, code: ed.value, mode });
       arm(lang === 'py' ? 180000 : 30000);
     }

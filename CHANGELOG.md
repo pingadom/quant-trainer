@@ -13,6 +13,7 @@
   - Your progress on the original checks is kept, but a chapter now also needs its homework to count as finished.
   - Every numeric answer, in checks and homework, is re-derived independently in Python in CI (research/verify_handbook.py), and CI fails if any has no derivation.
 - Handbook answers now accept expressions such as `sqrt(2)/2`.
+- Leaving the Coding screen while a run fails to start can no longer throw an error.
 
 ## 0.38.0
 
