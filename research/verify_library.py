@@ -526,3 +526,403 @@ def own_seat_prob(n, k):
 put("bs-seat-99.0", own_seat_prob(100, 99))
 put("bs-break-longer.0", 2 * quad(lambda L: (1 - L) / L, 0.5, 1)[0])
 put("bs-ten-colour-hats.0", 99)
+
+
+# ---------------------------------------------------------------- EigenPrep
+# Envelopes with a prior on X in {50, 100}: enumerate (X, which envelope opened).
+num = den = Fr(0)
+for X in (50, 100):
+    for opened, other in ((X, 2 * X), (2 * X, X)):
+        if opened == 100:
+            den += Fr(1, 4)
+            num += Fr(1, 4) * other
+put("ep-envelopes-prior.0", num / den)
+
+# Coin MLE by grid search over the likelihood, and its standard error.
+grid_p = [i / 10000 for i in range(1, 10000)]
+put("ep-coin-mle.0", max(grid_p, key=lambda p: 7 * math.log(p) + 3 * math.log(1 - p)))
+put("ep-coin-mle.1", math.sqrt(0.7 * 0.3 / 10))
+
+# Bertrand's boxes: enumerate (box, coin drawn).
+boxes = [("G", "G"), ("S", "S"), ("G", "S")]
+draws = [(b, i) for b in boxes for i in (0, 1)]
+gold = [(b, i) for b, i in draws if b[i] == "G"]
+put("ep-bertrand-box.0", Fr(sum(1 for b, i in gold if b[1 - i] == "G"), len(gold)))
+
+
+def ruin_p(k, N, p):
+    # solve P(i) = p P(i+1) + q P(i-1) as a linear system
+    M = np.zeros((N + 1, N + 1))
+    rhs = np.zeros(N + 1)
+    M[0, 0] = M[N, N] = 1
+    rhs[N] = 1
+    for i in range(1, N):
+        M[i, i] = 1
+        M[i, i + 1] = -p
+        M[i, i - 1] = -(1 - p)
+    return float(np.linalg.solve(M, rhs)[k])
+
+
+put("ep-ruin-biased.0", round(ruin_p(5, 10, 0.6), 12))
+
+
+def monty_n(n, opened):
+    # enumerate prize position; you pick door 0; host opens `opened` goat doors; you switch at random
+    win = Fr(0)
+    for prize in range(n):
+        if prize == 0:
+            continue  # switching never wins
+        # the prize door is never opened, so it remains among the n - 1 - opened other closed doors
+        win += Fr(1, n) * Fr(1, n - 1 - opened)
+    return win
+
+
+put("ep-monty-ten.0", monty_n(10, 3))
+# E[boxes] = sum over t of P(not both collected after t boxes), tracking which coupons you hold.
+def coupon_two(pa):
+    state = {frozenset(): 1.0}
+    total = 0.0
+    for _ in range(2000):
+        total += sum(p for s, p in state.items() if len(s) < 2)
+        nxt = {}
+        for s, p in state.items():
+            if len(s) == 2:
+                continue
+            for c, q in (("A", pa), ("B", 1 - pa)):
+                t = s | {c}
+                nxt[t] = nxt.get(t, 0) + p * q
+        state = nxt
+    return total
+
+
+put("ep-coupon-biased.0", round(coupon_two(0.2), 9))
+
+
+def secretary(n):
+    best = 0
+    for r in range(0, n):
+        wins = 0
+        for perm in itertools.permutations(range(n)):  # higher is better
+            seen = max(perm[:r]) if r else -1
+            pick = next((x for x in perm[r:] if x > seen), None)
+            wins += pick == n - 1
+        best = max(best, Fr(wins, math.factorial(n)))
+    return best
+
+
+put("ep-secretary-four.0", secretary(4))
+
+
+def ballot(a, b):
+    good = tot = 0
+    for seq in set(itertools.permutations("A" * a + "B" * b)):
+        tot += 1
+        lead = 0
+        ok = True
+        for c in seq:
+            lead += 1 if c == "A" else -1
+            if lead <= 0:
+                ok = False
+                break
+        good += ok
+    return Fr(good, tot)
+
+
+put("ep-ballot.0", ballot(6, 4))
+put("ep-walk-back.0", 1)
+put("ep-walk-back.1", Fr(sum(1 for s in itertools.product((1, -1), repeat=4) if sum(s) == 0), 16))
+put("ep-geometric-race.0", Fr(1, 2) / (1 - Fr(1, 2) * Fr(2, 3)))
+
+
+def p_no_triple(n, days=365):
+    # dp over days: number of ways to place n labelled people with at most 2 per day, divided by days^n
+    from math import comb as C
+    total = 0
+    for j in range(0, n // 2 + 1):  # j days with 2 people, n - 2j days with 1
+        singles = n - 2 * j
+        if j + singles > days:
+            continue
+        ways = C(days, j) * C(days - j, singles) * math.factorial(n) // (2 ** j)
+        total += ways
+    return Fr(total, days ** n)
+
+
+put("ep-triple-birthday.0", next(n for n in range(2, 200) if 1 - p_no_triple(n) > Fr(1, 2)))
+put("ep-st-pete-capped.0", sum(Fr(1, 2 ** n) * 2 ** n for n in range(1, 21)) + Fr(1, 2 ** 20) * 2 ** 20)
+
+
+def polya(r, b, k):
+    # exact probability the k-th draw is red, by enumerating draw histories
+    dist = {(r, b): Fr(1)}
+    for _ in range(k - 1):
+        nxt = {}
+        for (x, y), p in dist.items():
+            nxt[(x + 1, y)] = nxt.get((x + 1, y), 0) + p * Fr(x, x + y)
+            nxt[(x, y + 1)] = nxt.get((x, y + 1), 0) + p * Fr(y, x + y)
+        dist = nxt
+    return sum(p * Fr(x, x + y) for (x, y), p in dist.items())
+
+
+put("ep-polya-fifth.0", polya(2, 3, 5))
+put("ep-derange-five.0", Fr(sum(1 for p in itertools.permutations(range(5)) if all(p[i] != i for i in range(5))), 120))
+
+
+def banach(n):
+    # exact: walk over (left, right) matches; first time he reaches into an empty box
+    from functools import lru_cache
+
+    @lru_cache(None)
+    def f(a, b):
+        # probability that when he first finds a box empty, the other has 0 left
+        res = Fr(0)
+        for take_a in (True, False):
+            if take_a:
+                res += Fr(1, 2) * ((1 if b == 0 else 0) if a == 0 else f(a - 1, b))
+            else:
+                res += Fr(1, 2) * ((1 if a == 0 else 0) if b == 0 else f(a, b - 1))
+        return res
+    return f(n, n)
+
+
+put("ep-banach.0", banach(5))
+
+
+def last_colour(r, b):
+    tot = 0
+    seqs = set(itertools.permutations("R" * r + "B" * b))
+    for s in seqs:
+        lr = max(i for i, c in enumerate(s) if c == "R")
+        lb = max(i for i, c in enumerate(s) if c == "B")
+        tot += min(lr, lb) + 1
+    return Fr(tot, len(seqs))
+
+
+put("ep-last-colour.0", last_colour(5, 5))
+put("ep-buffon-half.0", quad(lambda th: (1 * abs(math.sin(th))) / 2, 0, math.pi)[0] / math.pi)
+
+
+def crp(n):
+    # exact expected tables by dynamic programming over table-count distribution
+    dist = {1: Fr(1)}
+    for i in range(1, n):
+        nxt = {}
+        for k, p in dist.items():
+            nxt[k + 1] = nxt.get(k + 1, 0) + p * Fr(1, i + 1)
+            nxt[k] = nxt.get(k, 0) + p * Fr(i, i + 1)
+        dist = nxt
+    return sum(k * p for k, p in dist.items())
+
+
+put("ep-crp-tables.0", crp(10))
+put("ep-elo-200.0", 1 / (1 + 10 ** (-200 / 400)))
+put("ep-galton.0", Fr(sum(1 for s in itertools.product((0, 1), repeat=10) if sum(s) == 5), 1024))
+
+
+def parking(n):
+    good = 0
+    for prefs in itertools.product(range(1, n + 1), repeat=n):
+        taken = set()
+        ok = True
+        for p in prefs:
+            spot = next((s for s in range(p, n + 1) if s not in taken), None)
+            if spot is None:
+                ok = False
+                break
+            taken.add(spot)
+        good += ok
+    return good
+
+
+put("ep-parking.0", parking(3))
+put("ep-doubling.0", 1 - Fr(1, 2) ** 6)
+put("ep-doubling.1", (1 - Fr(1, 2) ** 6) * 1 - Fr(1, 2) ** 6 * 63)
+
+# ---- EigenPrep brain teasers
+put("ep-clock-overlap.0", Fr(90) / (6 - Fr(1, 2)))
+put("ep-heavy-27.0", next(k for k in range(1, 6) if 3 ** k >= 27))
+
+
+def pattern_wait(pat):
+    # expected tosses to see pat, by solving the KMP automaton chain
+    n = len(pat)
+    A = np.zeros((n, n))
+    b = np.ones(n)
+    for st in range(n):
+        A[st, st] += 1
+        for c in "HT":
+            s = pat[:st] + c
+            while s and not pat.startswith(s):
+                s = s[1:]
+            nxt = len(s)
+            if nxt < n:
+                A[st, nxt] -= 0.5
+    return float(np.linalg.solve(A, b)[0])
+
+
+put("ep-ht-hh.0", round(pattern_wait("HT"), 9))
+put("ep-ht-hh.1", round(pattern_wait("HH"), 9))
+put("ep-triangle-ants.0", Fr(sum(1 for d in itertools.product((0, 1), repeat=3) if len(set(d)) == 1), 8))
+put("ep-triangle-ants.1", Fr(sum(1 for d in itertools.product((0, 1), repeat=4) if len(set(d)) == 1), 16))
+put("ep-double-headed.0", Fr(1, 1000) / (Fr(1, 1000) + Fr(999, 1000) * Fr(1, 1024)))
+
+
+def bridge(times):
+    # Dijkstra over (people on the start side, torch side)
+    import heapq
+    start = (frozenset(times), 0)
+    dist = {start: 0}
+    pq = [(0, 0, start)]
+    k = 0
+    while pq:
+        d, _, (left, side) = heapq.heappop(pq)
+        if not left:
+            return d
+        if d > dist[(left, side)]:
+            continue
+        here = left if side == 0 else frozenset(times) - left
+        for grp in list(itertools.combinations(here, 1)) + list(itertools.combinations(here, 2)):
+            nl = left - set(grp) if side == 0 else left | set(grp)
+            st = (frozenset(nl), 1 - side)
+            nd = d + max(grp)
+            if nd < dist.get(st, 1e9):
+                dist[st] = nd
+                k += 1
+                heapq.heappush(pq, (nd, k, st))
+
+
+put("ep-bridge-torch.0", bridge((1, 2, 5, 10)))
+
+
+def cube_colourings():
+    # faces: 0 top,1 bottom,2 front,3 back,4 left,5 right; generate the 24 rotations
+    def rot_x(f):  # top->front->bottom->back
+        return (f[3], f[2], f[0], f[1], f[4], f[5])
+
+    def rot_z(f):  # front->right->back->left
+        return (f[0], f[1], f[4], f[5], f[3], f[2])
+
+    rots = {tuple(range(6))}
+    frontier = [tuple(range(6))]
+    while frontier:
+        f = frontier.pop()
+        for g in (rot_x(f), rot_z(f)):
+            if g not in rots:
+                rots.add(g)
+                frontier.append(g)
+    assert len(rots) == 24
+    seen = set()
+    classes = 0
+    for col in set(itertools.permutations("AABBCC")):
+        if col in seen:
+            continue
+        classes += 1
+        for r in rots:
+            seen.add(tuple(col[i] for i in r))
+    return classes
+
+
+put("ep-cube-colours.0", cube_colourings())
+
+
+def cycles_ok(n, k):
+    good = 0
+    for p in itertools.permutations(range(n)):
+        seen = set()
+        ok = True
+        for s in range(n):
+            if s in seen:
+                continue
+            ln, c = 0, s
+            while c not in seen:
+                seen.add(c)
+                c = p[c]
+                ln += 1
+            ok &= ln <= k
+        good += ok
+    return Fr(good, math.factorial(n))
+
+
+put("ep-cycle-boxes.0", cycles_ok(4, 2))
+put("ep-sock-half.0", next(n for n in range(2, 50) if any(Fr(r * (r - 1) + (n - r) * (n - r - 1), n * (n - 1)) == Fr(1, 2) for r in range(n + 1))))
+
+
+def roulette_two():
+    a_survives = 0
+    for s in range(6):
+        k = next(k for k in range(12) if (s + k) % 6 in (0, 1))
+        a_survives += k % 2 == 1  # odd shot index means B is hit
+    return Fr(a_survives, 6)
+
+
+put("ep-roulette-two.0", roulette_two())
+# Ant on the band: fraction 0.01 ln(1 + T) reaches 1 at ln(1 + T) = 1/0.01.
+put("ep-rubber-band.0", round(1 / 0.01, 9))
+put("ep-all-in.0", Fr(100 * 2 ** 5, 2 ** 5))
+put("ep-all-in.1", Fr(1, 2 ** 5))
+put("ep-monty-thousand.0", 1 - Fr(1, 1000))
+
+
+def jugs(target=4, A=5, B=3):
+    from collections import deque
+    start = (0, 0)
+    q = deque([(start, 0)])
+    seen = {start}
+    while q:
+        (a, b), d = q.popleft()
+        if a == target or b == target:
+            return d
+        moves = [(A, b), (a, B), (0, b), (a, 0)]
+        t = min(a, B - b)
+        moves.append((a - t, b + t))
+        t = min(b, A - a)
+        moves.append((a + t, b - t))
+        for m in moves:
+            if m not in seen:
+                seen.add(m)
+                q.append((m, d + 1))
+
+
+put("ep-jugs.0", jugs())
+put("ep-consecutive-1000.0", sum(1 for k in range(2, 100) for a in range(1, 1000) if k * (2 * a + k - 1) == 2000))
+put("ep-clock-digits.0", sum(1 for h in range(1, 13) for m in range(60) if len(set(str(h) + "%02d" % m)) < len(str(h) + "%02d" % m)))
+
+
+def flip_reach():
+    start = (0,) * 10
+    seen = {start}
+    frontier = [start]
+    while frontier:
+        s = frontier.pop()
+        for i in range(4):
+            t = tuple(1 - x if i <= j < i + 7 else x for j, x in enumerate(s))
+            if t not in seen:
+                seen.add(t)
+                frontier.append(t)
+    return len(seen)
+
+
+put("ep-flip-seven.0", flip_reach())
+
+# ---- EigenPrep finance
+put("ep-parity-105.0", 8 - 100 + 105 * math.exp(-0.05))
+put("ep-delta-hedge.0", 100 * 0.6)
+put("ep-call-arb.0", 50 - 45 - 3)
+put("ep-forward-6m.0", 100 * math.exp(0.04 * 0.5))
+from scipy.stats import norm  # noqa: E402
+
+put("ep-var-95.0", 10e6 * 0.02 * 1.645)
+assert abs(norm.ppf(0.95) - 1.645) < 1e-3
+put("ep-sharpe.0", (12 - 3) / 15)
+put("ep-duration.0", -5 * 1)
+put("ep-beta-mix.0", 0.6 * 1.2 + 0.4 * 0.1)
+put("ep-put-delta.0", 0.7 - 1)
+put("ep-irp.0", 1.2 * 1.02 / 1.01)
+
+# ---- EigenPrep quick-fire arithmetic, evaluated from the original expressions
+ARITH = ["17*13", "441**0.5", "23**2", "144/12", "0.15*240", "2**8", "73+89", "19*25", "169**0.5", "16**2",
+         "357-189", "math.factorial(8)/math.factorial(6)", "24*37", "0.125*320", "3**5", "95+127", "225**0.5", "18*45", "25**2", "480/15",
+         "0.35*180", "11*99", "234-157", "2**10", "324**0.5", "14*17", "72+139", "0.2*450", "21**2", "6**4",
+         "156*4", "729/27", "289**0.5", "15*67", "418-239", "0.375*160", "13*84", "19**2", "85+276", "2**7",
+         "196**0.5", "28*25", "675/25", "0.6*85", "17**2", "346-178", "16*31", "5**6", "92+219", "361**0.5"]
+for i, expr in enumerate(ARITH):
+    put(f"ep-arith-{i // 10 + 1}.{i % 10}", round(eval(expr), 9))  # noqa: S307 (fixed literal list)

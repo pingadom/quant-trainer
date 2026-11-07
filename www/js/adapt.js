@@ -28,7 +28,7 @@
     { id: 'markov', name: 'Markov chains & random walks', topics: ['markov', 'walks'], cats: ['Markov chains', 'Random walks'], hb: ['markov', 'walks', 'brownian', 'stochastic'] },
     { id: 'stats', name: 'Statistics & distributions', topics: ['dist', 'moments', 'inference', 'regression', 'timeseries'], cats: ['Statistics', 'Regression'], hb: ['variance', 'distributions', 'linalg', 'clt', 'estimation', 'testing', 'regression', 'matrix', 'timeseries', 'factors', 'backtest'] },
     { id: 'mm', name: 'Market making & estimation', topics: [], cats: ['Market making', 'Estimation'], hb: ['market-making', 'fermi'], mm: true },
-    { id: 'options', name: 'Options & bet sizing', topics: ['options', 'finance'], cats: ['Options', 'Bet sizing'], hb: ['options', 'betting'] },
+    { id: 'options', name: 'Options, finance & bet sizing', topics: ['options', 'finance'], cats: ['Options', 'Bet sizing', 'Finance'], hb: ['options', 'betting'] },
   ];
   const byId = (id) => AREAS.find((a) => a.id === id);
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.47.0
+
+- **Question library: 80 more questions from EigenPrep** (CU Quants), bringing the bank to 389.
+  - Probability: Bertrand's boxes, ruin in a biased game, Monty Hall with ten doors, unequal coupons, the secretary problem with four, the ballot theorem, a birthday shared by three, a capped St Petersburg game, Pólya's urn, Banach's matchboxes, Buffon's needle, the Chinese restaurant process, parking functions and the doubling strategy.
+  - Brain teasers: the bridge and torch, colouring a cube, following the chain of boxes, two-player roulette, the ant on the rubber band, water jugs, repeated digits on a clock, and more.
+  - Finance: put–call parity, delta hedging, forwards, VaR, Sharpe ratio, duration, beta and interest-rate parity, plus open questions on the skew, early exercise, carry trades, CDS, repo, contango, pairs trading and others with model answers.
+  - Five sets of quick-fire arithmetic.
+  - Several of the source's answers were wrong (the cube colouring is 6, not 3; two-player roulette is 1/3 for the first player, not 5/7; betting everything on a fair coin keeps the expected wealth at $100). Ours are re-derived independently in Python.
+- A new **Finance** topic in the Options weak-spot area.
+
 ## 0.46.0
 
 - **Question library**, a large general bank in Interview questions (Firm → Question library). It starts with 102 puzzles from BrainStellar's collection: probability, expected value, Markov chains, random walks, game theory, combinatorics and logic, from easy to hard. More collections follow.
