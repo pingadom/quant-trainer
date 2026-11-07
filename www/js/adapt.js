@@ -25,8 +25,8 @@
     { id: 'prob', name: 'Probability & symmetry', topics: ['dice', 'puzzles'], cats: ['Probability', 'Logic'], hb: ['counting', 'prob-basics', 'symmetry', 'continuous'] },
     { id: 'bayes', name: 'Conditional probability & Bayes', topics: ['bayes'], cats: ['Conditional probability', 'Bayes'], hb: ['conditional'] },
     { id: 'ev', name: 'Expected value & optimal stopping', topics: ['ev'], cats: ['Expected value', 'Optimal stopping', 'Decision making', 'Game theory'], hb: ['expectation', 'recursion', 'stopping', 'games'] },
-    { id: 'markov', name: 'Markov chains & random walks', topics: ['markov', 'walks'], cats: ['Markov chains', 'Random walks'], hb: ['markov', 'walks'] },
-    { id: 'stats', name: 'Statistics & distributions', topics: ['dist', 'moments', 'inference', 'regression', 'timeseries'], cats: ['Statistics', 'Regression'], hb: ['variance', 'distributions', 'clt', 'estimation', 'testing', 'regression', 'matrix', 'timeseries', 'factors', 'backtest'] },
+    { id: 'markov', name: 'Markov chains & random walks', topics: ['markov', 'walks'], cats: ['Markov chains', 'Random walks'], hb: ['markov', 'walks', 'brownian', 'stochastic'] },
+    { id: 'stats', name: 'Statistics & distributions', topics: ['dist', 'moments', 'inference', 'regression', 'timeseries'], cats: ['Statistics', 'Regression'], hb: ['variance', 'distributions', 'linalg', 'clt', 'estimation', 'testing', 'regression', 'matrix', 'timeseries', 'factors', 'backtest'] },
     { id: 'mm', name: 'Market making & estimation', topics: [], cats: ['Market making', 'Estimation'], hb: ['market-making', 'fermi'], mm: true },
     { id: 'options', name: 'Options & bet sizing', topics: ['options', 'finance'], cats: ['Options', 'Bet sizing'], hb: ['options', 'betting'] },
   ];

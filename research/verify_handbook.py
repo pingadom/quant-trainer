@@ -177,6 +177,21 @@ def one_step(s, up, down, k):
     return q * max(up - k, 0) + (1 - q) * max(down - k, 0)
 
 
+def risk_neutral_call(s, k, sigma, t, payoff=None):
+    """E[payoff(S_T)] with S_T = s exp(-sigma^2 t/2 + sigma sqrt(t) Z), by integrating over Z (no formula)."""
+    pay = payoff or (lambda x: max(x - k, 0.0))
+    f = lambda z: pay(s * exp(-0.5 * sigma ** 2 * t + sigma * sqrt(t) * z)) * norm.pdf(z)
+    return quad(f, -12, 12, points=[0.0], limit=200)[0]
+
+
+def eig(m):
+    return np.linalg.eigvals(np.array(m, float))
+
+
+def solve(m, b):
+    return np.linalg.solve(np.array(m, float), np.array(b, float))
+
+
 FIT = np.polyfit([0, 1, 2], [1, 2, 4], 1)
 full_deck = [(r, s) for r in range(13) for s in range(4)]
 
@@ -237,6 +252,31 @@ ANSWERS = {
     "continuous": {
         "h0": 0.125, "h1": 0.25, "h2": 0.2, "h3": 0.75, "h4": Fr(1, 3), "h5": pi / 4, "h6": quad(lambda x: x * x * 2 * x, 0, 1)[0],
     },
+    "linalg": {
+        0: float(np.linalg.norm([3, 4])), 1: float(np.dot([1, 2, 3], [4, 5, 6])), 2: 1 / float(np.linalg.norm([1, 1])),
+        3: float((np.array([[1, 2], [3, 4]]) @ np.array([1, 1]))[1]), 4: float((np.array([[1, 2], [3, 4]]) @ np.array([[0, 1], [1, 0]]))[0, 0]),
+        5: float(np.linalg.det([[3, 1], [2, 4]])), 6: 0, 7: float(solve([[1, 1], [1, -1]], [5, 1])[0]), 8: 2 * 3,
+        9: int(np.linalg.matrix_rank(np.array([[1, 2], [2, 4]]))), 10: float((np.array([[1, 0], [1, 1], [1, 2]]).T @ np.array([[1, 0], [1, 1], [1, 2]]))[1, 1]),
+        11: float(max(eig([[4, 1], [2, 3]]).real)), 12: float(np.prod(eig([[5, 2], [2, 2]]).real)), 13: float(min(eig([[0.8, 0.2], [0.4, 0.6]]).real)),
+        14: float(min(eig([[1, 2], [2, 1]]).real)), 15: float(np.linalg.cholesky(np.array([[1, 0.6], [0.6, 1]]))[1, 1]),
+        "h0": float(np.linalg.norm([1, 2, 2])), "h1": float(np.linalg.inv(np.array([[2, 1], [5, 3]]))[0, 1]), "h2": float(solve([[3, 2], [1, -1]], [12, -1])[1]),
+        "h3": float(max(eig([[6, 2], [2, 3]]).real)), "h4": float(np.linalg.det([[2, 0, 0], [1, 3, 0], [4, 5, 1]])),
+        "h5": float(max(eig([[1, 0.5, 0.5], [0.5, 1, 0.5], [0.5, 0.5, 1]]).real)), "h6": log(0.5) / log(float(min(eig([[0.9, 0.1], [0.1, 0.9]]).real))),
+        "h7": float(np.linalg.cholesky(np.array([[1, -0.5], [-0.5, 1]]))[1, 1]),
+    },
+    "brownian": {
+        0: 4, 1: round(norm.sf(1), 5), 2: min(2, 5), 3: 0.5, 4: 3, 5: 100 * sqrt(2 / pi) * sqrt(1 / 100), 6: 2 * round(norm.sf(1), 5),
+        7: quad(lambda m: 2 * norm.sf(m / 2), 0, 50)[0], 8: sqrt(100), 9: 3 / (3 + 1), 10: 1 * 3, 11: 1 / (1 + exp(-2 * 0.5 / 1 ** 2 * 1)),
+        "h0": 3 - 1, "h1": round(norm.sf(2 / sqrt(4)), 5), "h2": min(1, 3), "h3": 2, "h4": 2 * round(norm.sf(2), 5), "h5": 2 * 1, "h6": 2 * round(norm.sf(0.03 / (0.01 * sqrt(9))), 5),
+    },
+    "stochastic": {
+        0: 1 + 0.1 * 0.01 + 0.2 * sqrt(0.01) * 1, 1: float(norm.moment(4, scale=sqrt(2))), 2: (2 ** 2 - 1) / 2, 3: 0.1 - 0.2 ** 2 / 2,
+        4: 100 * exp(0.1 - 0.2 ** 2 / 2), 5: quad(lambda z: 100 * exp(0.08 + 0.2 * z) * norm.pdf(z), -12, 12)[0], 6: round(norm.cdf(0.08 / 0.2), 5),
+        7: (log(100 / 100) + 0.5 * 0.2 ** 2) / 0.2, 8: 100 * (2 * round(norm.cdf(0.1), 5) - 1), 9: 1 - round(norm.cdf(0.1), 5),
+        10: log(2) / 0.5, 11: 1 ** 2 / (2 * 0.5), 12: -log(0.95),
+        "h0": 100 * exp(0.05 - 0.3 ** 2 / 2), "h1": round(norm.cdf((0.05 - 0.3 ** 2 / 2) / 0.3), 5), "h2": quad(lambda z: exp(sqrt(2) * z) * norm.pdf(z), -15, 15)[0],
+        "h3": 100 * (2 * round(norm.cdf(0.075), 5) - 1), "h4": log(2) / 0.1, "h5": 0.25 * sqrt(4), "h6": quad(lambda z: exp(2 * (-0.02 + 0.2 * z)) * norm.pdf(z), -12, 12)[0],
+    },
     "clt": {
         0: round(norm.sf(1), 5), 1: 2 / sqrt(400), 2: 2 * sqrt(10000 / 4), 3: (2 * 0.5 / 0.01) ** 2,
         "h0": sqrt(36 * 35 / 12), "h1": round(norm.sf(2), 4), "h2": 10 / 5, "h3": 100 * 4, "h4": (2 / 0.01) ** 2, "h5": 0.05 * sqrt(252),
@@ -290,3 +330,8 @@ ANSWERS = {
         "h0": 0.75 * 0.08 + 0.25 * -0.3, "h1": 20 - 50 * 0.1, "h2": 16 * sqrt(1 / 4), "h3": 252 / 5, "h4": sqrt(2 * log(1000)) / sqrt(4), "h5": (40 - 200 * 0.05) / 20, "h6": 2 ** (5 - 3),
     },
 }
+
+# The rounded Black-Scholes answers must still be close to the exact risk-neutral prices.
+assert abs(ANSWERS["stochastic"][8] - risk_neutral_call(100, 100, 0.2, 1)) < 0.01
+assert abs(ANSWERS["stochastic"][9] - risk_neutral_call(100, 100, 0.2, 1, lambda x: float(x > 100))) < 0.001
+assert abs(ANSWERS["stochastic"]["h3"] - risk_neutral_call(100, 100, 0.3, 0.25)) < 0.01

@@ -1,5 +1,5 @@
 // The Theo handbook: a work-through course from the basics up to everything a quant trading
-// interview tests. PARTS sets the order; the chapters themselves live in hb-part1.js to hb-part5.js.
+// interview tests. PARTS sets the order; the chapters themselves live in hb-part1.js to hb-part6.js.
 //
 // A chapter is { title, minutes, why, goals, prereq, sections, takeaways, explain, homework, practice }.
 // A section is { h, blocks }, and a block is one of:
@@ -23,17 +23,18 @@
 // (records "hb.<chapter>.<key>").
 (function () {
   const PARTS = [
-    { id: 'foundations', short: 'Foundations', title: 'Part 1 · Foundations', blurb: 'Fast arithmetic, the maths toolkit, counting, and the core of probability: everything later builds on this.', chapters: ['arith', 'toolkit', 'counting', 'prob-basics', 'conditional', 'expectation', 'variance'] },
+    { id: 'foundations', short: 'Foundations', title: 'Part 1 · Foundations', blurb: 'Fast arithmetic, the maths toolkit, linear algebra, counting, and the core of probability: everything later builds on this.', chapters: ['arith', 'toolkit', 'linalg', 'counting', 'prob-basics', 'conditional', 'expectation', 'variance'] },
     { id: 'probability', short: 'Interview probability', title: 'Part 2 · Interview probability', blurb: 'The techniques behind most interview puzzles: distributions, symmetry, recursion, Markov chains, random walks and optimal stopping.', chapters: ['distributions', 'symmetry', 'recursion', 'markov', 'walks', 'stopping', 'continuous'] },
     { id: 'statistics', short: 'Statistics', title: 'Part 3 · Statistics', blurb: 'From data to decisions: the CLT, estimation, testing, regression, correlation matrices and time series.', chapters: ['clt', 'estimation', 'testing', 'regression', 'matrix', 'timeseries'] },
-    { id: 'trading', short: 'Trading', title: 'Part 4 · Trading', blurb: 'Turning probability into prices and bets: sizing, market making, options, estimation and game theory.', chapters: ['betting', 'market-making', 'options', 'fermi', 'games'] },
-    { id: 'equities', short: 'Quant equities', title: 'Part 5 · Quant equities', blurb: 'How systematic equity desks think: factors, signals, backtests and costs.', chapters: ['factors', 'backtest'] },
-    { id: 'craft', short: 'Interview craft', title: 'Part 6 · Interview craft', blurb: 'How to perform on the day: thinking aloud, speed, sanity checks and your own story.', chapters: ['craft'] },
+    { id: 'stochastic', short: 'Stochastic processes', title: 'Part 4 · Stochastic processes', blurb: 'Brownian motion and stochastic calculus: the continuous-time maths behind option pricing and mean reversion.', chapters: ['brownian', 'stochastic'] },
+    { id: 'trading', short: 'Trading', title: 'Part 5 · Trading', blurb: 'Turning probability into prices and bets: sizing, market making, options, estimation and game theory.', chapters: ['betting', 'market-making', 'options', 'fermi', 'games'] },
+    { id: 'equities', short: 'Quant equities', title: 'Part 6 · Quant equities', blurb: 'How systematic equity desks think: factors, signals, backtests and costs.', chapters: ['factors', 'backtest'] },
+    { id: 'craft', short: 'Interview craft', title: 'Part 7 · Interview craft', blurb: 'How to perform on the day: thinking aloud, speed, sanity checks and your own story.', chapters: ['craft'] },
   ];
 
   // Shorter paths through the course, for when the interview is close.
   const ROUTES = [
-    { name: 'Two weeks to a quant equities phone screen', blurb: 'The chapters that matter most, in order. Do the checks and Core homework, then a mock.', chapters: ['prob-basics', 'conditional', 'expectation', 'variance', 'recursion', 'stopping', 'clt', 'testing', 'regression', 'matrix', 'betting', 'market-making', 'factors', 'backtest', 'craft'] },
+    { name: 'Two weeks to a quant equities phone screen', blurb: 'The chapters that matter most, in order. Do the checks and Core homework, then a mock.', chapters: ['prob-basics', 'conditional', 'expectation', 'variance', 'recursion', 'stopping', 'linalg', 'clt', 'testing', 'regression', 'matrix', 'betting', 'market-making', 'factors', 'backtest', 'craft'] },
     { name: 'One week to a market making interview', blurb: 'Speed and pricing first. Pair these with Make me a market and the arithmetic drills.', chapters: ['arith', 'conditional', 'expectation', 'recursion', 'betting', 'market-making', 'fermi', 'craft'] },
   ];
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.40.0
+
+- **Three new Handbook chapters**, bringing it to 31:
+  - **Linear algebra** (Part 1): vectors and the dot product, matrices as transformations, determinants and inverses, rank and least squares by the normal equations, eigenvalues and eigenvectors, symmetric and positive semi-definite matrices, and the Cholesky factor.
+  - **Brownian motion** (new Part 4, Stochastic processes): the limit of a random walk, independent normal increments, quadratic variation and rough paths, scaling and the reflection principle, martingales and hitting times, with and without drift.
+  - **Stochastic calculus and Black–Scholes**: SDEs and the Euler scheme, Itô's lemma, geometric Brownian motion and volatility drag (mean v median), the Black–Scholes equation by hedging, risk-neutral pricing, and the Ornstein–Uhlenbeck process.
+  - Each has worked examples, diagrams, checks, homework and a model explanation, with three new tools: a 2×2 matrix explorer, Brownian paths from small steps, and geometric Brownian motion's mean against its median.
+  - A new part exam, Stochastic processes. Chapter cross-references now use names rather than numbers.
+
 ## 0.39.0
 
 - **The Handbook is now a full course to work through.** It has 28 chapters in six parts, about 23 hours of reading plus homework, and every chapter from Part 3 onwards is new.

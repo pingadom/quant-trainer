@@ -226,5 +226,68 @@
       box.addEventListener('input', draw);
       draw();
     },
+
+    // A 2×2 matrix as a map: the unit square's image, the determinant and any real eigenvectors.
+    linmap(box) {
+      const sl = (k, label, v) => slider(k, label, -2, 2, 0.25, v);
+      box.innerHTML = `<b>Try it: a 2×2 matrix [a b; c d]</b>
+        <div class="hb-sliders">${sl('a', 'a', 1.5)}${sl('b', 'b', 0.5)}${sl('c', 'c', -0.5)}${sl('d', 'd', 1)}</div><div class="hb-out"></div>`;
+      const draw = () => {
+        const [a, b, c, d] = ['a', 'b', 'c', 'd'].map((k) => { const v = val(box, k); show(box, k, f(v, 2)); return v; });
+        const det = a * d - b * c, tr = a + d, disc = tr * tr - 4 * det;
+        const lams = disc >= 0 ? [(tr + Math.sqrt(disc)) / 2, (tr - Math.sqrt(disc)) / 2] : [];
+        const vec = (l) => { const v = Math.abs(b) > 1e-9 ? [b, l - a] : Math.abs(c) > 1e-9 ? [l - d, c] : l === a ? [1, 0] : [0, 1]; const n = Math.hypot(...v) || 1; return [v[0] / n, v[1] / n]; };
+        const segs = lams.map((l, i) => { const [x, y] = vec(l); return [-3 * x, -3 * y, 3 * x, 3 * y, i ? 'acc' : 'ok']; });
+        out(box, `${Fig()({ fig: 'plot', x: [-3, 3], y: [-3, 3], w: 300, h: 290, xt: [-2, 0, 2], yt: [-2, 0, 2], polys: [{ pts: [[0, 0], [1, 0], [1, 1], [0, 1]], tone: 'acc-soft' }, { pts: [[0, 0], [a, c], [a + b, c + d], [b, d]], tone: 'ok-soft' }], series: [{ pts: [[0, 0], [a, c]], tone: 'ok' }, { pts: [[0, 0], [b, d]], tone: 'bad' }], segs, alt: 'The unit square and its image under the matrix, with eigenvector lines.' })}
+          <p class="small">Columns: (${f(a, 2)}, ${f(c, 2)}) in green and (${f(b, 2)}, ${f(d, 2)}) in red. Determinant <b>${f(det, 3)}</b>${Math.abs(det) < 1e-9 ? ': the square is squashed flat, so there\'s no inverse' : det < 0 ? ': negative, so the square is flipped' : ''}. ${lams.length ? `Eigenvalues <b>${f(lams[0], 3)}</b> and <b>${f(lams[1], 3)}</b>, along the lines drawn.` : 'No real eigenvalues: the matrix rotates every direction.'}</p>`);
+      };
+      box.addEventListener('input', draw);
+      draw();
+    },
+
+    // Brownian motion as many small steps: paths, the √t fan, and Σ(ΔW)².
+    brownian(box) {
+      box.innerHTML = `<b>Try it: build Brownian motion from small steps</b>
+        <div class="hb-sliders">${slider('n', 'Steps between 0 and 1', 5, 2000, 5, 20)}</div><button type="button" data-go>New paths</button><div class="hb-out"></div>`;
+      const draw = () => {
+        const n = val(box, 'n'), dt = 1 / n, paths = [], ends = [];
+        let qv = 0;
+        show(box, 'n', n);
+        for (let k = 0; k < 6; k++) {
+          const pts = [[0, 0]];
+          for (let i = 1; i <= n; i++) { const dw = gauss() * Math.sqrt(dt); if (!k) qv += dw * dw; pts.push([i * dt, pts[i - 1][1] + dw]); }
+          paths.push({ pts: pts.filter((_, i) => i % Math.ceil(n / 400) === 0 || i === n), tone: ['acc', 'ok', 'bad', 'ink', 'muted', 'acc'][k] });
+          ends.push(pts[n][1]);
+        }
+        out(box, `${Fig()({ fig: 'plot', x: [0, 1], y: [-3, 3], h: 220, xt: [0, 0.5, 1], yt: [-2, 0, 2], fns: [{ f: (t) => 2 * Math.sqrt(t), tone: 'muted', dash: true }, { f: (t) => -2 * Math.sqrt(t), tone: 'muted', dash: true }], series: paths, alt: `Six random paths made of ${n} steps each, inside a plus or minus two root t fan.` })}
+          <p class="small">Each step is ±√Δt in size, so W(1) has variance 1 whatever the number of steps. For the first path, Σ(ΔW)² = <b>${f(qv, 3)}</b>: it closes in on 1 as the steps shrink.</p>`);
+      };
+      box.querySelector('[data-go]').addEventListener('click', draw);
+      box.addEventListener('input', draw);
+      draw();
+    },
+
+    // Geometric Brownian motion: mean against median, and how many paths lose money.
+    gbm(box) {
+      box.innerHTML = `<b>Try it: geometric Brownian motion over 5 years</b>
+        <div class="hb-sliders">${slider('m', 'Expected return μ, %', -10, 30, 1, 6)}${slider('s', 'Volatility σ, %', 5, 80, 1, 25)}</div><button type="button" data-go>New paths</button><div class="hb-out"></div>`;
+      const draw = () => {
+        const mu = val(box, 'm') / 100, sig = val(box, 's') / 100, T = 5, steps = 60, dt = T / steps, ends = [], shown = [];
+        show(box, 'm', `${Math.round(mu * 100)}%`); show(box, 's', `${Math.round(sig * 100)}%`);
+        for (let k = 0; k < 400; k++) {
+          let x = 0;
+          const pts = [[0, 1]];
+          for (let i = 1; i <= steps; i++) { x += (mu - (sig * sig) / 2) * dt + sig * Math.sqrt(dt) * gauss(); if (k < 12) pts.push([i * dt, Math.exp(x)]); }
+          ends.push(Math.exp(x));
+          if (k < 12) shown.push({ pts, tone: 'muted' });
+        }
+        const below = ends.filter((e) => e < 1).length / ends.length, top = Math.max(2, Math.exp(mu * T) * 1.6);
+        out(box, `${Fig()({ fig: 'plot', x: [0, 5], y: [0, top], h: 220, xt: [0, 1, 2, 3, 4, 5], yt: [1, 2], series: shown, fns: [{ f: (t) => Math.exp(mu * t), tone: 'ok' }, { f: (t) => Math.exp((mu - (sig * sig) / 2) * t), tone: 'bad' }], alt: 'Simulated price paths with the mean curve and the median curve.' })}
+          <p class="small">Mean after 5 years: <b>${f(Math.exp(mu * T), 2)}</b> (green). Median: <b>${f(Math.exp((mu - (sig * sig) / 2) * T), 2)}</b> (red). Of 400 paths, <b>${Math.round(below * 100)}%</b> end below where they started.</p>`);
+      };
+      box.querySelector('[data-go]').addEventListener('click', draw);
+      box.addEventListener('input', draw);
+      draw();
+    },
   };
 })();
