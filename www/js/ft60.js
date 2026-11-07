@@ -327,7 +327,7 @@
       const o = cur.opts[+btn.dataset.i], ok = o.ok;
       if (ok) correct++;
       else wrong++;
-      answered.push({ ...cur, ok, you: o.label, ms: Date.now() - shownAt });
+      answered.push({ ...cur, ok, you: o.label, ms: Date.now() - shownAt, t: Date.now() - (end - SECS * 1000) });
       if (live) {
         $card.classList.remove('flash-ok', 'flash-bad');
         void $card.offsetWidth;
@@ -357,7 +357,8 @@
       done = true;
       stop();
       QT.cleanup = null;
-      el.innerHTML = results(answered, at3.n);
+      const elapsed = Math.min(SECS * 1000, Date.now() - (end - SECS * 1000));
+      el.innerHTML = results(answered, at3.n, { elapsed, open: answered.length < N ? { ...cur, ms: Date.now() - shownAt } : null });
       el.querySelector('#again').addEventListener('click', () => run(el));
       if (QT.mental.wireReview) QT.mental.wireReview(el);
     }
@@ -366,7 +367,7 @@
   }
 
   // Score, pace, guessing and the per-question review.
-  function results(answered, half) {
+  function results(answered, half, run = {}) {
     const right = answered.filter((x) => x.ok).length, wrongN = answered.length - right, score = right - wrongN, unreached = N - answered.length;
     const s = store.get(), rec = (s.mental.ft60 ||= { best: null, runs: [] }), prev = rec.best;
     rec.best = prev === null ? score : Math.max(prev, score);
@@ -393,6 +394,7 @@
         <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best</div></div>
       </div>
       ${notes.length ? `<div class="card">${notes.map((t) => `<p class="small" style="margin:4px 0">${t}</p>`).join('')}</div>` : ''}
+      ${QT.pace ? QT.pace.card(answered, { secs: SECS, elapsed: run.elapsed, open: run.open, label: '60 in 6', pace: { n: N, name: `Pace for all ${N}`, fixed: true } }) : ''}
       ${QT.mental.review(answered, slow)}
       ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}. They come back tomorrow as short timed sets.</p>` : ''}
       ${answered.length ? `<details class="card ft-all"><summary>Every question (${answered.length})</summary><div class="table-wrap"><table><tr><th class="num">#</th><th>Question</th><th>Answer</th><th class="num">Score</th><th class="num">Time</th></tr>${rows}</table></div></details>` : ''}

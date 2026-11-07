@@ -274,12 +274,12 @@
     const input = answerBox(el, (v) => {
       if (done || v !== cur.a) return;
       const ms = Date.now() - shownAt;
-      answered.push({ ...cur, ms, onBeat: ms <= pace, pace });
+      answered.push({ ...cur, ms, onBeat: ms <= pace, pace, t: Date.now() - (end - RHYTHM_SECS * 1000) });
       after(ms <= pace);
     });
     const skip = () => {
       if (done) return;
-      skipped.push({ ...cur, ms: Date.now() - shownAt });
+      skipped.push({ ...cur, ms: Date.now() - shownAt, t: Date.now() - (end - RHYTHM_SECS * 1000) });
       after(false);
       if (!QT.keypad.enabled()) input.focus();
     };
@@ -307,6 +307,9 @@
       const counts = {};
       for (const x of slow) counts[x.kind] = (counts[x.kind] || 0) + 1;
       const worst = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      // Answers and skips in the order they happened, skips drawn as their own colour.
+      const timeline = [...answered.map((x) => ({ ...x, ok: true })), ...skipped.map((x) => ({ ...x, ok: false }))].sort((x, y) => x.t - y.t);
+      const pacing = QT.pace ? QT.pace.card(timeline, { secs: RHYTHM_SECS, label: 'Rhythm drill', bad: 'Skipped', open: cur ? { ...cur, ms: Date.now() - shownAt } : null }) : '';
       el.innerHTML = `
         <h1>Rhythm drill: done</h1>
         <div class="tiles">
@@ -320,6 +323,7 @@
             <p class="small">${slow.slice(0, 12).map((x) => `<span class="mono">${esc(x.q)} = ${x.a}</span>`).join(' · ')}</p>
             <a class="btn" href="#/mental/flow/method/${worst[0]}">Method drill: ${esc(PATTERNS[worst[0]].label.toLowerCase())}</a>` : '<p style="margin:0">Nothing broke the rhythm. Next time it will start faster.</p>'}
         </div>
+        ${pacing}
         <div class="row" style="margin-top:14px"><button id="fl-again">Again</button><a class="btn ghost" href="#/mental/flow">Flow training</a></div>`;
       el.querySelector('#fl-again').addEventListener('click', () => rhythm(el, only));
     }

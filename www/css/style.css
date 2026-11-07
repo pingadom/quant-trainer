@@ -520,6 +520,30 @@ canvas { width: 100%; height: 280px; display: block; background: var(--panel-2);
 .chart-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 12px; }
 @media (max-width: 400px) { .chart-grid { grid-template-columns: 1fr; } }
 .chart-card { margin: 0; }
+/* pacing columns (js/pace.js) */
+.pace .chart-y { height: 150px; }
+.pace-plot { position: relative; height: 150px; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.pace-mid { position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); opacity: 0.6; }
+.pace-ref { position: absolute; left: 0; right: 0; border-top: 1.5px dashed var(--ink); opacity: 0.75; pointer-events: none; z-index: 1; }
+.pace-cols { position: absolute; inset: 0; display: flex; gap: 2px; padding: 0 2px; }
+.pace-col {
+  flex: 1 1 0; min-width: 0; min-height: 0; height: 100%; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center; cursor: pointer;
+}
+.pace-col:hover, .pace-col.on { background: var(--accent-soft); filter: none; }
+.pace-col:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pace-bar { width: 100%; max-width: 24px; display: flex; flex-direction: column; gap: 2px; border-radius: 4px 4px 0 0; overflow: hidden; }
+.pace-bar i { display: block; min-height: 2px; flex-basis: 0; }
+.pace-ok { background: var(--ok); }
+.pace-ok.one { background: var(--accent); }
+.pace-bad { background: var(--bad); }
+/* Stripes as well as colour, so wrong answers stand out without telling red from green. */
+.pace-bad { background: repeating-linear-gradient(135deg, var(--bad) 0 3px, color-mix(in srgb, var(--bad) 45%, transparent) 3px 5px); }
+.pace-col.part .pace-bar { opacity: 0.55; }
+.ch-key.pace-refkey { border-color: var(--ink); border-top-width: 1.5px; }
+.pace-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.pace .chart-x { justify-content: space-between; }
+.pace-read { min-height: 2.6em; margin: 8px 0 0; }
 .heatmap { width: 100%; max-width: 420px; display: block; margin: 6px 0 10px; }
 .hm-on { fill: var(--accent); }
 .hm-off { fill: var(--panel-2); stroke: var(--line); stroke-width: 0.5; }

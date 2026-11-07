@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.42.0
+
+- **Pacing chart after every timed game:** Zetamac (including challenges and single-operation games), 80 in 8, 60 in 6 and the rhythm drill.
+  - A column for each slice of the run (10 seconds in a 2-minute Zetamac, 20 or 30 seconds in the longer tests) shows how many questions you answered in it, split into right and wrong (or skipped), against the pace you need (one every 6 seconds for 80 in 8 and 60 in 6) or your own average.
+  - Hover over or tap a column to see that slice: how many you answered and the question you spent longest on, including one you were still on when time ran out.
+  - Notes underneath: first half against second half, your fastest and slowest stretches, the question where you fell behind the pace for 80 or 60, and the questions that stalled you, with how many answers they cost at your usual speed.
+
 ## 0.41.0
 
 - **60 in 6**, practice for Flow Traders' arithmetic test (Mental maths → 60 in 6): 60 multiple-choice questions in 6 minutes, +1 right, −1 wrong, 0 for any not reached, one at a time with no going back.

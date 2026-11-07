@@ -104,7 +104,7 @@
     const mode = MODES[modeId], mc = style === 'mc', net = mode.scoring === 'net';
     let cur, correct = 0, wrong = 0, n = 0, done = false, timer = null, onKey = null, shownAt = 0;
     const answered = []; // every answered question with its time, for the review
-    const end = Date.now() + mode.secs * 1000;
+    const end = Date.now() + mode.secs * 1000, start = end - mode.secs * 1000;
 
     el.innerHTML = `
       <h1>${mode.label}${modeId === 'full' ? ` <span class="small">${mc ? 'multiple choice' : 'typed'}</span>` : ''}</h1>
@@ -139,7 +139,7 @@
       flash(ok);
       if (ok) correct++;
       else wrong++;
-      answered.push({ ...cur, ok, you: shown, ms: Date.now() - shownAt });
+      answered.push({ ...cur, ok, you: shown, ms: Date.now() - shownAt, t: Date.now() - start });
       if (mode.max && n >= mode.max) finish();
       else next();
     };
@@ -216,6 +216,8 @@
       store.touchDay();
       store.save();
       const acc = correct + wrong ? Math.round((100 * correct) / (correct + wrong)) : 0;
+      const elapsed = Math.min(Date.now() - start, mode.secs * 1000), allDone = mode.max && answered.length >= mode.max;
+      const pacing = QT.pace ? QT.pace.card(answered, { secs: mode.secs, elapsed, label: mode.label, open: allDone ? null : { ...cur, ms: Date.now() - shownAt }, pace: mode.max ? { n: mode.max, name: `Pace for all ${mode.max}`, fixed: true } : null }) : '';
       el.innerHTML = `
         <div class="title-row"><h1>${mode.label}: done</h1>${prevBest === null || score > prevBest ? QT.flair.milestone('New best') : ''}</div>
         <div class="tiles">
@@ -224,6 +226,7 @@
           <div class="tile"><div class="v">${acc}%</div><div class="k">accuracy</div></div>
           <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best${modeId === 'full' ? ` (${mc ? 'multiple choice' : 'typed'})` : ''}</div></div>
         </div>
+        ${pacing}
         ${review(answered, slowSecs())}
         ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}. They come back tomorrow as short timed sets.</p>` : ''}
         <div class="row" style="margin-top:18px"><button id="again">Go again</button><a class="btn ghost" href="#/mental">Back</a></div>`;
@@ -397,7 +400,7 @@
       if (done) return;
       const v = QT.parseAnswer($in.value);
       if (v === cur.a) {
-        answered.push({ ...cur, ok: true, you: String(v), ms: Date.now() - shownAt });
+        answered.push({ ...cur, ok: true, you: String(v), ms: Date.now() - shownAt, t: Date.now() - (end - s.secs * 1000) });
         $s.textContent = `Score: ${answered.length}`;
         flash();
         next();
@@ -419,6 +422,8 @@
       // The question you were stuck on when time ran out is saved for review too, if you'd
       // already spent longer than your threshold on it.
       const stuckMs = Date.now() - shownAt;
+      // Drawn before the stuck question joins the list: it isn't an answer, just time spent.
+      const pacing = QT.pace ? QT.pace.card(answered, { secs: s.secs, label: 'Zetamac', open: cur ? { ...cur, ms: stuckMs } : null }) : '';
       if (cur && stuckMs > slowSecs() * 1000) answered.push({ ...cur, ok: false, you: 'time ran out', ms: stuckMs });
       rec.best = prev === null ? score : Math.max(prev, score);
       rec.runs.push({ date: new Date().toISOString(), correct: score, wrong: 0 });
@@ -441,6 +446,7 @@
           <p class="small" style="margin-top:0">Send a friend these exact questions and your score to beat.</p>
           <div class="row"><button id="zm-share">Challenge a friend</button><span class="small" id="zm-msg" aria-live="polite"></span></div>
         </div>` : ''}
+        ${pacing}
         ${QT.flow ? QT.flow.resultCard(answered) : ''}
         ${review(answered, slowSecs())}
         ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}.</p>` : ''}
