@@ -315,7 +315,7 @@
         ] },
         { h: 'The secretary problem', blocks: [
           `<p>You interview n candidates in random order and must accept or reject each on the spot. You win only if you pick the very best. A good rule: reject the first fraction x, then take the first candidate who beats everyone so far.</p>`,
-          { fig: 'plot', x: [0, 1], y: [0, 0.45], xl: 'fraction of candidates skipped', yl: 'P(pick the best)', xt: [0, [0.368, '1/e'], 1], yt: [0, 0.2, 0.368], fns: [{ f: (x) => (x <= 0 ? 0 : -x * Math.log(x)) }], pts: [{ x: 1 / Math.E, y: 1 / Math.E, tone: 'ok' }], alt: 'The curve minus x log x, peaking at x equals 1 over e with value 1 over e.', cap: 'For large n the success rate is −x ln x, which peaks at x = 1/e, with success rate 1/e. You met this function in the toolkit chapter.' },
+          { fig: 'plot', x: [0, 1], y: [0, 0.45], xl: 'fraction of candidates skipped', yl: 'P(pick the best)', xt: [0, [0.368, '1/e'], 1], yt: [0, 0.2, [0.368, '0.37']], fns: [{ f: (x) => (x <= 0 ? 0 : -x * Math.log(x)) }], pts: [{ x: 1 / Math.E, y: 1 / Math.E, tone: 'ok' }], alt: 'The curve minus x log x, peaking at x equals 1 over e with value 1 over e.', cap: 'For large n the success rate is −x ln x, which peaks at x = 1/e, with success rate 1/e. You met this function in the toolkit chapter.' },
           { proof: 'You win if the best is at position t > xn, and the best of those before t sits in the skipped part: chance xn/t. Averaging over t gives ∫ₓ¹ (x/t) dt = −x ln x.' },
           { q: 'With 100 candidates, about how many should you see and reject before choosing?', a: 37, tol: { abs: 1.5 }, hint: 'n/e.', sol: '100/e ≈ <b>37</b>.' },
         ] },

@@ -945,20 +945,21 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 /* handbook: a work-through course */
 .hb-text { max-width: 72ch; }
 .hb-eq { font-family: var(--mono); background: var(--panel-2); border-radius: 8px; padding: 8px 12px; margin: 10px 0; overflow-x: auto; }
-.hb-fig { margin: 16px 0; max-width: 460px; }
+/* Diagrams are laid out to a fixed font, so labels fit in every theme. */
+.hb-fig { margin: 16px 0; max-width: 460px; --fig: 'IBM Plex Sans', system-ui, sans-serif; }
 .hb-fig.wide { max-width: 640px; }
 .hb-fig svg { display: block; width: 100%; height: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
 .hb-fig figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
-.hf-t { fill: var(--ink); font: 14px var(--body); }
-.hf-t-ok { fill: var(--ok); font: 600 14px var(--body); }
-.hf-t-bad { fill: var(--bad); font: 600 14px var(--body); }
-.hf-t-acc { fill: var(--accent); font: 600 14px var(--body); }
-.hf-m { fill: var(--muted); font: 12.5px var(--body); }
-.hf-s { fill: var(--ink); font: 12.5px var(--body); }
+.hf-t { fill: var(--ink); font: 14px var(--fig); }
+.hf-t-ok { fill: var(--ok); font: 600 14px var(--fig); }
+.hf-t-bad { fill: var(--bad); font: 600 14px var(--fig); }
+.hf-t-acc { fill: var(--accent); font: 600 14px var(--fig); }
+.hf-m { fill: var(--muted); font: 12.5px var(--fig); }
+.hf-s { fill: var(--ink); font: 12.5px var(--fig); }
 .hf-s.tone-ok { fill: var(--ok); font-weight: 600; }
 .hf-s.tone-bad { fill: var(--bad); font-weight: 600; }
 .hf-s.tone-acc { fill: var(--accent); font-weight: 600; }
-.hf-on { fill: var(--on-accent); font: 600 13px var(--body); }
+.hf-on { fill: var(--on-accent); font: 600 13px var(--fig); }
 .hf-line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
 .hf-axis { stroke: var(--muted); stroke-width: 1.2; }
 .hf-grid { stroke: var(--line); stroke-width: 1; }
