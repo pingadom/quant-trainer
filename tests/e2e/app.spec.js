@@ -125,7 +125,10 @@ test('broken or unknown links never leave a broken screen', async ({ page }) => 
     await expect(page.locator('main h1').first(), hash).toContainText(heading);
   }
   await page.goto('./#/bank/nope');
-  await expect(page.locator('.qitem')).toHaveCount(await page.evaluate(() => QT.bank.length)); // unknown firm → every question, not none
+  // Unknown firm → every question, not none (the list shows them 60 at a time).
+  const n = await page.evaluate(() => QT.bank.length);
+  await expect(page.locator('.qitem')).toHaveCount(Math.min(60, n));
+  if (n > 60) await expect(page.locator('#bank-more')).toContainText(`of ${n} shown`);
 });
 
 test('80-in-8 offers multiple choice or typed answers', async ({ page, isMobile }) => {
