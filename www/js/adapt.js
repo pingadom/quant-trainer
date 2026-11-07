@@ -36,7 +36,7 @@
   const skillIds = (A) => (QT.topicById ? A.topics.filter(QT.topicById).flatMap((t) => QT.coach.allIds([QT.topicById(t)])) : []);
   const hbChecks = (A) => (QT.handbook ? A.hb.flatMap((id) => {
     const ch = QT.handbook.CHAPTERS[id];
-    return ch && !ch.planned ? ch.sections.flatMap((s) => s.checks || []).map((c, idx) => ({ id, idx, c, title: ch.title })) : [];
+    return ch ? QT.handbook.checksOf(ch).filter(({ c }) => !c.opts).map(({ c, key }) => ({ id, idx: key, c, title: ch.title })) : [];
   }) : []);
   const bankOf = (A) => QT.bank.filter((b) => b.parts && A.cats.includes(b.cat));
 

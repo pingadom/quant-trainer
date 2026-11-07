@@ -58,7 +58,7 @@
     const firmName = (id) => (QT.firms[id] ? QT.firms[id].name : id);
     const items = [
       ...PAGES.map(([href, title, text]) => ({ type: 'page', href, title, meta: '', text })),
-      ...(QT.handbook ? Object.entries(QT.handbook.CHAPTERS).filter(([, c]) => !c.planned).map(([id, c]) => ({ type: 'page', href: `#/handbook/${id}`, title: `Handbook: ${c.title}`, meta: '', text: plain(c.sections.map((x) => `${x.h} ${x.html}`).join(' ') + ' ' + c.goals.join(' ')) })) : []),
+      ...(QT.handbook ? Object.entries(QT.handbook.CHAPTERS).map(([id, c]) => ({ type: 'page', href: `#/handbook/${id}`, title: `Handbook: ${c.title}`, meta: '', text: plain(QT.handbook.text(c)) })) : []),
       ...QT.bank.map((b) => ({
         type: 'iq', href: `#/iq/${b.id}`, title: clip(plain(b.q), 110), meta: `${firmName(b.firm)} · ${b.cat}`,
         text: [b.q, b.cat, firmName(b.firm), b.role, ...(b.parts || []).map((p) => p.q), ...(b.followups || [])].map(plain).join(' '),

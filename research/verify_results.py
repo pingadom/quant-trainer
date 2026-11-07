@@ -891,6 +891,14 @@ for ch_, vals in hb2.items():
         record(f"hb.{ch_}.{i}", v, "handbook check")
 
 
+# Everything added to the handbook since: see verify_handbook.py.
+from verify_handbook import ANSWERS  # noqa: E402
+
+for ch_, vals in ANSWERS.items():
+    for key_, v in vals.items():
+        record(f"hb.{ch_}.{key_}", v, "handbook")
+
+
 # ---------------------------------------------------------------- report
 def main():
     if hasattr(sys.stdout, "reconfigure"):
@@ -916,6 +924,11 @@ def main():
     if js:
         unverified = sorted(set(js) - set(R))
         print(f"\n{len(R) - bad}/{len(R)} values agree with the app.", f"Not independently derived (rules of thumb or trivial arithmetic): {', '.join(unverified)}" if unverified else "")
+        # Every answer in the handbook must have its own derivation.
+        missing = [k for k in unverified if k.startswith("hb.")]
+        if missing:
+            print(f"Handbook answers with no independent derivation: {', '.join(missing)}")
+            bad += len(missing)
     sys.exit(1 if bad else 0)
 
 

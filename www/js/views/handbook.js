@@ -1,100 +1,291 @@
-// The handbook: #/handbook lists the course; #/handbook/<chapter> is one chapter. Content lives in
-// handbook-content.js. Each "check yourself" question is answered inline; a chapter is done when
-// every check has been answered correctly. Progress is saved in state.handbook.
+// The handbook: a work-through course. Routes:
+//   #/handbook                 the course, your progress and what to do next
+//   #/handbook/<chapter>       one chapter: lessons, worked examples, checks, homework
+//   #/handbook/review          spaced review of chapters you have finished
+//   #/handbook/exam/<part|all> a mixed exam with no hints
+//   #/handbook/sheet           every chapter's summary on one page
+//
+// Content lives in hb-part*.js, diagrams in hb-figs.js and extra tools in hb-widgets.js. A chapter
+// is finished when every check is right and all its core and interview homework is done.
+// Progress is saved in state.handbook, and exam scores in state.hbExams.
 (function () {
   const store = QT.store, R = QT.rand, f = QT.fmtNum, esc = QT.escapeHtml;
   const HB = () => QT.handbook;
   const order = () => HB().PARTS.flatMap((p) => p.chapters);
   const chapter = (id) => HB().CHAPTERS[id];
-  const checksOf = (ch) => (ch.sections || []).flatMap((s) => s.checks || []);
-  const rec = (id) => store.get().handbook?.[id] || { c: {}, done: false };
+  const rec = (id) => store.get().handbook?.[id] || { c: {}, h: {}, done: false };
+  const DAY = 86400000, REVIEW_GAPS = [3, 7, 21, 60], PASS = 0.8;
+  const required = (h) => !['stretch', 'lab'].includes(h.c.lvl);
+  const LEVELS = { core: 'Core', interview: 'Interview', stretch: 'Stretch', lab: 'Lab' };
 
   function progress(id) {
-    const ch = chapter(id), n = checksOf(ch).length, r = rec(id);
-    const right = Object.values(r.c || {}).filter(Boolean).length;
-    return { n, right, done: !ch.planned && n > 0 && right >= n };
+    const ch = chapter(id), r = rec(id), checks = HB().checksOf(ch), hw = HB().homeworkOf(ch).filter(required);
+    const right = checks.filter(({ key }) => r.c?.[key]).length, hwDone = hw.filter(({ key }) => (r.h?.[key] || 0) >= 1).length;
+    const learned = checks.length > 0 && right >= checks.length;
+    return { n: checks.length, right, hw: hw.length, hwDone, learned, done: learned && hwDone >= hw.length };
   }
-  function markCheck(id, idx, ok) {
-    const s = store.get();
-    s.handbook ||= {};
-    const r = (s.handbook[id] ||= { c: {}, done: false });
-    if (ok) r.c[idx] = 1;
-    else if (!r.c[idx]) r.c[idx] = 0;
-    const p = progress(id);
-    const justDone = p.done && !r.done;
+  // Called after any answer: a chapter finished for the first time joins the review schedule.
+  function settle(id) {
+    const r = store.get().handbook[id], p = progress(id), justDone = p.done && !r.done;
     r.done = p.done;
+    if (justDone && !r.rv) r.rv = { due: Date.now() + REVIEW_GAPS[0] * DAY, st: 0 };
     store.touchDay();
     store.save();
     return justDone;
   }
-  // The next chapter to work on: the first written chapter that isn't done.
-  const nextChapter = () => order().find((id) => !chapter(id).planned && !progress(id).done);
+  const entry = (id) => {
+    const s = store.get();
+    s.handbook ||= {};
+    const r = (s.handbook[id] ||= { c: {}, h: {}, done: false });
+    r.c ||= {};
+    r.h ||= {};
+    return r;
+  };
+  function markCheck(id, key, ok) {
+    const r = entry(id);
+    if (ok) r.c[key] = 1;
+    else if (!r.c[key]) r.c[key] = 0;
+    return settle(id);
+  }
+  // Homework: 2 is right or "got it", 1 is "partly", 0 is "missed".
+  function markHomework(id, key, score) {
+    const r = entry(id);
+    r.h[key] = Math.max(score, score === 0 ? 0 : r.h[key] || 0);
+    return settle(id);
+  }
+  // The next chapter to work on: the first that isn't finished.
+  const nextChapter = () => order().find((id) => !progress(id).done);
+  const dueReviews = (now = Date.now()) => order().filter((id) => { const v = rec(id).rv; return v && v.due <= now; });
 
-  // ---------------------------------------------------------------- index
+  // ---------------------------------------------------------------- questions anywhere
+  // Every question that can be marked automatically, for warm-ups, reviews and exams.
+  function pool(ids) {
+    return ids.flatMap((id) => {
+      const ch = chapter(id);
+      return [...HB().checksOf(ch), ...HB().homeworkOf(ch)].filter(({ c }) => c.opts || Number.isFinite(c.a)).map(({ c, key }) => ({ id, key, c }));
+    });
+  }
+  const readAnswer = (raw) => { const v = QT.parseAnswer(raw); return Number.isNaN(v) ? QT.evalExpr(raw) : v; };
+  // Options are written with the right answer first, then shown in an order fixed for each question.
+  function shuffled(c, seed) {
+    let h = 7;
+    for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) % 9973;
+    return c.opts.map((o, i) => ({ text: Array.isArray(o) ? o[0] : o, why: Array.isArray(o) ? o[1] : '', right: i === 0, order: (h * (i + 3) * 37) % 101 })).sort((a, b) => a.order - b.order);
+  }
+
+  // One question at a time. opts: { exam, title, done(results), finishText }.
+  function runQuiz(box, items, opts = {}) {
+    let at = 0;
+    const results = [];
+    const draw = () => {
+      if (at >= items.length) return opts.done?.(results);
+      const it = items[at], c = it.c, title = chapter(it.id).title;
+      const options = c.opts ? shuffled(c, `${it.id}${it.key}`) : null;
+      box.innerHTML = `
+        <div class="eyebrow">${esc(opts.title || 'Question')} · ${at + 1} of ${items.length}${opts.exam ? '' : ` · ${esc(title)}`}</div>
+        <p class="question">${c.q}</p>
+        <form class="hb-run" autocomplete="off">
+          ${options ? `<div class="hb-opts">${options.map((o, i) => `<button type="button" class="hb-opt" data-o="${i}">${o.text}</button>`).join('')}</div>`
+            : `<div class="answer-row"><input type="text" autocapitalize="off" aria-label="Your answer" placeholder="Your answer"><button>${opts.exam ? 'Submit' : 'Check'}</button></div>`}
+        </form>
+        <div class="hb-fb" aria-live="polite"></div>`;
+      const fb = box.querySelector('.hb-fb');
+      const finish = (ok, typed) => {
+        results.push({ ...it, ok, typed });
+        if (opts.exam) { at++; return draw(); }
+        box.querySelectorAll('input, .hb-run button').forEach((x) => { x.disabled = true; });
+        fb.innerHTML = `<span class="fb-inline ${ok ? 'ok' : 'bad'}">${ok ? '✓ Correct' : 'Not this time'}</span><div class="solution">${c.sol}</div><button type="button" class="hb-next">${at + 1 < items.length ? 'Next' : esc(opts.finishText || 'Finish')}</button>`;
+        box.querySelector('.hb-next').addEventListener('click', () => { at++; draw(); });
+        box.querySelector('.hb-next').focus();
+      };
+      if (options) {
+        box.querySelectorAll('.hb-opt').forEach((b) => b.addEventListener('click', () => {
+          const o = options[+b.dataset.o];
+          finish(o.right, o.text);
+        }));
+      } else {
+        const input = box.querySelector('input');
+        box.querySelector('form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (!input.value.trim()) return (fb.textContent = 'Type an answer first.');
+          const v = readAnswer(input.value);
+          if (Number.isNaN(v)) return (fb.textContent = "Couldn't read that. Try 0.25, 1/4, 25% or sqrt(2)/2.");
+          finish(QT.isCorrect(v, c.a, c.tol || {}), input.value);
+        });
+        input.focus({ preventScroll: true });
+      }
+    };
+    draw();
+  }
+
+  // ---------------------------------------------------------------- the course page
   function index(el) {
-    const written = order().filter((id) => !chapter(id).planned);
-    const done = written.filter((id) => progress(id).done).length, next = nextChapter();
+    const all = order(), done = all.filter((id) => progress(id).done).length, next = nextChapter(), due = dueReviews();
+    const exams = store.get().hbExams || {};
+    const examRow = (id, label) => { const e = exams[id]; return `<a class="btn ghost" href="#/handbook/exam/${id}">${esc(label)}${e ? ` · best ${Math.round(e.best * 100)}%` : ''}</a>`; };
     el.innerHTML = `
       <h1>Handbook</h1>
-      <p class="lede">A course from the basics up to everything quant trading interviews test. Each chapter is short explanations, worked examples and interactive tools, with questions to check yourself as you go. Work through it in order, or jump to what you need.</p>
+      <p class="lede">A complete course, from fractions to factor models, written to be worked through in order. Finish it properly and you will have met, practised and been tested on everything a quant trading interview asks.</p>
       <div class="card hb-overview">
-        <div class="row" style="justify-content:space-between"><b>${done} of ${written.length} chapters done</b>${next ? `<a class="btn" href="#/handbook/${next}">${done ? 'Continue' : 'Start'}: ${esc(chapter(next).title)}</a>` : ''}</div>
-        <div class="bar stack" role="progressbar" aria-label="Chapters done" aria-valuenow="${written.length ? Math.round((100 * done) / written.length) : 0}" aria-valuemin="0" aria-valuemax="100"><i style="width:${written.length ? (100 * done) / written.length : 0}%"></i></div>
+        <div class="row" style="justify-content:space-between"><b>${done} of ${all.length} chapters finished</b>${next ? `<a class="btn" href="#/handbook/${next}">${done || rec(next).c && Object.keys(rec(next).c).length ? 'Continue' : 'Start'}: ${esc(chapter(next).title)}</a>` : '<a class="btn" href="#/handbook/exam/all">Sit the final exam</a>'}</div>
+        <div class="bar stack" role="progressbar" aria-label="Chapters finished" aria-valuenow="${Math.round((100 * done) / all.length)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(100 * done) / all.length}%"></i></div>
       </div>
+      ${due.length ? `<div class="card hb-due"><b>${due.length} chapter${due.length > 1 ? 's' : ''} due for review.</b> <span class="small">A few mixed questions now stop it fading.</span> <a class="btn" href="#/handbook/review">Review now</a></div>` : ''}
+      <details class="card hb-how">
+        <summary>How to use this handbook</summary>
+        <ol>
+          <li><b>Warm up.</b> Each chapter opens with quick questions from what it builds on.</li>
+          <li><b>Read with a pen.</b> Try each worked example yourself, then reveal it one step at a time. Struggling first is what makes it stick.</li>
+          <li><b>Predict, then test.</b> Commit to a guess before each simulation, and notice when you're surprised.</li>
+          <li><b>Answer every check.</b> They're short on purpose. A wrong answer tells you what to reread.</li>
+          <li><b>Explain it.</b> Write the idea in your own words. If you can't, you haven't got it yet.</li>
+          <li><b>Do the homework on paper.</b> Core and Interview problems finish the chapter. Stretch problems and Labs are optional, but they're where the deepest understanding comes from.</li>
+          <li><b>Come back.</b> Finished chapters return for review after 3, 7, 21 and 60 days.</li>
+          <li><b>Sit the exam.</b> Each part ends with a mixed exam with no hints. ${Math.round(PASS * 100)}% is a pass.</li>
+        </ol>
+        <p class="small">The whole course is about ${Math.round(all.reduce((a, id) => a + chapter(id).minutes, 0) / 60)} hours of reading, plus homework. Short on time? Start from a route below. <a href="#/handbook/sheet">Every chapter's summary</a> is on one page.</p>
+      </details>
+      ${(HB().ROUTES || []).map((r) => `<details class="card hb-route"><summary>${esc(r.name)}</summary><p class="small">${esc(r.blurb)}</p><ol>${r.chapters.map((id) => `<li><a href="#/handbook/${id}">${esc(chapter(id).title)}</a>${progress(id).done ? ' ✓' : ''}</li>`).join('')}</ol></details>`).join('')}
       ${HB().PARTS.map((part) => `
         <h2>${esc(part.title)}</h2>
         <p class="small">${esc(part.blurb)}</p>
-        <div class="hb-chapters">${part.chapters.map((id, i) => {
-          const ch = chapter(id), p = progress(id);
-          if (ch.planned) return `<div class="card hb-chapter planned"><div class="hb-num">${order().indexOf(id) + 1}</div><div><b>${esc(ch.title)}</b> <span class="chip">coming soon</span><p class="small">${esc(ch.blurb)}</p><p class="small">Practise now: ${ch.practice.map(([l, h]) => `<a href="${h}">${esc(l)}</a>`).join(' · ')}</p></div></div>`;
-          const state = p.done ? 'done' : p.right ? 'started' : '';
-          return `<a class="card hb-chapter ${state}" href="#/handbook/${id}"><div class="hb-num">${p.done ? '✓' : order().indexOf(id) + 1}</div><div><b>${esc(ch.title)}</b><p class="small">${ch.minutes} min · ${p.n} checks${p.right && !p.done ? ` · ${p.right} done` : ''}${p.done ? ' · done' : ''}</p></div></a>`;
-        }).join('')}</div>`).join('')}`;
+        <div class="hb-chapters">${part.chapters.map((id) => {
+          const ch = chapter(id), p = progress(id), started = p.right || p.hwDone;
+          return `<a class="card hb-chapter ${p.done ? 'done' : started ? 'started' : ''}" href="#/handbook/${id}"><div class="hb-num">${p.done ? '✓' : order().indexOf(id) + 1}</div><div><b>${esc(ch.title)}</b><p class="small">${ch.minutes} min · ${p.right} of ${p.n} checks · ${p.hwDone} of ${p.hw} homework${p.done ? ' · finished' : ''}</p></div></a>`;
+        }).join('')}</div>
+        <p class="hb-exam-link">${examRow(part.id, `Exam: ${part.short}`)}</p>`).join('')}
+      <h2>Final exam</h2>
+      <p class="small">Thirty questions drawn from the whole course, with no hints.</p>
+      <p>${examRow('all', 'Final exam')}</p>`;
   }
 
-  // ---------------------------------------------------------------- chapter
+  // ---------------------------------------------------------------- one chapter
   function view(el, id) {
     const ch = chapter(id);
-    if (!ch || ch.planned) return index(el);
-    const ids = order().filter((x) => !chapter(x).planned), at = ids.indexOf(id);
-    const prev = ids[at - 1], next = ids[at + 1];
+    if (!ch) return index(el);
+    const ids = order(), at = ids.indexOf(id), prev = ids[at - 1], next = ids[at + 1];
     const part = HB().PARTS.find((p) => p.chapters.includes(id));
-    let k = 0;
-    const r = rec(id);
+    const r = rec(id), keys = new Map(HB().checksOf(ch).map(({ c, key }) => [c, key]));
+    const warm = (ch.prereq || []).filter((x) => chapter(x));
+    const hw = HB().homeworkOf(ch), levels = Object.keys(LEVELS).filter((l) => hw.some((h) => h.c.lvl === l));
     el.innerHTML = `
       <a class="back" href="#/handbook">← Handbook</a>
-      <div class="eyebrow">${esc(part.title)} · chapter ${order().indexOf(id) + 1} · ${ch.minutes} min</div>
+      <div class="eyebrow">${esc(part.title)} · chapter ${at + 1} of ${ids.length} · ${ch.minutes} min</div>
       <h1>${esc(ch.title)}</h1>
-      <div class="card hb-goals"><b>You'll be able to</b><ul>${ch.goals.map((g) => `<li>${esc(g)}</li>`).join('')}</ul>
+      ${ch.why ? `<p class="lede">${ch.why}</p>` : ''}
+      <div class="card hb-goals"><b>By the end you'll be able to</b><ul>${ch.goals.map((g) => `<li>${esc(g)}</li>`).join('')}</ul>
+        ${warm.length ? `<p class="small">Builds on: ${warm.map((x) => `<a href="#/handbook/${x}">${esc(chapter(x).title)}</a>`).join(' · ')}</p>` : ''}
         <p class="small" id="hb-progress"></p></div>
-      ${ch.sections.map((s) => `
-        <section class="hb-section">
+      ${warm.length ? `<details class="card hb-warm" id="hb-warm"><summary>Warm up: three questions from earlier chapters</summary><div class="hb-warm-body"></div></details>` : ''}
+      ${ch.sections.map((s, i) => `
+        <section class="hb-section" id="s${i}">
           <h2>${esc(s.h)}</h2>
-          <div class="hb-text">${s.html}</div>
-          ${s.widget ? `<div class="card hb-widget" data-widget="${s.widget}"></div>` : ''}
-          ${(s.checks || []).map((c) => { const idx = k++; return checkCard(c, idx, r.c?.[idx] === 1); }).join('')}
+          ${s.blocks.map((b) => block(b, keys, r, id)).join('')}
         </section>`).join('')}
-      <h2>Key takeaways</h2>
-      <ul class="hb-takeaways">${ch.takeaways.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
-      <h2>Practise it</h2>
-      <p>${ch.practice.map(([l, h]) => `<a class="btn ghost" href="${h}">${esc(l)}</a>`).join(' ')}</p>
+      <h2>Summary</h2>
+      <ul class="hb-takeaways">${ch.takeaways.map((t) => `<li>${t}</li>`).join('')}</ul>
+      ${ch.explain ? `<section class="card hb-explain"><div class="eyebrow">Explain it in your own words</div>
+        <p class="question">${ch.explain.q}</p>
+        <textarea rows="4" aria-label="Your explanation" maxlength="2000" placeholder="Write it as if to a friend who hasn't read this. Saved on this device.">${esc(r.note || '')}</textarea>
+        <details class="hb-why"><summary>Compare with a model answer</summary><div>${ch.explain.a}</div></details></section>` : ''}
+      <h2 id="homework">Homework</h2>
+      <p class="small">Do these on paper, away from the app if you can. ${hw.some(required) ? 'Core and Interview problems finish the chapter.' : ''} Numeric answers are marked here; for written ones, compare with the model answer and mark yourself honestly.</p>
+      ${levels.map((l) => hw.filter((h) => h.c.lvl === l).map((h, i) => homeworkCard(h, l, i, r)).join('')).join('')}
+      <h2>Keep practising</h2>
+      <p class="hb-practice">${ch.practice.map(([l, h]) => `<a class="btn ghost" href="${h}">${esc(l)}</a>`).join(' ')}</p>
       <div class="row hb-nav">${prev ? `<a class="btn ghost" href="#/handbook/${prev}">← ${esc(chapter(prev).title)}</a>` : ''}${next ? `<a class="btn" href="#/handbook/${next}">${esc(chapter(next).title)} →</a>` : `<a class="btn" href="#/handbook">Back to the handbook</a>`}</div>`;
     const drawProgress = () => {
-      const p = progress(id);
-      el.querySelector('#hb-progress').innerHTML = p.done ? '✓ Chapter done: every check answered correctly.' : `Checks answered correctly: <b>${p.right} of ${p.n}</b>. Answer them all to finish the chapter.`;
+      const p = progress(id), box = el.querySelector('#hb-progress');
+      if (!box) return;
+      box.innerHTML = p.done ? '✓ Finished: every check is right and the homework is done. It will come back for review.'
+        : `Checks right: <b>${p.right} of ${p.n}</b> · homework done: <b>${p.hwDone} of ${p.hw}</b>.`;
     };
     drawProgress();
     el.querySelectorAll('.hb-check').forEach((box) => wireCheck(box, id, ch, drawProgress));
-    el.querySelectorAll('[data-widget]').forEach((w) => (WIDGETS[w.dataset.widget] || (() => {}))(w));
+    el.querySelectorAll('.hb-mcq').forEach((box) => wireMcq(box, id, ch, drawProgress));
+    el.querySelectorAll('.hb-hw').forEach((box) => wireHomework(box, id, ch, drawProgress));
+    el.querySelectorAll('.hb-worked').forEach(wireWorked);
+    el.querySelectorAll('.hb-predict').forEach(wirePredict);
+    el.querySelectorAll('[data-widget]:not([hidden])').forEach(startWidget);
+    const area = el.querySelector('.hb-explain textarea');
+    area?.addEventListener('change', () => { entry(id).note = area.value.slice(0, 2000); store.save(); });
+    const warmBox = el.querySelector('#hb-warm');
+    warmBox?.addEventListener('toggle', () => {
+      const body = warmBox.querySelector('.hb-warm-body');
+      if (!warmBox.open || body.childElementCount) return;
+      const items = R.shuffle(pool(warm)).slice(0, 3);
+      runQuiz(body, items, { title: 'Warm up', finishText: 'Done', done: () => { body.innerHTML = '<p class="small">Warmed up. If any of those felt shaky, reread that chapter\'s summary first.</p>'; } });
+    });
   }
 
-  function checkCard(c, idx, solved) {
+  function block(b, keys, r, id) {
+    if (typeof b === 'string') return `<div class="hb-text">${b}</div>`;
+    if (b.fig) return QT.hbFig(b);
+    if (b.widget) return widgetBlock(b);
+    if (b.worked) return workedCard(b);
+    if (b.idea) return `<aside class="hb-note idea"><b>Key idea</b> ${b.idea}</aside>`;
+    if (b.trap) return `<aside class="hb-note trap"><b>Common mistake</b> ${b.trap}</aside>`;
+    if (b.market) return `<aside class="hb-note market"><b>On the desk</b> ${b.market}</aside>`;
+    if (b.proof) return `<details class="hb-why"><summary>${esc(b.title || "Why it's true")}</summary><div>${b.proof}</div></details>`;
+    if (b.think) return `<details class="hb-think"><summary>${b.think}</summary><div>${b.back}</div></details>`;
+    const key = keys.get(b);
+    return b.opts ? mcqCard(b, key, id, r.c?.[key] === 1) : checkCard(b, key, r.c?.[key] === 1);
+  }
+
+  function workedCard(b) {
+    let n = 0;
+    const steps = b.steps.map((s) => {
+      const [ask, body] = Array.isArray(s) ? s : [null, s];
+      return `<li hidden data-step="${n++}">${ask ? `<p class="hb-ask">${ask}</p><div hidden data-body>${body}</div>` : `<div data-body>${body}</div>`}</li>`;
+    }).join('');
+    return `<div class="card hb-worked"><div class="eyebrow">Worked example${b.worked === true ? '' : ` · ${esc(b.worked)}`}</div>
+      <p class="question">${b.q}</p>
+      <p class="small">Try it on paper first, then work through it.</p>
+      <ol class="hb-steps">${steps}</ol>
+      <button type="button" class="ghost" data-next>Show the first step</button></div>`;
+  }
+  function wireWorked(box) {
+    const items = [...box.querySelectorAll('[data-step]')], btn = box.querySelector('[data-next]');
+    let i = -1, waiting = null;
+    btn.addEventListener('click', () => {
+      if (waiting) {
+        waiting.hidden = false;
+        waiting = null;
+      } else {
+        i++;
+        items[i].hidden = false;
+        const body = items[i].querySelector('[data-body]');
+        if (body.hidden) waiting = body;
+      }
+      if (i >= items.length - 1 && !waiting) btn.remove();
+      else btn.textContent = waiting ? 'Reveal' : `Next step (${i + 2} of ${items.length})`;
+    });
+  }
+
+  function widgetBlock(b) {
+    const w = `<div class="card hb-widget" data-widget="${b.widget}"${b.predict ? ' hidden' : ''}></div>`;
+    if (!b.predict) return w;
+    return `<div class="card hb-predict"><div class="eyebrow">Predict first</div><p class="question">${b.predict.q}</p>
+      <div class="hb-opts">${b.predict.opts.map((o) => `<button type="button" class="hb-opt">${o}</button>`).join('')}</div>
+      <p class="small hb-then" hidden>${b.predict.then || 'Now test your guess.'}</p></div>${w}`;
+  }
+  function wirePredict(box) {
+    const w = box.nextElementSibling;
+    box.querySelectorAll('.hb-opt').forEach((b) => b.addEventListener('click', () => {
+      box.querySelectorAll('.hb-opt').forEach((x) => { x.disabled = true; x.classList.toggle('picked', x === b); });
+      box.querySelector('.hb-then').hidden = false;
+      if (w.hidden) { w.hidden = false; startWidget(w); }
+    }));
+  }
+  const startWidget = (w) => ({ ...WIDGETS, ...QT.hbWidgets }[w.dataset.widget] || (() => {}))(w);
+
+  function checkCard(c, key, solved) {
     return `
-      <form class="card hb-check${solved ? ' solved' : ''}" data-idx="${idx}" autocomplete="off">
+      <form class="card hb-check${solved ? ' solved' : ''}" data-key="${key}" autocomplete="off">
         <div class="eyebrow">Check yourself</div>
         <p class="question">${c.q}</p>
         <div class="answer-row">
-          <input type="text" inputmode="${c.a < 0 ? 'text' : 'decimal'}" aria-label="Your answer" placeholder="${solved ? 'Solved. Try it again?' : 'Your answer'}">
+          <input type="text" autocapitalize="off" aria-label="Your answer" placeholder="${solved ? 'Solved. Try it again?' : 'Your answer'}">
           <button>Check</button>
         </div>
         <div class="row hb-check-actions">${c.hint ? '<button type="button" class="link" data-act="hint">Hint</button>' : ''}<button type="button" class="link" data-act="show">Show solution</button></div>
@@ -103,17 +294,18 @@
         <div class="solution" hidden>${c.sol}</div>
       </form>`;
   }
+  const checkOf = (ch, key) => HB().checksOf(ch).find((x) => x.key === key).c;
 
   function wireCheck(box, id, ch, onChange) {
-    const idx = +box.dataset.idx, c = checksOf(ch)[idx], input = box.querySelector('input'), fb = box.querySelector('.hb-fb');
+    const key = box.dataset.key, c = checkOf(ch, key), input = box.querySelector('input'), fb = box.querySelector('.hb-fb');
     box.addEventListener('submit', (e) => {
       e.preventDefault();
-      const v = QT.parseAnswer(input.value);
+      const v = readAnswer(input.value);
       if (!input.value.trim()) return (fb.textContent = 'Type an answer first.');
-      if (Number.isNaN(v)) return (fb.textContent = "Couldn't read that. Try 0.25, 1/4 or 25%.");
+      if (Number.isNaN(v)) return (fb.textContent = "Couldn't read that. Try 0.25, 1/4, 25% or sqrt(2)/2.");
       const ok = QT.isCorrect(v, c.a, c.tol || {});
-      const finished = markCheck(id, idx, ok);
-      fb.innerHTML = ok ? `<span class="fb-inline ok">✓ Correct${finished ? ' · chapter done!' : ''}</span>` : `<span class="fb-inline bad">Not quite. Try again, or use the hint.</span>`;
+      const finished = markCheck(id, key, ok);
+      fb.innerHTML = ok ? `<span class="fb-inline ok">✓ Correct${finished ? ' · chapter finished!' : ''}</span>` : `<span class="fb-inline bad">Not quite. Try again, or use the hint.</span>`;
       if (ok) {
         box.classList.add('solved');
         box.querySelector('.solution').hidden = false;
@@ -125,9 +317,149 @@
       if (act === 'hint') box.querySelector('.hb-hint').hidden = false;
       if (act === 'show') {
         box.querySelector('.solution').hidden = false;
-        fb.innerHTML = `<span class="small">Read it, then try the next check. This one stays open to try again.</span>`;
+        fb.innerHTML = `<span class="small">Read it, then cover it and answer in your own working. This check stays open.</span>`;
       }
     });
+  }
+
+  function mcqCard(c, key, id, solved) {
+    return `<div class="card hb-mcq${solved ? ' solved' : ''}" data-key="${key}" role="group" aria-label="Concept check">
+      <div class="eyebrow">Concept check</div>
+      <p class="question">${c.q}</p>
+      <div class="hb-opts">${shuffled(c, `${id}${key}`).map((o, i) => `<button type="button" class="hb-opt" data-o="${i}">${o.text}</button>`).join('')}</div>
+      <div class="hb-fb" aria-live="polite"></div>
+      <div class="solution" hidden>${c.sol}</div></div>`;
+  }
+  function wireMcq(box, id, ch, onChange) {
+    const key = box.dataset.key, c = checkOf(ch, key), options = shuffled(c, `${id}${key}`), fb = box.querySelector('.hb-fb');
+    box.querySelectorAll('.hb-opt').forEach((b) => b.addEventListener('click', () => {
+      const o = options[+b.dataset.o], finished = markCheck(id, key, o.right);
+      b.classList.add(o.right ? 'right' : 'wrong');
+      fb.innerHTML = o.right ? `<span class="fb-inline ok">✓ Correct${finished ? ' · chapter finished!' : ''}</span>` : `<span class="fb-inline bad">Not that one.</span> ${o.why || 'Think again.'}`;
+      if (o.right) {
+        box.classList.add('solved');
+        box.querySelector('.solution').hidden = false;
+        box.querySelectorAll('.hb-opt').forEach((x) => { x.disabled = true; });
+      }
+      onChange();
+    }));
+  }
+
+  function homeworkCard({ c, key }, lvl, i, r) {
+    const auto = Number.isFinite(c.a), score = r.h?.[key];
+    return `<form class="card hb-hw lvl-${lvl}${score >= 1 ? ' solved' : ''}" data-key="${key}" autocomplete="off">
+      <div class="eyebrow">${LEVELS[lvl]} ${i + 1}${required({ c }) ? '' : ' · optional'}</div>
+      <p class="question">${c.q}</p>
+      ${auto ? `<div class="answer-row"><input type="text" autocapitalize="off" aria-label="Your answer" placeholder="${score >= 1 ? 'Done. Try it again?' : 'Your answer'}"><button>Check</button></div>` : ''}
+      <div class="row hb-check-actions">${c.hint ? '<button type="button" class="link" data-act="hint">Hint</button>' : ''}<button type="button" class="link" data-act="show">${auto ? 'Show solution' : 'Show the model answer'}</button></div>
+      <p class="small hb-hint" hidden>${c.hint || ''}</p>
+      <div class="hb-fb" aria-live="polite"></div>
+      <div class="solution" hidden>${c.sol}</div>
+      ${auto ? '' : `<div class="hb-self" hidden><span class="small">How did you do?</span> <button type="button" class="ghost" data-score="2">Got it</button> <button type="button" class="ghost" data-score="1">Partly</button> <button type="button" class="ghost" data-score="0">Missed it</button></div>`}
+    </form>`;
+  }
+  function wireHomework(box, id, ch, onChange) {
+    const key = box.dataset.key, c = HB().homeworkOf(ch).find((x) => x.key === key).c, input = box.querySelector('input'), fb = box.querySelector('.hb-fb');
+    box.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!input) return;
+      const v = readAnswer(input.value);
+      if (!input.value.trim()) return (fb.textContent = 'Type an answer first.');
+      if (Number.isNaN(v)) return (fb.textContent = "Couldn't read that. Try 0.25, 1/4, 25% or sqrt(2)/2.");
+      const ok = QT.isCorrect(v, c.a, c.tol || {});
+      fb.innerHTML = ok ? '<span class="fb-inline ok">✓ Correct</span>' : '<span class="fb-inline bad">Not quite. Check your working, or use the hint.</span>';
+      if (ok) {
+        markHomework(id, key, 2);
+        box.classList.add('solved');
+        box.querySelector('.solution').hidden = false;
+      }
+      onChange();
+    });
+    box.addEventListener('click', (e) => {
+      const act = e.target.closest('[data-act]')?.dataset.act, score = e.target.closest('[data-score]')?.dataset.score;
+      if (act === 'hint') box.querySelector('.hb-hint').hidden = false;
+      if (act === 'show') {
+        box.querySelector('.solution').hidden = false;
+        const self = box.querySelector('.hb-self');
+        if (self) self.hidden = false;
+      }
+      if (score !== undefined) {
+        const finished = markHomework(id, key, +score);
+        box.classList.toggle('solved', +score >= 1);
+        fb.innerHTML = `<span class="small">${+score === 2 ? 'Good.' : +score === 1 ? 'Counted. Redo the part you missed tomorrow.' : 'Noted. Reread the section and try it again later.'}${finished ? ' Chapter finished!' : ''}</span>`;
+        onChange();
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------- spaced review
+  function review(el) {
+    const due = dueReviews();
+    el.innerHTML = `<a class="back" href="#/handbook">← Handbook</a><h1>Review</h1>`;
+    if (!due.length) {
+      const soon = order().map((id) => ({ id, v: rec(id).rv })).filter((x) => x.v).sort((a, b) => a.v.due - b.v.due)[0];
+      el.insertAdjacentHTML('beforeend', `<div class="card"><p style="margin-top:0">Nothing is due.${soon ? ` Next up: <b>${esc(chapter(soon.id).title)}</b>, in ${Math.max(1, Math.ceil((soon.v.due - Date.now()) / DAY))} days.` : ' Chapters join the schedule when you finish them.'}</p><a class="btn" href="#/handbook">Back to the handbook</a></div>`);
+      return;
+    }
+    // Three questions per due chapter, mixed together: switching between topics is the point.
+    const items = R.shuffle(due.flatMap((id) => R.shuffle(pool([id])).slice(0, 3)));
+    el.insertAdjacentHTML('beforeend', `<p class="lede">${items.length} mixed questions from ${due.length} chapter${due.length > 1 ? 's' : ''}. Answer from memory before anything else.</p><div class="card" id="hb-run"></div>`);
+    const box = el.querySelector('#hb-run');
+    runQuiz(box, items, {
+      title: 'Review',
+      done(results) {
+        const rows = due.map((id) => {
+          const mine = results.filter((x) => x.id === id), right = mine.filter((x) => x.ok).length, kept = right >= Math.ceil(mine.length * (2 / 3));
+          const r = entry(id), st = kept ? Math.min(REVIEW_GAPS.length - 1, r.rv.st + 1) : 0;
+          r.rv = { due: Date.now() + REVIEW_GAPS[st] * DAY, st };
+          return `<tr><td><a href="#/handbook/${id}">${esc(chapter(id).title)}</a></td><td class="mono">${right} of ${mine.length}</td><td>${kept ? `Back in ${REVIEW_GAPS[st]} days` : `Reread the summary. Back in ${REVIEW_GAPS[st]} days`}</td></tr>`;
+        }).join('');
+        store.touchDay();
+        store.save();
+        box.innerHTML = `<div class="eyebrow">Review done</div><table class="hb-table">${rows}</table><a class="btn" href="#/handbook">Back to the handbook</a>`;
+      },
+    });
+  }
+
+  // ---------------------------------------------------------------- exams
+  function exam(el, which) {
+    const part = HB().PARTS.find((p) => p.id === which), final = which === 'all';
+    if (!part && !final) return index(el);
+    const ids = final ? order() : part.chapters, size = final ? 30 : Math.min(15, Math.max(10, ids.length * 3));
+    const name = final ? 'Final exam' : `Exam: ${part.short}`, best = store.get().hbExams?.[which];
+    el.innerHTML = `<a class="back" href="#/handbook">← Handbook</a><h1>${esc(name)}</h1>
+      <div class="card" id="hb-run"><p style="margin-top:0">${size} questions, mixed across ${ids.length} chapter${ids.length > 1 ? 's' : ''}. No hints and no feedback until the end, as in an interview. Paper and a pen are fine; a calculator isn't. ${Math.round(PASS * 100)}% is a pass.</p>
+      ${best ? `<p class="small">Your best so far: ${Math.round(best.best * 100)}%, ${best.n} attempt${best.n > 1 ? 's' : ''}.</p>` : ''}
+      <button type="button" id="hb-begin">Begin</button></div>`;
+    el.querySelector('#hb-begin').addEventListener('click', () => {
+      // Spread the questions evenly over the chapters before shuffling them together.
+      const byCh = ids.map((id) => R.shuffle(pool([id]))), items = [];
+      for (let i = 0; items.length < size && byCh.some((q) => q.length); i = (i + 1) % byCh.length) if (byCh[i].length) items.push(byCh[i].pop());
+      const box = el.querySelector('#hb-run');
+      runQuiz(box, R.shuffle(items), { exam: true, title: name, done: (res) => report(box, res, which, name) });
+    });
+  }
+  function report(box, res, which, name) {
+    const score = res.filter((x) => x.ok).length / res.length, s = store.get(), old = s.hbExams[which];
+    s.hbExams[which] = { best: Math.max(score, old?.best || 0), last: score, n: (old?.n || 0) + 1, at: Date.now() };
+    store.touchDay();
+    store.save();
+    const ids = [...new Set(res.map((x) => x.id))];
+    const rows = ids.map((id) => ({ id, mine: res.filter((x) => x.id === id) })).map((x) => ({ ...x, right: x.mine.filter((y) => y.ok).length })).sort((a, b) => a.right / a.mine.length - b.right / b.mine.length);
+    const missed = res.filter((x) => !x.ok);
+    box.innerHTML = `<div class="eyebrow">${esc(name)}</div>
+      <p class="hb-score"><b>${res.filter((x) => x.ok).length} of ${res.length}</b> · ${Math.round(score * 100)}% · ${score >= PASS ? 'pass' : `a pass is ${Math.round(PASS * 100)}%`}</p>
+      <table class="hb-table"><tr><th>Chapter</th><th>Score</th></tr>${rows.map((x) => `<tr><td><a href="#/handbook/${x.id}">${esc(chapter(x.id).title)}</a></td><td class="mono">${x.right} of ${x.mine.length}</td></tr>`).join('')}</table>
+      ${missed.length ? `<h2>What you missed</h2>${missed.map((x) => `<div class="hb-missed"><p>${x.c.q}</p><p class="small">You said: ${esc(x.typed)}</p><div class="solution">${x.c.sol}</div></div>`).join('')}` : '<p>Nothing missed.</p>'}
+      <div class="row"><a class="btn ghost" href="#/handbook/exam/${which}">Sit it again</a> <a class="btn" href="#/handbook">Back to the handbook</a></div>`;
+    window.scrollTo(0, 0);
+  }
+
+  // ---------------------------------------------------------------- summaries on one page
+  function sheet(el) {
+    el.innerHTML = `<a class="back" href="#/handbook">← Handbook</a><h1>Every chapter's summary</h1>
+      <p class="lede">The course on one page: read it the night before. It's a reminder of what you've learned, not a way to learn it.</p>
+      ${HB().PARTS.map((part) => `<h2>${esc(part.title)}</h2>${part.chapters.map((id) => `<details class="card hb-sheet" open><summary><a href="#/handbook/${id}">${esc(chapter(id).title)}</a></summary><ul>${chapter(id).takeaways.map((t) => `<li>${t}</li>`).join('')}</ul></details>`).join('')}`).join('')}`;
   }
 
   // ---------------------------------------------------------------- interactive tools
@@ -329,6 +661,12 @@
     },
   };
 
-  QT.views = Object.assign(QT.views || {}, { handbook: (el, id) => (id ? view(el, id) : index(el)) });
-  QT.handbookProgress = { progress, nextChapter, order, markCheck };
+  function route(el, id, arg) {
+    if (id === 'review') return review(el);
+    if (id === 'exam') return exam(el, arg);
+    if (id === 'sheet') return sheet(el);
+    return id ? view(el, id) : index(el);
+  }
+  QT.views = Object.assign(QT.views || {}, { handbook: route });
+  QT.handbookProgress = { progress, nextChapter, order, markCheck, markHomework, dueReviews, pool };
 })();

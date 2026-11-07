@@ -184,7 +184,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] } });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] } });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -371,8 +371,15 @@
       ? { firm: pl.firm, date: pl.date, start: pl.start, done: mapKeys(pl.done, (v) => arr(v, 20).map((x) => text(x, 60)), (k) => dayRe.test(k)) }
       : null;
     // Formula flashcards: spaced-repetition box (0–4) and due time per card id.
-    // Handbook: per chapter, which "check yourself" questions were answered correctly, and done.
-    s.handbook = mapKeys(r.handbook, (x) => ({ c: mapKeys(obj(x).c, (v) => (v ? 1 : 0), (k) => /^\d{1,2}$/.test(k)), done: !!obj(x).done }), (k) => /^[a-z0-9-]{1,40}$/.test(k));
+    // Handbook: per chapter, which checks were answered correctly (c), homework scores (h: 0 missed,
+    // 1 partly, 2 got it), your own explanation (note), finished (done) and the next review (rv).
+    const hbKey = (k) => /^[a-z0-9-]{1,12}$/.test(k);
+    s.handbook = mapKeys(r.handbook, (x) => {
+      const rv = obj(obj(x).rv);
+      return { c: mapKeys(obj(x).c, (v) => (v ? 1 : 0), hbKey), h: mapKeys(obj(x).h, (v) => Math.max(0, Math.min(2, Math.round(num(v)))), hbKey), note: String(obj(x).note ?? '').slice(0, 2000), done: !!obj(x).done, ...(num(rv.due) ? { rv: { due: num(rv.due), st: Math.max(0, Math.min(3, Math.round(num(rv.st)))) } } : {}) };
+    }, (k) => /^[a-z0-9-]{1,40}$/.test(k));
+    // Handbook exams: best and latest score, attempts and when, per part (or "all").
+    s.hbExams = mapKeys(r.hbExams, (x) => ({ best: Math.max(0, Math.min(1, num(obj(x).best))), last: Math.max(0, Math.min(1, num(obj(x).last))), n: Math.max(0, Math.round(num(obj(x).n))), at: num(obj(x).at) }), (k) => /^[a-z]{1,20}$/.test(k));
     // Stories: your written answers to behavioural prompts (plain text, escaped when shown).
     s.stories = mapKeys(r.stories, (x) => ({ f: arr(obj(x).f, 8).map((v) => String(v ?? '').slice(0, 4000)), t: num(obj(x).t) }), (k) => /^[a-z-]{1,30}$/.test(k));
     // Phone-screen mock runs: [right, of] for each scored part.
