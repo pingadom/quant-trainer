@@ -196,6 +196,27 @@
       if (pos.some((x) => Math.abs(x - n / 4) > 5.5 * Math.sqrt(n * 0.25 * 0.75))) fail(`80-in-8: right answer positions not uniform ${pos}`);
     }
 
+    // 60 in 6: one right option of four (by value: fraction options may be unsimplified), distinct
+    // labels and values, tidy numbers, the right answer equally likely in each position, every
+    // question type seen, and a fast method that reaches the answer and names a real guide.
+    if (QT.ft60) {
+      const pos = [0, 0, 0, 0], kinds = new Set();
+      for (let k = 0; k < 6000; k++) {
+        const g = QT.ft60.question(), o = g.opts, fw = QT.mentalTips.fastWay(g), right = o.filter((x) => x.ok);
+        kinds.add(g.kind);
+        const vals = o.map((x) => x.v), distinct = vals.every((v, i) => vals.every((w, j) => i === j || Math.abs(v - w) > 1e-9));
+        const text = [g.q, ...o.map((x) => x.label)].join('|');
+        if (o.length !== 4 || right.length !== 1 || Math.abs(right[0].v - g.a) > 1e-9 || new Set(o.map((x) => x.label)).size !== 4 || !distinct || vals.some((v) => !(v > 0)) || /undefined|NaN|Infinity|e[-+]\d|\d\.\d{6,}/.test(text)) { fail(`60 in 6: bad question ${text}`); break; }
+        if (!fw || Math.abs(fw.value - g.a) > 1e-9 || /undefined|NaN/.test(fw.steps) || !(QT.tricks || []).some((t) => t.id === fw.guide) || !QT.mentalTips.KINDS[g.kind]) { fail(`60 in 6: method for ${g.kind} "${g.q}" gives ${fw && fw.value}, answer ${g.a}`); break; }
+        pos[o.indexOf(right[0])]++;
+      }
+      const n = pos.reduce((a, b) => a + b, 0);
+      if (pos.some((x) => Math.abs(x - n / 4) > 5.5 * Math.sqrt(n * 0.25 * 0.75))) fail(`60 in 6: right answer positions not uniform ${pos}`);
+      if (kinds.size !== Object.keys(QT.ft60.MIX).length) fail(`60 in 6: saw ${kinds.size} question types`);
+      if (QT.mental.genOfKind('ftFracMD').kind !== 'ftFracMD') fail('60 in 6: speed reps need questions of a given type');
+      if (QT.ft60.pretty('15/16 + 2 1/2 <b>') !== '<span class="fr"><span>15</span><span>16</span></span> + 2<span class="fr"><span>1</span><span>2</span></span> &lt;b&gt;') fail(`60 in 6: fraction display ${QT.ft60.pretty('15/16 + 2 1/2 <b>')}`);
+    }
+
     // Interview plan: valid tasks for every firm and day, today's status, and schema validation.
     if (QT.plan) {
       const saved = QT.store.exportJson();

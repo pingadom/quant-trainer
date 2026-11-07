@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -172,6 +172,30 @@ test('slow and missed 80-in-8 questions come back with the fast method', async (
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Speed drill');
   await page.getByRole('link', { name: '← Mental maths' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Your speed by question type' })).toBeVisible(); // remembered across runs
+});
+
+test('60 in 6: one question at a time, unreached questions score nothing', async ({ page, isMobile }) => {
+  await page.clock.install();
+  await page.goto('./#/mental/60in6');
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.locator('#ft-n')).toHaveText('Question 1/60');
+  await expect(page.locator('#ft-mc button')).toHaveCount(4);
+  await page.locator('#ft-mc button[data-ok="1"]').click();
+  await page.locator('#ft-mc button[data-ok="0"]').first().click();
+  await expect(page.locator('#ft-n')).toHaveText('Question 3/60');
+  await expect(page.locator('#ft-score')).toHaveText('Score 0');
+  if (!isMobile) {
+    await page.keyboard.press('Control+2'); // a browser shortcut must not answer
+    await expect(page.locator('#ft-n')).toHaveText('Question 3/60');
+    await page.keyboard.press('2');
+    await expect(page.locator('#ft-n')).toHaveText('Question 4/60');
+  }
+  await page.clock.runFor(361_000);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/60 in 6: done/);
+  await expect(page.locator('.tile').nth(1)).toContainText(isMobile ? '1 / 1 / 58' : /1 \/ 2 \/ 57|2 \/ 1 \/ 57/);
+  await expect(page.getByText(/Every question \(\d+\)/)).toBeVisible();
+  await page.goto('./#/mental');
+  await expect(page.getByRole('link', { name: 'Open' })).toBeVisible();
 });
 
 test('a due speed rep runs, and a failed one comes back tomorrow', async ({ page }) => {

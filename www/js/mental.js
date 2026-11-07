@@ -50,13 +50,14 @@
   function render(el, sub, arg, arg2) {
     if (sub === 'rep' && QT.mentalTips.KINDS[arg]) return rep(el, arg);
     if (sub === 'flow' && QT.flow) return QT.flow.render(el, arg, arg2);
+    if (sub === '60in6' && QT.ft60) return QT.ft60.render(el);
     if (sub === 'challenge' && SEED_RE.test(arg || '')) return challengeIntro(el, arg, /^\d{1,4}$/.test(arg2 || '') ? +arg2 : null);
     const st = store.get().mental, style = savedStyle();
     const best = (k) => st[k]?.best ?? '–';
     el.innerHTML = `
       <h1>Mental maths</h1>
       <p class="lede">Market-making firms screen with fast arithmetic tests. Speed comes from practice plus a handful of tricks you can learn in an afternoon.</p>
-      <a class="card shortcut primary" href="#/tricks" style="margin-bottom:16px"><b>Learn the speed tricks →</b><span>20 short guides (squaring, near-100 multiplication, fractions, last-digit checks, guessing strategy…) each with a practice drill</span></a>
+      <a class="card shortcut primary" href="#/tricks" style="margin-bottom:16px"><b>Learn the speed tricks →</b><span>${(QT.tricks || []).length} short guides (squaring, near-100 multiplication, fractions, last-digit checks, guessing strategy…) each with a practice drill</span></a>
       ${repsCard()}
       <a class="card shortcut" href="#/mental/flow" style="margin-bottom:16px"><b>Flow training for + and − →</b><span>Find the sums that drop you into slow, step-by-step mode, then a rhythm drill and method drills to make them automatic</span></a>
       <div class="grid">
@@ -71,6 +72,12 @@
           <p class="small">Best: <b>${best('full')}</b> net (multiple choice) · <b>${best('fullTyped')}</b> net (typed)</p>
           <button data-mode="full">Start</button>
         </div>
+        ${QT.ft60 ? `<div class="card wide">
+          <h3>60 in 6</h3>
+          <p class="small">The format reported for Flow Traders' arithmetic test: 60 multiple-choice questions in 6 minutes, +1 right, −1 wrong, 0 for any you don't reach. Whole numbers, decimals, fractions (often unsimplified options) and percentages, many with the missing number on the left.</p>
+          <p class="small">Best: <b>${best('ft60')}</b> net</p>
+          <a class="btn" href="#/mental/60in6">Open</a>
+        </div>` : ''}
         ${zetamacCard()}
       </div>
       <div class="card" style="margin-top:12px">
@@ -272,6 +279,7 @@
   // A question of a given type, for speed reps and drills: Zetamac types use default settings.
   function genOfKind(kind) {
     if (ZM_KIND_OP[kind]) return zmQuestion(ZM_DEFAULT, ZM_KIND_OP[kind]);
+    if (QT.ft60 && QT.ft60.G[kind]) return QT.ft60.G[kind]();
     for (let t = 0; t < 300; t++) {
       const g = R.pick(gens)();
       if (g.kind === kind) return g;
@@ -549,7 +557,8 @@
       if (!$in.value.trim()) return;
       const v = QT.parseAnswer($in.value);
       if (Number.isNaN(v)) return (hint.textContent = "Couldn't read that. Try 0.25, 1/4 or 25%.");
-      answer(Math.abs(v - cur.a) <= (cur.tol ?? 0.005), $in.value.trim());
+      // "36 is …% of 80": 45 and 45% are both right.
+      answer(Math.abs(v - cur.a) <= (cur.tol ?? 0.005) || (cur.pct && Math.abs(v * 100 - cur.a) <= 0.005), $in.value.trim());
     });
     $('#rp-pass').addEventListener('click', () => answer(false, 'passed'));
     QT.keypad.attach(form, [$in], () => form.requestSubmit());
@@ -606,7 +615,7 @@
       <div class="card table-wrap"><table>
         <tr><th>Type</th><th class="num">Median</th><th class="num">Missed</th><th>Guide</th></tr>
         ${rows.map((r) => `<tr><td>${r.label}</td><td class="num ${r.median > secs ? 'neg' : ''}">${r.median.toFixed(1)} s</td><td class="num">${Math.round(r.missRate * 100)}%</td><td>${guide(r.guide) ? `<a href="#/tricks/${r.guide}">${guide(r.guide).title}</a>` : ''}</td></tr>`).join('')}
-      </table><p class="small">Over up to your last 30 answers of each type, from 80 in 8, Zetamac and speed reps. Red: slower than your ${secs} s review threshold.</p></div>`;
+      </table><p class="small">Over up to your last 30 answers of each type, from 80 in 8, 60 in 6, Zetamac and speed reps. Red: slower than your ${secs} s review threshold.</p></div>`;
   }
 
   // End-of-session review: per-type timings, then each slow or missed question with the fastest
@@ -628,7 +637,7 @@
       const fw = T.fastWay(x), g = fw && guide(fw.guide);
       const tag = x.ok ? '<span class="flag slow">slow</span>' : `<span class="flag bad">${['passed', 'time ran out'].includes(x.you) ? x.you : `✗ you said ${esc(x.you)}`}</span>`;
       return `<div class="card review-item">
-        <div class="review-head"><span class="mono">${esc(x.q)} = <b>${QT.fmtNum(x.a)}</b></span><span class="review-meta">${tag}<span class="mono small">${sec(x.ms)}</span></span></div>
+        <div class="review-head"><span class="mono">${x.al != null ? `${esc(x.q)} → <b>${esc(x.al)}</b>` : `${esc(x.q)} = <b>${QT.fmtNum(x.a)}</b>`}</span><span class="review-meta">${tag}<span class="mono small">${sec(x.ms)}</span></span></div>
         ${fw ? `<p class="small review-how"><b>Faster: ${fw.name}.</b> ${fw.steps}${g ? ` <a href="#/tricks/${g.id}">Guide: ${g.title} →</a>` : ''}</p>` : ''}
       </div>`;
     };
@@ -674,5 +683,5 @@
     return vals.length ? Math.max(...vals) : null;
   };
 
-  QT.mental = { render, gens, options, best80, review, scheduleReps, dueReps, zmQuestion, zmValid, ZM_DEFAULT, genOfKind, seededList };
+  QT.mental = { render, gens, options, best80, review, wireReview, recordSpeed, slowSecs, scheduleReps, dueReps, zmQuestion, zmValid, ZM_DEFAULT, genOfKind, seededList };
 })();

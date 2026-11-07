@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.41.0
+
+- **60 in 6**, practice for Flow Traders' arithmetic test (Mental maths → 60 in 6): 60 multiple-choice questions in 6 minutes, +1 right, −1 wrong, 0 for any not reached, one at a time with no going back.
+  - Twelve question types in the reported mix: whole-number sums and products, missing numbers (? − 587 = 73), decimals with different numbers of places, decimal × decimal (10.7 × 13.2), decimals with a missing factor (? × 0.12 = 18), chained multiplication (0.6 × 70 × 5,000), "36 is …% of 80", and fraction sums and products shown as stacked fractions, with options that are often unsimplified (24/2) or mixed numbers.
+  - The wrong options are the slips people make: digits lined up on the right instead of at the point, the wrong number of zeros, the inverse fraction, off by ten.
+  - Results show net score, right, wrong and not reached, your pace at the halfway mark, whether you guessed in the closing seconds, the fast method for every slow or missed question, and every question with your time. Slow types join your speed reps.
+  - Optional live score, as on the practice site. Questions are generated fresh each run; they are not copies of the real test.
+- **Two new speed-trick guides:** "Decimals: digits first, then the point" and "Fraction arithmetic at speed".
+
 ## 0.40.0
 
 - **Three new Handbook chapters**, bringing it to 31:

@@ -1025,3 +1025,12 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .hb-takeaways li { margin-bottom: 4px; }
 .hb-practice { display: flex; flex-wrap: wrap; gap: 6px; }
 .hb-code { font: 0.86rem var(--mono); background: var(--panel-2); border-radius: 8px; padding: 10px 12px; overflow-x: auto; }
+
+/* 60 in 6: stacked fractions in questions and options */
+.fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.72em; line-height: 1.1; margin: 0 0.12em; }
+.fr > span:first-child { border-bottom: 1.5px solid currentColor; padding: 0 0.15em; }
+.ft-q { font-size: 1.9rem; min-height: 3.2rem; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0 0.3em; }
+.ft-mc button { min-height: 64px; }
+.ft-all summary { cursor: pointer; font-weight: 600; }
+.ft-all td.mono { white-space: nowrap; }
+.ft-mc .fr { font-size: 0.85em; }

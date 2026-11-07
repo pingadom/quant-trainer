@@ -159,7 +159,7 @@
     zAdd([x, y]) {
       const [big, small] = x >= y ? [x, y] : [y, x], u = small % 10, t = small - u;
       if (u >= 8) return { name: 'Round up, then take back', guide: 'round-and-compensate', value: x + y, steps: `${small} is ${10 - u} short of ${small + 10 - u}: ${big} + ${small + 10 - u} = ${big + small + 10 - u}, minus ${10 - u}: ${b(x + y)}.` };
-      return { name: 'Tens first, then units', guide: 'left-to-right-adding', value: x + y, steps: `${big} + ${t} = ${big + t}${u ? `, then + ${u} = ${b(x + y)}` : ` = ${b(x + y)}`}.` };
+      return { name: 'Tens first, then units', guide: 'left-to-right-adding', value: x + y, steps: t && u ? `${big} + ${t} = ${big + t}, then + ${u} = ${b(x + y)}.` : `${big} + ${small} = ${b(x + y)}.` };
     },
     zSub([c, x]) {
       const u = x % 10, t = x - u;
@@ -198,5 +198,8 @@
       .sort((a, b) => b.median - a.median);
   }
 
-  QT.mentalTips = { KINDS, fastWay, speedTable };
+  // Other test formats (ft60.js) register their own question types and methods here.
+  const add = (kinds, methods) => { Object.assign(KINDS, kinds); Object.assign(METHODS, methods); };
+
+  QT.mentalTips = { KINDS, fastWay, speedTable, add };
 })();

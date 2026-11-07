@@ -136,6 +136,30 @@
       },
     },
 
+    {
+      id: 'decimal-places', group: 'Multiplication', title: 'Decimals: digits first, then the point',
+      tagline: '0.144 ÷ 0.018 = 144 ÷ 18 = 8.',
+      body: `<p><b>Multiplying:</b> ignore the decimal points, multiply the whole numbers, then give the answer as many decimal places as the two numbers had between them.</p>
+        <ul class="examples"><li>0.6 × 0.08: 6 × 8 = 48, three places → <b>0.048</b></li><li>5.6 × 0.8: 56 × 8 = 448, two places → <b>4.48</b></li></ul>
+        <p><b>Dividing:</b> move both decimal points the same number of places until you're dividing by a whole number. The answer doesn't change.</p>
+        <ul class="examples"><li>0.144 ÷ 0.018 = 144 ÷ 18 = <b>8</b></li><li>18 ÷ 0.12 = 1,800 ÷ 12 = <b>150</b></li></ul>
+        <p><b>Two one-place decimals</b> (10.7 × 13.2): split off the whole part, 10 × 13.2 + 0.7 × 13.2 = 132 + 9.24 = <b>141.24</b>. In multiple choice, the last digits (7 × 2 = 1<b>4</b>) and the rough size (11 × 13 ≈ 143) usually leave one option.</p>
+        <p><b>Chains</b> (0.6 × 70 × 5,000): multiply the digits, 6 × 7 × 5 = 210, then count zeros: 0.6 takes one off, 70 adds one, 5,000 adds three, so <b>210,000</b>. The wrong options are usually the right digits with the wrong number of zeros.</p>`,
+      gen: () => {
+        const kind = R.pick(['mul', 'div', 'chain']);
+        if (kind === 'mul') {
+          const a = R.int(2, 9), b = R.pick([11, 12, 13, 14, 15, 16, 17, 18, 19, 23, 24, 25, 26, 27, 28, 34, 35, 36, 45, 47, 56, 64, 72, 85]), da = R.int(1, 2), db = R.int(1, 2), x = r(a / 10 ** da, 3), y = r(b / 10 ** db, 3), ans = r(x * y, 6);
+          return { q: `${x} × ${y}`, a: ans, tol: { abs: 1e-6, rel: 0 }, sol: `${a} × ${b} = ${a * b}, ${da + db} decimal places → <b>${f(ans)}</b>` };
+        }
+        if (kind === 'div') {
+          const k = R.int(2, 3), d = R.int(11, 25), q = R.int(3, 12), dv = r(d / 10 ** k, 3), nv = r((d * q) / 10 ** k, 3);
+          return { q: `${nv} ÷ ${dv}`, a: q, tol: EXACT, sol: `Move both points ${k} places: ${d * q} ÷ ${d} = <b>${q}</b>` };
+        }
+        const da = R.int(2, 9), db = R.int(2, 9), z = R.int(2, 3), ans = da * db * 5 * 10 ** z;
+        return { q: `0.${da} × ${db * 10} × ${c(5 * 10 ** z)}`, a: ans, tol: EXACT, sol: `${da} × ${db} × 5 = ${da * db * 5}, then zeros: −1 + 1 + ${z} = ${z} → <b>${c(ans)}</b>` };
+      },
+    },
+
     // ----------------------------------------------------------- addition & subtraction
     {
       id: 'complements', group: 'Addition & subtraction', title: 'Subtracting from 1,000',
@@ -223,6 +247,27 @@
         }
         const k = R.int(3, 9), q = R.pick([R.int(11, 40), R.float(10, 30, 1)]);
         return { q: `? ÷ ${k} = ${q}`, a: r(q * k, 2), tol: EXACT, sol: `${q} × ${k} = <b>${f(r(q * k, 2))}</b>` };
+      },
+    },
+
+    {
+      id: 'fraction-arithmetic', group: 'Division & fractions', title: 'Fraction arithmetic at speed',
+      tagline: 'Cancel first, flip to divide, compare values not looks.',
+      body: `<p><b>Cancel before anything else.</b> 12/32 + 15/16: 12/32 is 6/16, so the sum is 21/16. 14/7 + 35/70 is 2 + ½ = <b>2½</b>.</p>
+        <p><b>Dividing by a fraction is multiplying by it upside down.</b> 60 ÷ 10/13 = 60 ÷ 10 × 13 = <b>78</b>. Divide first, then multiply, so the numbers stay small: 5/6 × 12 = 12 ÷ 6 × 5 = <b>10</b>.</p>
+        <p><b>Missing fractions:</b> undo the operation. ? − 5/16 = 1/8 → ? = 2/16 + 5/16 = <b>7/16</b>. 2/4 × ? = 6 → ? = 6 × 4/2 = <b>12</b>.</p>
+        <p><b>In multiple choice, compare values, not looks.</b> Options are often left unsimplified, so 12 may appear as 24/2 and ½ as 2/4. Cancel each option in your head; the wrong ones are often the inverse (you multiplied instead of dividing) or one off on the top.</p>`,
+      gen: () => {
+        const kind = R.pick(['add', 'div', 'mul']);
+        if (kind === 'add') {
+          const d = R.pick([4, 6, 8, 10, 12, 16]), m = R.int(2, 4), u = R.int(1, d - 1), w = R.int(1, d - 1);
+          return { q: `${u * m}/${d * m} + ${w}/${d}`, a: (u + w) / d, tol: EXACT, sol: `${u * m}/${d * m} = ${u}/${d}, so ${u}/${d} + ${w}/${d} = <b>${u + w}/${d}</b>` };
+        }
+        let p, q;
+        do { q = R.int(3, 12); p = R.int(2, q - 1); } while (QT.m.gcd(p, q) !== 1);
+        const j = R.int(2, 9);
+        if (kind === 'div') return { q: `${p * j} ÷ ${p}/${q}`, a: j * q, tol: EXACT, sol: `${p * j} ÷ ${p} = ${j}, × ${q} = <b>${j * q}</b>` };
+        return { q: `${p}/${q} × ${q * j}`, a: p * j, tol: EXACT, sol: `${q * j} ÷ ${q} = ${j}, × ${p} = <b>${p * j}</b>` };
       },
     },
 

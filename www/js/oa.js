@@ -58,7 +58,7 @@
           <button data-test="${k}">Start</button>
         </div>`).join('')}
       </div>
-      <p class="small">Arithmetic screens: see <a href="#/mental">Mental maths</a> (80 in 8) and the <a href="#/tricks">speed tricks</a>.</p>`;
+      <p class="small">Arithmetic screens: see <a href="#/mental">Mental maths</a> (80 in 8), <a href="#/mental/60in6">60 in 6</a> (the Flow Traders format) and the <a href="#/tricks">speed tricks</a>.</p>`;
     el.querySelectorAll('[data-test]').forEach((b) => b.addEventListener('click', () => ({ seq: sequences, span, total })[b.dataset.test](el)));
   }
 
