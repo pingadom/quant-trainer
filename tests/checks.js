@@ -586,28 +586,68 @@
       }
     }
 
-    // Handbook: every chapter listed exists, checks have answers and solutions, and a check
-    // answered right is saved (and a chapter finishes when all its checks are right).
+    // Handbook: the course is complete and well formed. Numeric answers are cross-checked in Python.
     if (QT.handbook) {
-      const { PARTS, CHAPTERS } = QT.handbook, listed = PARTS.flatMap((p) => p.chapters);
+      const { PARTS, CHAPTERS, ROUTES, checksOf, homeworkOf } = QT.handbook, listed = PARTS.flatMap((p) => p.chapters);
+      const TOOLS = ['counting', 'dice', 'bayes', 'lln', 'sqrtn', 'dist', 'pattern', 'markov', 'walk', 'reroll', 'area', ...Object.keys(QT.hbWidgets || {})];
+      const junk = (t) => /undefined|NaN/.test(t);
       if (new Set(listed).size !== listed.length) fail('handbook: a chapter is listed twice');
-      for (const id of listed) {
+      let mcqs = 0, longest = 0, shortest = 0, figs = 0;
+      listed.forEach((id, at) => {
         const ch = CHAPTERS[id];
-        if (!ch) { fail(`handbook: ${id} is listed but not defined`); continue; }
-        if (!(ch.practice || []).length || ch.practice.some(([l, h]) => !l || !/^#\//.test(h))) fail(`handbook: ${id} practice links`);
-        if (ch.planned) continue;
-        if (!ch.goals?.length || !ch.takeaways?.length || !ch.sections?.length) fail(`handbook: ${id} is missing goals, takeaways or sections`);
-        ch.sections.flatMap((s) => s.checks || []).forEach((c, i) => {
-          if (!c.q || !c.sol || !Number.isFinite(c.a)) fail(`handbook: ${id} check ${i} incomplete`);
-          if (/undefined|NaN/.test(c.q + c.sol + (c.hint || ''))) fail(`handbook: ${id} check ${i} shows junk`);
-        });
-      }
+        if (!ch) return fail(`handbook: ${id} is listed but not defined`);
+        if (ch.planned) fail(`handbook: ${id} is still planned`);
+        for (const [l, h] of ch.practice || []) {
+          if (!l || !/^#\//.test(h)) fail(`handbook: ${id} practice link ${h}`);
+          const [, kind, target] = h.match(/^#\/([a-z]+)\/([^/]+)/) || [];
+          if (kind === 'iq' && !QT.bank.some((b) => b.id === target)) fail(`handbook: ${id} links to a missing question ${target}`);
+          if (kind === 'topic' && !QT.topicById(target)) fail(`handbook: ${id} links to a missing topic ${target}`);
+        }
+        if (!ch.practice?.length || !ch.goals?.length || !ch.takeaways?.length || !ch.sections?.length || !ch.why || !ch.explain?.a) fail(`handbook: ${id} is missing a part`);
+        (ch.prereq || []).forEach((p) => { if (!(listed.indexOf(p) >= 0 && listed.indexOf(p) < at)) fail(`handbook: ${id} builds on ${p}, which comes later`); });
+        const checks = checksOf(ch), hw = homeworkOf(ch), keys = checks.map((x) => x.key);
+        if (new Set(keys).size !== keys.length || keys.some((k) => !/^[a-z0-9-]{1,12}$/.test(k))) fail(`handbook: ${id} check keys ${keys}`);
+        if (checks.length < 4) fail(`handbook: ${id} has only ${checks.length} checks`);
+        if (hw.length < 6 || hw.filter((h) => ['core', 'interview'].includes(h.c.lvl)).length < 4) fail(`handbook: ${id} needs more homework`);
+        for (const { c, key } of checks) {
+          if (c.opts) {
+            mcqs++;
+            const text = c.opts.map((o) => (Array.isArray(o) ? o[0] : o));
+            if (text.length < 3 || !c.sol) fail(`handbook: ${id} concept check ${key} incomplete`);
+            if (text[0].length > Math.max(...text.slice(1).map((t) => t.length))) longest++;
+            if (text[0].length < Math.min(...text.slice(1).map((t) => t.length))) shortest++;
+          } else if (!c.q || !c.sol || !Number.isFinite(c.a)) fail(`handbook: ${id} check ${key} incomplete`);
+          if (junk(c.q + c.sol + (c.hint || ''))) fail(`handbook: ${id} check ${key} shows junk`);
+        }
+        for (const { c, key } of hw) {
+          if (!c.q || !c.sol || !['core', 'interview', 'stretch', 'lab'].includes(c.lvl)) fail(`handbook: ${id} homework ${key} incomplete`);
+          if (junk(c.q + c.sol + (c.hint || ''))) fail(`handbook: ${id} homework ${key} shows junk`);
+        }
+        for (const s of ch.sections) for (const b of s.blocks) {
+          if (b.fig) {
+            figs++;
+            if (!b.alt || !QT.hbFig.kinds.includes(b.fig)) fail(`handbook: ${id} figure ${b.fig} needs alt text`);
+            if (/undefined|NaN/.test(QT.hbFig(b))) fail(`handbook: ${id} figure ${b.alt} draws junk`);
+          }
+          if (b.widget && !TOOLS.includes(b.widget)) fail(`handbook: ${id} uses an unknown tool ${b.widget}`);
+          if (b.worked && !(b.q && b.steps?.length > 1)) fail(`handbook: ${id} worked example incomplete`);
+          if (typeof b === 'string' && /undefined|NaN/.test(b)) fail(`handbook: ${id} text shows junk`);
+        }
+      });
       for (const id of Object.keys(CHAPTERS)) if (!listed.includes(id)) fail(`handbook: ${id} is defined but not listed`);
+      if (ROUTES.some((r) => r.chapters.some((id) => !CHAPTERS[id]))) fail('handbook: a route names a missing chapter');
+      // As with the quizzes, the right answer mustn't give itself away by being the longest.
+      if (longest / mcqs > 0.33 || shortest / mcqs > 0.33) fail(`handbook: the right answer is the longest in ${longest}, and the shortest in ${shortest}, of ${mcqs} concept checks`);
+      if (figs < 60) fail(`handbook: only ${figs} figures`);
       const saved = QT.store.exportJson(), snap = JSON.parse(saved);
-      snap.handbook = { arith: { c: { 0: 1, 1: 0, 99: 1 }, done: false }, 'BAD KEY': { c: {}, done: true } };
+      snap.handbook = { arith: { c: { 0: 1, 1: 0, 99: 1, a1: 1, 'BAD KEY': 1 }, h: { h0: 2, h1: 9, 'BAD KEY': 1 }, note: 'x'.repeat(3000), rv: { due: 5, st: 99 }, done: false }, counting: { c: {}, rv: 'junk' }, 'BAD KEY': { c: {}, done: true } };
+      snap.hbExams = { all: { best: 7, last: 0.5, n: 2, at: 1 }, 'BAD KEY': { best: 1 } };
       QT.store.importJson(JSON.stringify(snap));
       const h = QT.store.get().handbook;
-      if (h.arith?.c?.[0] !== 1 || h.arith.c[1] !== 0 || h['BAD KEY'] || h.arith.c[99] !== 1) fail(`handbook: progress not sanitised as expected ${JSON.stringify(h)}`);
+      if (h.arith?.c?.[0] !== 1 || h.arith.c[1] !== 0 || h['BAD KEY'] || h.arith.c[99] !== 1 || h.arith.c.a1 !== 1 || h.arith.c['BAD KEY']) fail(`handbook: progress not sanitised as expected ${JSON.stringify(h)}`);
+      if (h.arith.h.h0 !== 2 || h.arith.h.h1 !== 2 || h.arith.h['BAD KEY'] || h.arith.note.length !== 2000 || h.arith.rv.st !== 3 || h.counting.rv) fail(`handbook: homework and reviews not sanitised as expected ${JSON.stringify(h.arith)}`);
+      const ex = QT.store.get().hbExams;
+      if (ex.all?.best !== 1 || ex['BAD KEY']) fail(`handbook: exams not sanitised as expected ${JSON.stringify(ex)}`);
       QT.store.importJson(saved);
     }
 

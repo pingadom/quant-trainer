@@ -1,1 +1,209 @@
-// Handbook, part file 5.
+// Handbook, Parts 5 and 6: Quant equities and Interview craft. See handbook-content.js.
+(function () {
+  const Fig = QT.hbFig;
+  // A walk-forward picture: train on a window, test on the next, roll on.
+  const wf = (start) => Array.from({ length: 12 }, (_, i) => (i >= start && i < start + 4 ? { t: '', tone: 'acc-soft' } : i === start + 4 ? { t: '', tone: 'ok' } : ''));
+
+  QT.hbChapters = Object.assign(QT.hbChapters || {}, {
+    factors: {
+      title: 'Returns, factors and alpha', minutes: 55,
+      why: 'A systematic equity desk rarely asks "will this stock go up?". It asks "will this stock beat similar stocks?". This chapter is the vocabulary of that world: beta, alpha, factors, neutrality and the information coefficient.',
+      goals: ['Measure performance with Sharpe, information ratio and drawdown', 'Split a return into beta and alpha, and hedge the beta', 'Explain factor models and why books are neutralised', 'Turn a signal into a portfolio, and use the fundamental law'],
+      prereq: ['regression', 'matrix', 'timeseries'],
+      sections: [
+        { h: 'Measuring performance', blocks: [
+          `<p>Returns alone mean little: 20% with 60% volatility is worse than 10% with 5%. The standard measure is the <b>Sharpe ratio</b>:</p>
+           <div class="hb-eq">Sharpe = (return − risk-free rate)/volatility &nbsp;&nbsp; annual ≈ daily × √252</div>
+           <p>The <b>information ratio</b> is the same thing measured against a benchmark. <b>Maximum drawdown</b> is the largest peak-to-trough fall, which is what actually gets a strategy shut down.</p>`,
+          { fig: 'plot', x: [0, 40], y: [90, 130], h: 180, xl: 'days', yl: 'P&L index', xt: [0, 20, 40], yt: [100, 120], series: [{ pts: [100, 103, 105, 104, 108, 112, 110, 115, 118, 120, 117, 113, 110, 106, 103, 100, 98, 96, 99, 97, 96, 100, 103, 105, 104, 108, 110, 113, 112, 116, 118, 117, 120, 122, 121, 124, 126, 125, 127, 129, 128].map((v, i) => [i, v]) }], pts: [{ x: 9, y: 120, tone: 'ok' }, { x: 20, y: 96, tone: 'bad' }], labels: [{ x: 10, y: 123, t: 'peak 120', tone: 'ok' }, { x: 21, y: 92, t: 'trough 96', tone: 'bad' }], alt: 'An equity curve rising to 120, falling to 96, then recovering.', cap: 'Drawdown here is 24/120 = 20%. It took 10 days to fall, and a further 15 to recover.' },
+          { q: 'A strategy returns 12% with 20% volatility, and the risk-free rate is 2%. What is its Sharpe ratio?', a: 0.5, hint: '(12 − 2)/20.', sol: '<b>0.5</b>.' },
+          { q: 'Daily mean return is 0.1%, and daily sd is 1%. What is the annualised Sharpe? Give 2 decimal places.', a: 0.1 * Math.sqrt(252), tol: { abs: 0.01 }, hint: '0.1 × √252.', sol: '≈ <b>1.59</b>.' },
+          { q: 'An account peaks at 120 and falls to 90. What is the drawdown, as a decimal?', a: 0.25, hint: '30/120.', sol: '<b>0.25</b>.' },
+        ] },
+        { h: 'Beta and alpha', blocks: [
+          `<p>Regress a stock's returns on the market's:</p>
+           <div class="hb-eq">r<sub>stock</sub> = α + β r<sub>market</sub> + ε</div>
+           <p><b>β</b> is the market exposure: you could get this cheaply with an index future. <b>α</b> is the average return left over, the part you're really paid for. <b>ε</b> is idiosyncratic noise, with variance σ²<sub>stock</sub> − β²σ²<sub>market</sub>.</p>`,
+          { fig: 'plot', x: [-3, 3], y: [-4, 4], w: 320, h: 260, xl: 'market return, %', yl: 'stock return, %', xt: [-2, 0, 2], yt: [-3, 0, 3], pts: Fig.scatter(60, 0.7, 19).map((p) => ({ ...p, y: 0.5 + 1.3 * p.y * 0.95 })).filter((p) => Math.abs(p.y) < 3.9), fns: [{ f: (x) => 0.5 + 1.25 * x, tone: 'ok', from: -3, to: 2.7 }], labels: [{ x: 0.15, y: 0.15, t: 'α', tone: 'bad' }, { x: 1.2, y: 3.4, t: 'slope β', tone: 'ok' }], alt: 'A scatter of stock against market returns, with a fitted line whose intercept is alpha and slope is beta.', cap: 'Beta is the slope. Alpha is the intercept, and it\'s much harder to estimate than beta.' },
+          { worked: 'beta hedging', q: 'You\'re long $10m of a stock with β = 1.5. How do you remove the market risk?', steps: [
+            ['What is your dollar market exposure?', '$10m × 1.5 = $15m.'],
+            ['What index position cancels it?', 'Short $15m of index futures.'],
+            ['If the market falls 2%, what happens?', 'The stock falls about 3% (−$300k), and the hedge makes +$300k. You\'re left with α + ε.'],
+          ] },
+          { q: 'You\'re long $5m of a stock with β = 1.2. How much index, in $m, do you short to be beta-neutral?', a: 6, hint: '5 × 1.2.', sol: '<b>$6m</b>.' },
+          { q: 'A stock returned 15% while the market returned 10%. Its β is 1.2, and the risk-free rate is 0. What is its alpha, in percent?', a: 3, hint: '15 − 1.2 × 10.', sol: '<b>3%</b>.' },
+          { q: 'A stock has 40% volatility and β = 1, and the market has 20% volatility. What is its idiosyncratic volatility? Give it as a decimal.', a: Math.sqrt(0.12), tol: { abs: 0.003 }, hint: '√(0.16 − 0.04).', sol: '≈ <b>0.346</b>. Most of a single stock\'s risk is its own.' },
+        ] },
+        { h: 'Factor models', blocks: [
+          `<p>One market factor isn't enough. Stocks also share exposures to sectors and styles. A <b>factor model</b> writes each return as</p>
+           <div class="hb-eq">r<sub>i</sub> = Σ β<sub>ik</sub> f<sub>k</sub> + ε<sub>i</sub></div>
+           <p>The common style factors are <b>value</b> (cheap v expensive), <b>size</b>, <b>momentum</b>, <b>quality</b> and <b>low volatility</b>. This cuts a huge covariance matrix down to a few factors plus independent noise: exactly the fix from chapter 19.</p>
+           <p><b>Neutralising</b> means holding zero net exposure to chosen factors. A market-neutral, sector-neutral book makes money only if its picks beat similar stocks. A drop in the market or in tech doesn't touch it.</p>`,
+          { fig: 'bars', vals: [55, 20, 25], labs: ['Market', 'Sector and style', 'Stock-specific'], show: ['55%', '20%', '25%'], tone: (i) => (i === 2 ? 'ok' : 'acc-soft'), w: 320, h: 180, alt: 'Illustrative risk split of an unhedged portfolio into market, sector and stock-specific parts.', cap: 'Illustrative risk split of a long-only stock portfolio. Hedge out the first two bars, and what\'s left is the bet you meant to make.' },
+          { id: 'm1', q: 'Why would a systematic equity strategy be beta-neutral and sector-neutral?', opts: [['To isolate stock selection'], ['Because neutral books always make more money', 'They often give up return, but the Sharpe is what\'s improved.'], ['Regulators require it', 'They don\'t.'], ['Beta can\'t be measured otherwise', 'It can.']], sol: 'Market and sector moves are big and easy to buy cheaply, so a desk isn\'t paid for holding them. Removing them raises the Sharpe, allows more leverage on the real edge, and makes results easier to judge.' },
+          { trap: '"Factor crowding": when too many funds hold the same factor bets, an exit by one can hurt them all at once. In August 2007, many quant equity funds suffered large losses over a few days for this reason. Neutral doesn\'t mean riskless.' },
+        ] },
+        { h: 'From signal to portfolio', blocks: [
+          `<p>A <b>signal</b> scores each stock on each day. The usual steps:</p>`,
+          { fig: 'flow', alt: 'From raw signal to portfolio.', steps: ['Raw signal', 'Rank or z-score across stocks', 'Neutralise factors', 'Size by risk', 'Apply limits and costs', 'Trade'] },
+          `<p>The <b>information coefficient</b> (IC) is the cross-sectional correlation between a signal and next-period returns. An IC of 0.05 is good. Tiny, but you make many bets. The <b>fundamental law of active management</b> says:</p>
+           <div class="hb-eq">IR ≈ IC × √breadth</div>
+           <p>where breadth is the number of independent bets a year. It's the √n rule again.</p>`,
+          { q: 'A signal has an IC of 0.03, and makes 1,600 independent bets a year. What is its information ratio?', a: 1.2, hint: 'IC × √breadth.', sol: '0.03 × 40 = <b>1.2</b>.' },
+          { id: 'm2', q: 'You trade 500 stocks daily with a signal. Why is breadth much less than 500 × 252?', opts: [['Bets overlap and share factors'], ['Only 100 stocks really trade', 'That isn\'t the issue.'], ['Breadth counts only winning trades', 'It doesn\'t.'], ['IC falls to 0 at that size', 'That\'s not what breadth measures.']], sol: 'If today\'s positions are mostly yesterday\'s, and stocks move together, the independent bets are far fewer than the raw count. It\'s the same trap as in the CLT chapter.' },
+        ] },
+        { h: 'Momentum and reversal', blocks: [
+          `<p>Two of the best-documented effects sit at different horizons. <b>Short-term reversal</b>: stocks that fell over the last days to a month tend to bounce, partly as compensation for providing liquidity. <b>Momentum</b>: stocks that rose over the past 3–12 months tend to keep rising, usually skipping the latest month to avoid the reversal.</p>`,
+          { fig: 'strip', cell: 28, labelW: 92, rowGap: 6, rows: [{ label: 'reversal', cells: ['', '', '', '', '', '', '', '', '', '', '', { t: 'R', tone: 'bad' }] }, { label: 'momentum', cells: [{ t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, { t: 'M', tone: 'ok' }, ''] }], wide: true, alt: 'Twelve months of history: reversal uses the latest month, momentum uses the eleven before it.', cap: 'The 12 months of history, oldest on the left. Momentum skips the latest month, the one that reversal uses.' },
+          { id: 'm3', q: 'A stock has fallen 10% in a week on no news, and is up 40% in a year. A pure factor view says…', opts: [['Reversal says buy, and momentum agrees'], ['Both say sell', 'Check the horizons: down over the week, up over the year.'], ['Reversal says sell, and momentum says buy', 'Reversal fades the recent fall.'], ['Neither applies to single stocks', 'They\'re cross-sectional effects, but both point the same way here.']], sol: 'Reversal fades the weekly fall, and momentum follows the yearly rise. "No news" matters: a fall on real news tends to reverse less.' },
+        ] },
+        { h: 'How a pod works', blocks: [
+          `<p>At a multi-manager fund such as Citadel, many separate teams each run their own book, with capital and strict risk limits, using shared data and technology. Limits typically cover factor exposures, drawdown and gross and net exposure. A semi-systematic trader sits between the two styles: models find and size candidates, and the human uses context that the model can't see, such as a pending deal, a broken data point, or a crowded position.</p>`,
+          { id: 'm4', q: 'What can a semi-systematic trader add that a fully systematic strategy can\'t?', opts: [['Judgement on events with no history'], ['Faster execution than a machine', 'Machines are faster.'], ['Better statistics over thousands of stocks', 'Models do that better.'], ['Immunity to overfitting', 'Humans overfit stories too.']], sol: 'Models rely on history, while humans can read one-off situations. The best setups let the model do the breadth and let the human override with discipline, and they measure whether the overrides really add value.' },
+        ] },
+      ],
+      takeaways: ['Sharpe = excess return/volatility; annual ≈ daily × √252.', 'r = α + βm + ε. Hedge β with β × position of index.', 'Most single-stock risk is idiosyncratic.', 'Factor models shrink the risk problem. Neutral books isolate stock selection.', 'IR ≈ IC × √breadth, and breadth counts independent bets.', 'Reversal: days to a month. Momentum: 3–12 months.', 'Pods: separate books, strict limits, shared platform.'],
+      explain: { q: 'Your friend says "I made 30% this year, so I have alpha." What questions do you ask?', a: 'What did the market do, and what was your beta? Regress out the market and factor exposures, and see what\'s left. How much risk did you take, and what\'s the Sharpe? How many independent bets is that, and what\'s the t-stat? One year with a few concentrated positions can\'t separate skill from luck.' },
+      homework: [
+        { lvl: 'core', q: 'Returns 15%, volatility 10%, risk-free rate 5%. What is the Sharpe ratio?', a: 1, hint: '(15 − 5)/10.', sol: '<b>1</b>.' },
+        { lvl: 'core', q: 'You\'re long $20m with β = 0.8, and short $10m with β = 1.1. What is your net beta exposure, in $m?', a: 5, hint: '16 − 11.', sol: '<b>$5m</b> long.' },
+        { lvl: 'core', q: 'A stock has 30% volatility, and the correlation with the market is 0.5. What fraction of its variance is market-driven?', a: 0.25, hint: 'ρ².', sol: '<b>0.25</b>.' },
+        { lvl: 'core', q: 'A signal has IC 0.02. How much breadth does it need for an IR of 1?', a: 2500, tol: { abs: 1 }, hint: '(1/0.02)².', sol: '<b>2,500</b> independent bets a year.' },
+        { lvl: 'interview', q: 'If a book has 1% daily volatility and a limit of 10% maximum drawdown, how many sds of a one-day move is that limit?', a: 10, hint: '10%/1%.', sol: '<b>10</b>. It takes a run of bad days, not one, so serial correlation is what really threatens the limit.' },
+        { lvl: 'interview', q: 'A stock\'s annual alpha is 4% with idiosyncratic volatility 20%. What is the information ratio of holding it, hedged?', a: 0.2, hint: 'α/σ.', sol: '<b>0.2</b>. Diversify over many such names to raise it.' },
+        { lvl: 'interview', q: 'You hold 100 independent positions like that, equally sized. What is the IR?', a: 2, hint: 'IR scales with √n.', sol: '0.2 × 10 = <b>2</b>.' },
+        { lvl: 'stretch', q: 'Starting from Sharpe ≈ E[r]/σ with position sizes proportional to the signal, sketch why IR ≈ IC × √N for N independent stocks.', sol: 'Let weights be wᵢ = zᵢ, a standardised signal. Portfolio return Σ zᵢrᵢ has mean N × IC × σ (as corr(z, r) = IC), and variance Nσ² for independent stocks. So the ratio is N IC σ/(σ√N) = IC√N.' },
+        { lvl: 'lab', q: 'Pick 5 stocks and compute each one\'s beta to an index over a year. Build a beta-neutral long-short pair. Over the following month, how much of its P&L came from the market?', sol: 'Very little, if your hedge was right. You\'ll also see that the betas shifted a little, so a hedge needs maintaining.' },
+      ],
+      practice: [['Beta hedging', '#/sse/all/any/hedging'], ['Equity quant questions', '#/sse/all/equity-quant'], ['Returns, risk and sizing', '#/topic/finance']],
+    },
+
+    backtest: {
+      title: 'Backtests, overfitting and costs', minutes: 55,
+      why: 'Backtests are easy to make beautiful and hard to make honest. "What would you check?" is a favourite interview question, and in the job, these checks separate real research from expensive fiction.',
+      goals: ['Find look-ahead, survivorship and other biases', 'Estimate how much of a backtest is luck', 'Use out-of-sample and walk-forward tests', 'Model costs, impact, turnover and capacity'],
+      prereq: ['testing', 'factors', 'timeseries'],
+      sections: [
+        { h: 'The honest pipeline', blocks: [
+          { fig: 'flow', alt: 'The stages of a backtest.', steps: ['Point-in-time data', 'Signal', 'Lagged positions', 'Costs and impact', 'Out-of-sample test', 'Decide once'] },
+          `<p>A backtest simulates what you could really have done. Each step has a classic way of lying to you, and most of them make results look better, so treat a good backtest as something to attack.</p>`,
+        ] },
+        { h: 'Look-ahead bias', blocks: [
+          `<p>Your position today can only use information from before today. In pandas, this one line is the difference between research and fiction:</p>
+           <pre class="hb-code">signal = (ma_fast &gt; ma_slow).astype(int)
+strategy = signal.shift(1) * returns   # right
+strategy = signal * returns            # look-ahead!</pre>
+           <p>Without the shift, the signal is computed from today's close, and then earns today's return. Subtler versions: earnings data dated by fiscal period rather than release date, an index's current members, or scaling by a full-sample mean and standard deviation.</p>`,
+          { id: 'm1', q: 'You z-score a signal using the mean and sd of the whole 10-year sample, then backtest. What is wrong?', opts: [['It uses future information'], ['z-scores can\'t be used in backtests', 'They can, using past data only.'], ['Nothing, as z-scoring is only a rescale', 'The rescale itself uses future data.'], ['The sample is too long', 'Length isn\'t the problem.']], sol: 'Use expanding or rolling windows that end before each date. Otherwise the 2015 signal knows the distribution up to 2025.' },
+          { trap: 'Backtests that look too good usually are. A Sharpe of 5 on daily equities is far more likely to be a bug than a discovery. The first check is always for look-ahead.' },
+        ] },
+        { h: 'Survivorship and other data traps', blocks: [
+          `<p><b>Survivorship bias</b>: testing on stocks that exist today drops all that went bust, so a "buy cheap stocks" test never buys a loser that went to zero. Use a point-in-time universe.</p>
+           <p>Others: <b>corporate actions</b> (unadjusted prices make splits look like crashes), <b>stale prices</b> (illiquid stocks look calm), and <b>fill assumptions</b> (trading at a close price you couldn't have got).</p>`,
+          { fig: 'dots', cols: 20, size: 15, groups: [{ n: 90, tone: 'ok', t: '90 survivors: average +10%' }, { n: 10, tone: 'bad', t: '10 delisted: −100%, missing from the data' }], alt: 'One hundred dots: 90 survivors and 10 delisted stocks.', cap: 'A universe of today\'s survivors reports +10%. The truth, counting the 10 who vanished, is below zero.' },
+          { q: 'Of 100 stocks, 90 survive with an average return of +10%, and 10 go to zero. What is the true average return, as a decimal?', a: -0.01, hint: '0.9 × 0.1 + 0.1 × (−1).', sol: '<b>−0.01</b>.' },
+        ] },
+        { h: 'Overfitting', blocks: [
+          `<p>Try enough variations, and the best will look brilliant by chance. With N independent noise strategies over T years, the best Sharpe is about</p>
+           <div class="hb-eq">best Sharpe ≈ √(2 ln N)/√T</div>
+           <p>That's the multiple testing result from chapter 17, in Sharpe units. Every parameter you tune and every idea you drop counts as a test.</p>`,
+          { widget: 'overfit', predict: { q: 'You test 1,000 pure-noise strategies over 3 years. What is the best Sharpe you\'d expect to see?', opts: ['About 2', 'About 0.5', 'About 5'], then: 'Try it, then compare with the strategy\'s next 3 years.' } },
+          { q: 'You try 100 noise strategies, with 9 years of data each. Roughly what is the best Sharpe you\'d expect? Use 2 decimal places.', a: Math.sqrt(2 * Math.log(100)) / 3, tol: { abs: 0.02 }, hint: '√(2 ln 100) ≈ 3.03, and √9 = 3.', sol: '≈ <b>1.01</b>, from nothing but noise.' },
+          { fig: 'strip', cell: 22, labelW: 56, rowGap: 4, rows: [{ label: 'round 1', cells: wf(0) }, { label: 'round 2', cells: wf(2) }, { label: 'round 3', cells: wf(4) }, { label: 'round 4', cells: wf(6) }], wide: true, alt: 'Walk-forward windows: train on a block of periods, test on the next, then roll forward.', cap: 'Walk-forward testing: fit on the pale window, test on the dark period right after it, then roll on. The stitched-together test periods are your honest backtest.' },
+          { idea: 'A hold-out set only works once. If you peek, adjust and test again, it has become training data. Keep a log of every trial, and prefer simple rules with few parameters and a story for why they should work.' },
+          { id: 'm2', q: 'Which is the best sign that a backtest isn\'t overfit?', opts: [['It holds across markets and parameters'], ['The Sharpe is above 3', 'Very high is more suspicious.'], ['It uses many parameters, tuned carefully', 'That\'s the recipe for overfitting.'], ['The best year was the most recent', 'That proves nothing.']], sol: 'A real effect is usually broad: similar across nearby parameters, in other countries and in other periods. A narrow spike in parameter space is a fingerprint of luck.' },
+        ] },
+        { h: 'Costs', blocks: [
+          `<p>Paper alpha pays no costs. Real ones include commissions and half the <b>spread</b>, plus <b>market impact</b>, as your own trade moves the price. Impact grows with size, roughly like the square root of the fraction of daily volume traded:</p>
+           <div class="hb-eq">impact ≈ c × √(size/daily volume)</div>`,
+          { fig: 'plot', x: [0, 20], y: [0, 50], xl: 'trade size, % of daily volume', yl: 'impact, bps', xt: [1, 4, 9, 16], yt: [10, 20, 30, 40], fns: [{ f: (x) => 10 * Math.sqrt(x) }], pts: [{ x: 1, y: 10, tone: 'bad' }, { x: 4, y: 20, tone: 'bad' }, { x: 16, y: 40, tone: 'bad' }], alt: 'Impact against trade size, following a square root curve through 10 at 1 percent, 20 at 4 percent and 40 at 16 percent.', cap: 'The square-root law. Trading 4 times the size doubles impact per share, so the total dollar cost rises 8 times.' },
+          { q: 'Trading 1% of daily volume costs 10 bps of impact. How many bps does trading 9% cost?', a: 30, hint: '√9.', sol: '10 × 3 = <b>30 bps</b>.' },
+          `<p><b>Turnover</b> is how much you trade each year, as a multiple of your book. Cost drag is turnover × cost per unit traded:</p>
+           <div class="hb-eq">net alpha = gross alpha − turnover × cost</div>`,
+          { q: 'A strategy has 15% gross alpha, turns over 40× a year, and pays 5 bps per unit traded. What is its net alpha, in percent?', a: 13, hint: '40 × 0.05%.', sol: '15 − 2 = <b>13%</b>.' },
+          { q: 'A strategy has 10% gross alpha and turnover of 100×. At what cost per unit traded, in bps, does net alpha reach zero?', a: 10, hint: '10%/100.', sol: '0.1% = <b>10 bps</b>.' },
+          { market: '<b>Capacity</b> is where rising impact eats the alpha. Since impact grows with size, a strategy that looks great at $10m may not work at $1bn. Fast signals have high Sharpe and low capacity, while slow ones are the reverse.' },
+        ] },
+        { h: 'The interview answer', blocks: [
+          { worked: 'the Sharpe of 3', q: 'A colleague shows you a backtest of a daily equity strategy with an annualised Sharpe of 3. What do you check before believing it?', steps: [
+            ['What comes first?', 'Look-ahead: are signals lagged? Is data point-in-time? Could a bug explain it? A Sharpe of 3 on daily data is a red flag on its own.'],
+            ['What about the universe?', 'Survivorship, delisted stocks, and whether the names were tradable and borrowable on those dates.'],
+            ['How was it found?', 'How many variations were tried? Is there an untouched out-of-sample period? Is it stable across parameters and sub-periods?'],
+            ['Then what about costs?', 'Spread, impact, borrow fees and turnover. What\'s the Sharpe after realistic costs, and at what capacity?'],
+            ['And finally?', 'Risk and meaning: what\'s it exposed to (factors, crowding)? Does it fall in stress periods? Is there an economic reason, and who\'s on the other side?'],
+          ] },
+          { id: 'm3', q: 'A strategy\'s Sharpe falls from 2 to 1 live. What is the most likely first explanation?', opts: [['Overfitting and optimistic costs'], ['Bad luck: nothing is wrong', 'Possible, but it isn\'t the first thing to assume.'], ['The live data feed is wrong', 'Check it, but it\'s less common.'], ['The market became fully efficient overnight', 'Decay happens more slowly.']], sol: 'Live results commonly come in well below backtests: selection effects vanish, and real costs show up. Compare live fills with assumed fills, and it\'s usually the first gap you\'ll find.' },
+        ] },
+      ],
+      takeaways: ['Position today uses only information from before today: shift(1).', 'Use point-in-time data and universes.', 'Best of N noise: Sharpe ≈ √(2 ln N)/√T.', 'Hold-outs work once. Keep a log of trials.', 'Real effects are broad across parameters and markets.', 'Impact ∝ √(size/volume). Net alpha = gross − turnover × cost.', 'Capacity is where impact eats alpha.'],
+      explain: { q: 'Explain look-ahead bias and overfitting. How are they different?', a: 'Look-ahead means the simulation used information that wasn\'t available at the time, so it\'s a bug that fakes a return that could never have been earned. Overfitting uses only past data, but tunes the strategy to noise, so a real-looking pattern fails in the future. The first is fixed by correct timing, and the second by fewer trials, simpler rules and out-of-sample tests.' },
+      homework: [
+        { lvl: 'core', q: 'Of 200 funds, 150 survive with an average return of +8%, and 50 close at −30% on average and vanish from the database. What is the true average return, as a decimal?', a: 0.75 * 0.08 + 0.25 * -0.3, tol: { abs: 0.0005 }, hint: 'Weighted average.', sol: '<b>−0.015</b>.' },
+        { lvl: 'core', q: 'A strategy has gross alpha of 20% and turnover of 50×, at a cost of 10 bps. What is net alpha, in percent?', a: 15, hint: '50 × 0.1%.', sol: '<b>15%</b>.' },
+        { lvl: 'core', q: 'Trading 4% of daily volume costs 16 bps of impact. What does 1% cost?', a: 8, hint: 'Half the square root.', sol: '<b>8 bps</b>.' },
+        { lvl: 'core', q: 'A strategy holds positions for 5 trading days on average. Roughly what is its annual turnover multiple, buying and selling each book once? Use 252 days.', a: 252 / 5, tol: { abs: 1 }, hint: 'How many times a year is the book replaced?', sol: 'About <b>50×</b>.' },
+        { lvl: 'interview', q: 'You test 1,000 noise strategies over 4 years. What is the rough best Sharpe?', a: Math.sqrt(2 * Math.log(1000)) / 2, tol: { abs: 0.03 }, hint: '√(2 ln 1000) ≈ 3.72.', sol: '≈ <b>1.86</b>.' },
+        { lvl: 'interview', q: 'Sharpe is 2 before costs at 20% volatility, so gross return is 40%. Turnover is 200×, at 5 bps. What is the Sharpe after costs?', a: 1.5, hint: 'Costs are 10% a year.', sol: '(40 − 10)/20 = <b>1.5</b>.' },
+        { lvl: 'interview', q: 'A signal earns 5 bps a trade before costs, and your all-in cost is 3 bps a trade. If costs rise 1 bp with a doubling of size, at what multiple of today\'s size does the edge vanish?', a: 4, hint: 'You can afford 2 bps more.', sol: 'Two doublings: <b>4×</b>.' },
+        { lvl: 'stretch', q: 'Show that under the square-root law, a trade\'s total dollar cost grows like size<sup>3/2</sup>, and explain what this means for splitting an order.', sol: 'Cost per share ∝ √Q, so total cost ∝ Q × √Q = Q<sup>3/2</sup>. This is convex, so splitting across time, or across days with independent volume, cuts the total, as long as the impact has time to decay. That\'s why execution algorithms slice orders.' },
+        { lvl: 'lab', q: 'Open the pandas drills in the Citadel module. Do the moving-average drill, and run it with and without shift(1). How large is the fake return from look-ahead?', sol: 'On random data, removing the shift produces a positive return from nothing, since the signal partly reflects today\'s move. Seeing it once is a good inoculation.' },
+      ],
+      practice: [['Moving-average drill', '#/sse/q/q-py-002'], ['Backtest questions', '#/sse/all/any/backtesting'], ['Costs questions', '#/sse/all/any/costs']],
+    },
+
+    craft: {
+      title: 'On the day', minutes: 45,
+      why: 'You can know everything in this handbook and still have a bad interview. Interviewers mark how you think, how you handle being stuck, and whether they\'d want to sit beside you at 3 p.m. on a bad day. All of that can be practised.',
+      goals: ['Run a repeatable routine for any question', 'Think aloud in a way that earns credit', 'Sanity-check and recover from mistakes', 'Tell your own stories crisply, and ask good questions'],
+      prereq: [],
+      sections: [
+        { h: 'A routine for every question', blocks: [
+          { fig: 'flow', alt: 'The answering routine.', steps: ['Listen and restate', 'Clarify assumptions', 'Give a quick estimate', 'State your plan', 'Work aloud', 'Check', 'Say the answer'] },
+          `<p>The first 30 seconds set the tone. Restate the problem in your own words, as it catches misreadings and buys thinking time. Ask about anything ambiguous: are the dice fair? With replacement? Is the amount per trial or in total? Then, before calculating, say roughly what you expect.</p>`,
+          { id: 'm1', q: 'An interviewer asks a question you\'ve seen before. What should you do?', opts: [['Say so, then solve it aloud'], ['Pretend it\'s new and hesitate', 'Faking it is risky, and they often can tell.'], ['Give the answer at once and stop', 'That shows memory, not thinking.'], ['Refuse the question', 'It\'s not a test of novelty.']], sol: 'Honesty scores well, and it\'s no loss: they want to see your reasoning. Offer the method, and be ready for a follow-up variation.' },
+        ] },
+        { h: 'Thinking aloud', blocks: [
+          `<p>The interviewer can't mark what they can't hear. Think aloud, but narrate decisions, not arithmetic. "I'd condition on the first roll, since the game restarts" is useful. Reading out each digit isn't.</p>
+           <p>Silence is fine in short bursts. Say "let me think for ten seconds", and then do so. It sounds confident, and it's better than filling the air.</p>`,
+          { id: 'm2', q: 'Which is the best thing to say out loud?', opts: [['"It restarts after a tail, so I\'ll recurse."'], ['"Um, so, five sixths, times, hold on, carry the one…"', 'That\'s noise, not reasoning.'], ['"This is a hard one."', 'It tells them nothing.'], ['Nothing, until you have the final answer', 'They can\'t give credit for what they can\'t see.']], sol: 'Name the method, and why. It lets the interviewer follow you, help you, and give you credit.' },
+        ] },
+        { h: 'Sanity checks', blocks: [
+          `<p>Never give an answer you haven't tested. Quick checks:</p>
+           <ul><li><b>Range</b>: is a probability between 0 and 1? Is a variance positive?</li><li><b>Extremes</b>: does the formula work when p = 0, p = 1, or n = 1?</li><li><b>Symmetry</b>: if you swap the players, does the answer flip correctly?</li><li><b>Units</b>: is it in dollars, percent or bps?</li><li><b>Size</b>: does it match your first estimate?</li></ul>`,
+          { worked: 'catching your own mistake', q: 'You derive that the chance of at least one six in n rolls is n/6. Check it.', steps: [
+            ['Try n = 1.', '1/6: right.'],
+            ['Try an extreme: n = 7.', '7/6 is above 1, so it\'s impossible.'],
+            ['What went wrong?', 'It adds the probabilities without removing overlaps. The right answer is 1 − (5/6)ⁿ.'],
+          ] },
+          { id: 'm3', q: 'You compute a Sharpe ratio of 16 for a daily strategy. What should you do?', opts: [['Flag it and look for the error'], ['Announce it proudly as a great result', 'It\'s nearly impossible.'], ['Round it down to 3', 'Don\'t hide the error: find it.'], ['Say nothing and move on', 'An unchecked answer loses more credit than a caught mistake.']], sol: 'Catching your own error is a positive signal. Something like 0.05 × √252 slipping to 1 × 16 is a common cause.' },
+        ] },
+        { h: 'When you get stuck or go wrong', blocks: [
+          `<p>Being stuck is normal, and how you act is what's being tested. Try, in order: restate what you know, try a smaller case (n = 1, 2, 3), draw it, or solve an easier version and say so.</p>
+           <p>If you need a hint, take it gracefully and use it. If you spot a mistake: "Wait, that's wrong, because…". Fixing it calmly often leaves a better impression than never slipping at all. And if the interviewer pushes back, they may be testing whether you hold a correct answer, so re-check it, then either agree or defend it politely.</p>`,
+          { id: 'm4', q: 'The interviewer says "are you sure?" about a correct answer. What should you do?', opts: [['Re-check, then explain why'], ['Change your answer at once', 'That suggests you never believed it.'], ['Get defensive', 'They may be testing how you take pushback.'], ['Say that it was only a guess', 'Don\'t undersell your reasoning.']], sol: 'Treat it as a request to check. Trading needs people who\'ll change their mind for evidence, not for pressure.' },
+        ] },
+        { h: 'Your own story', blocks: [
+          `<p>Behavioural questions decide more offers than people expect. Prepare these, and practise saying them:</p>
+           <ul><li><b>Why trading?</b> Decision-making under uncertainty with fast, measurable feedback, backed by specific evidence of what you've done.</li><li><b>Why this firm?</b> Reasons that are true of this firm only: its model, its technology, its risk culture. Know whether it's a fund or a market maker.</li><li><b>A STAR story</b>: Situation, Task, Action, Result, plus a lesson, in about 2 minutes.</li><li><b>Your project.</b> Be ready to defend each design decision, give one result, and name one mistake you fixed.</li></ul>`,
+          { id: 'm5', q: 'Asked about a project, which answer is strongest?', opts: [['"I chose X over Y because of Z."'], ['"It used lots of advanced techniques."', 'That\'s a list, not a judgement.'], ['"It went perfectly."', 'No one believes it, and you learn nothing from it.'], ['"I followed a tutorial."', 'That leaves no decisions to discuss.']], sol: 'Interviewers probe decisions and honesty about limits. One clear number and one real mistake beat a list of tools.' },
+        ] },
+        { h: 'The phone or video screen', blocks: [
+          `<p>A checklist for the day: a quiet room, a charged device, a stable connection, paper and two pens. Have your CV open. Test the video link beforehand, and join 5 minutes early. Eat first. Don't look things up: interviewers can hear typing, and the point is how you think.</p>
+           <p>At the end, ask one or two real questions. Ask about the person's work, how decisions get made, or how new people are judged. Avoid anything you could have read online. Afterwards, write down every question you can remember, then work through any that you missed: it's the best revision you'll get.</p>`,
+          { id: 'm6', q: 'Which is the best question to ask at the end?', opts: [['"How do you judge new people?"'], ['"What does your firm do?"', 'You should know.'], ['"How much will I be paid in the first year?"', 'Save it for the offer.'], ['"Did I pass?"', 'That puts them in an awkward spot.']], sol: 'A good question shows that you\'re thinking about doing the job well. It also tells you something useful.' },
+        ] },
+      ],
+      takeaways: ['Restate, clarify, estimate, plan, work aloud, check, answer.', 'Narrate decisions, not arithmetic.', 'Check range, extremes, symmetry, units and size.', 'Stuck: go smaller, draw it, take hints well.', 'Catching your own mistake counts in your favour.', 'Have your "why trading", "why this firm", STAR stories and project ready.', 'Ask a real question, and write everything down afterwards.'],
+      explain: { q: 'Write your own 60-second answer to "why trading?". Be specific about what you\'ve actually done.', a: 'A strong answer names something real: a project or game where you made decisions under uncertainty, measured the results and changed your approach. It connects that with why fast, honest feedback appeals to you, and it ends with why this role. It shouldn\'t mention money or a love of markets without evidence.' },
+      homework: [
+        { lvl: 'core', q: 'Record yourself answering one Part 2 interview question aloud, in under 3 minutes. Listen back. How long were your silences, and did you state your method before you calculated?', sol: 'Most people find they calculate too soon and narrate too little. Redo it, stating the method in the first 15 seconds. The Think aloud tool in the app helps with this.' },
+        { lvl: 'core', q: 'Write STAR stories for: a mistake you made, a conflict in a team, and a decision made with incomplete information. Keep each to 2 minutes when read aloud.', sol: 'Check each for a real Result, ideally a number, and a Lesson that shows you changed something. Save them in the app\'s Stories section, and say them out loud at least twice.' },
+        { lvl: 'core', q: 'Write down your project in five lines: the problem, your approach, one key decision and why, the result, and one mistake you fixed. Then list three hard questions someone could ask, and answer them.', sol: 'Good hard questions: how do you know it isn\'t luck? What\'s your baseline? What would you do with ten times the data? If you can\'t answer "how would I know this is wrong?", work on that first.' },
+        { lvl: 'interview', q: 'Sit a full mock interview in the app, speaking aloud, with a timer. Afterwards, write down your two weakest moments.', sol: 'Use those to pick your next chapters, and repeat the mock a few days later. Improving your weakest moment is worth more than polishing your best.' },
+        { lvl: 'interview', q: 'Find three facts about the firm that aren\'t on its home page, and draft two questions that use them.', sol: 'Sources: recent interviews with its people, its published research and news on the business. A question that shows you read and thought about one of these stands out.' },
+        { lvl: 'lab', q: 'Ask a friend to read you three probability questions and interrupt you with "why?" at random points. Can you always answer?', sol: 'Being able to justify each step on demand is what interviews test. If "why?" rattles you, slow down at that step next time.' },
+      ],
+      practice: [['Think aloud', '#/talk'], ['Stories', '#/stories'], ['Mock interview', '#/screen'], ['Citadel mock', '#/sse/mock']],
+    },
+  });
+})();

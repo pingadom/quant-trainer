@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.39.0
+
+- **The Handbook is now a full course to work through.** It has 28 chapters in six parts, about 23 hours of reading plus homework, and every chapter from Part 3 onwards is new.
+  - **New chapters:** the maths toolkit; the law of large numbers and the CLT; estimation and confidence; hypothesis tests and false discoveries; regression; correlation matrices, portfolios and PCA; time series and volatility; betting and position sizing; market making; options; estimation and calibration; game theory; returns, factors and alpha; backtests, overfitting and costs; and on the day. The first 13 chapters were rewritten and extended.
+  - **Teaching methods in every chapter:** a warm-up from earlier chapters, worked examples revealed one step at a time with questions to think about, diagrams (77 in all), predict-first simulations, concept checks that explain why a wrong answer is wrong, common mistakes, proofs to fold out, links to the desk, and an "explain it in your own words" box with a model answer.
+  - **Homework for every chapter:** 237 problems at Core, Interview and Stretch levels, plus Labs to do away from the screen. Core and Interview problems finish a chapter. Numeric answers are marked automatically; for written ones, compare with the model answer and mark yourself.
+  - **Spaced review:** finished chapters come back after 3, 7, 21 and 60 days as mixed questions, and show in the coach.
+  - **Exams:** a mixed exam for each part and a final exam, with no hints or feedback until the end, and a report by chapter.
+  - **Routes and a summary page:** shorter paths for a two-week or a one-week run-up, and every chapter's summary on one page.
+  - **11 new interactive tools:** the CLT, confidence intervals, multiple testing, regression, two-asset portfolios, AR(1), Kelly, adverse selection, option payoffs, option values and overfitting.
+  - Your progress on the original checks is kept, but a chapter now also needs its homework to count as finished.
+  - Every numeric answer, in checks and homework, is re-derived independently in Python in CI (research/verify_handbook.py), and CI fails if any has no derivation.
+- Handbook answers now accept expressions such as `sqrt(2)/2`.
+
 ## 0.38.0
 
 - **Citadel SSE prep: mock, simulator and spaced repetition.**

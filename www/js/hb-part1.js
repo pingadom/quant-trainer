@@ -53,7 +53,7 @@
           { q: '47 × 53', a: 2491, tol: { abs: 0.5 }, hint: 'They sit either side of 50.', sol: '50² − 3² = 2500 − 9 = <b>2491</b>.' },
           { q: '98 × 97', a: 9506, tol: { abs: 0.5 }, hint: 'Both are near 100: subtract both gaps from 100, then add the product of the gaps.', sol: '100 × (100 − 2 − 3) + 2 × 3 = 9500 + 6 = <b>9506</b>.' },
           { id: 'a2', q: '85²', a: 7225, tol: { abs: 0.5 }, hint: 'Ends in 5: 8 × 9, then 25.', sol: '8 × 9 = 72, then 25: <b>7225</b>.' },
-          { id: 'm1', q: 'Someone says 87 × 43 = 3742. Without multiplying, what is wrong?', opts: [['The last digit should be 1, since 7 × 3 = 21'], ['It is too small, as 87 × 43 is over 4000', 'Compare with 90 × 40 = 3600: the size looks fine.'], ['It should be even, as one factor is even', 'Both 87 and 43 are odd.'], ['Nothing, it passes both checks', 'Try the last-digit check.']], sol: '7 × 3 ends in 1, so the true answer must too. It is 3741.' },
+          { id: 'm1', q: 'Someone says 87 × 43 = 3742. Without multiplying, what is wrong?', opts: [['Its last digit should be 1'], ['It is too small, as 87 × 43 is over 4000', 'Compare with 90 × 40 = 3600: the size looks fine.'], ['It should be even, as one factor is even', 'Both 87 and 43 are odd.'], ['Nothing, it passes both checks', 'Try the last-digit check.']], sol: '7 × 3 ends in 1, so the true answer must too. It is 3741.' },
         ] },
         { h: 'Percentages compound', blocks: [
           `<p>Percentage changes multiply rather than add. Up 20% then down 20% leaves you at 1.2 × 0.8 = 0.96: down 4%. The base changed between the two moves.</p>`,
@@ -112,7 +112,7 @@
           ] },
           { q: 'What is 1 + 2 + … + 100?', a: 5050, tol: { abs: 0.5 }, hint: 'n(n + 1)/2.', sol: '100 × 101/2 = <b>5050</b>.' },
           { q: 'What is 1 + ⅓ + (⅓)² + …?', a: 1.5, hint: '1/(1 − r).', sol: '1/(2/3) = <b>1.5</b>.' },
-          { opts: [['1/(1 − r) needs |r| &lt; 1, and here r = 1.1'], ['It equals 1/(1 − 1.1) = −10', 'A sum of positive terms can\'t be negative. The formula doesn\'t apply here.'], ['It equals 11', 'The terms grow, so the sum never settles.'], ['Series can\'t have a ratio above 1', 'They can, but then they diverge.']], q: 'A friend says 1 + 1.1 + 1.1² + … = −10. What went wrong?', sol: 'The formula is only valid when the terms shrink. Here they grow without limit, so the sum is infinite.' },
+          { opts: [['The series has no finite sum'], ['It equals 1/(1 − 1.1) = −10', 'A sum of positive terms can\'t be negative. The formula doesn\'t apply here.'], ['It equals 11', 'The terms grow, so the sum never settles.'], ['Series can\'t have a ratio above 1', 'They can, but then they diverge.']], q: 'A friend says 1 + 1.1 + 1.1² + … = −10. What went wrong?', sol: 'The formula is only valid when the terms shrink. Here they grow without limit, so the sum is infinite.' },
         ] },
         { h: 'Derivatives find the best choice', blocks: [
           `<p>The derivative f′(x) is the slope of f at x. At the top of a smooth hill the slope is zero, so to maximise f, solve f′(x) = 0 and check it's a maximum (f″ &lt; 0). You'll use this for the Kelly bet, least squares and maximum likelihood.</p>
@@ -134,7 +134,7 @@
            <p>An <b>eigenvector</b> v of a matrix A is a direction that A only stretches: Av = λv, where the number λ is its eigenvalue. Chapter 19 uses this to find the main sources of risk in a market.</p>`,
           { q: 'What is the dot product of [0.5, 0.5] and [0.04, 0.02]?', a: 0.03, hint: 'Multiply pairs, then add.', sol: '0.02 + 0.01 = <b>0.03</b>: the portfolio returned 3%.' },
           { q: 'Weights [1, 1] and covariance matrix [4 1; 1 9]. What is wᵀΣw?', a: 15, hint: 'Add up every entry of the matrix.', sol: '4 + 9 + 2 × 1 = <b>15</b>.' },
-          { opts: [['2: v only gets stretched, by a factor of 2'], ['[2, 2]: the eigenvalue is the output', 'That\'s the output vector. The eigenvalue is the number multiplying v.'], ['1: the entries of v are 1', 'Compare Av with v.'], ['4: the sum of the output', 'Compare Av with v.']], q: 'A = [2 0; 0 2] and v = [1, 1]. What is the eigenvalue for v?', sol: 'Av = [2, 2] = 2v, so λ = 2.' },
+          { opts: [['2, as Av = 2v'], ['[2, 2]: the eigenvalue is the output', 'That\'s the output vector. The eigenvalue is the number multiplying v.'], ['1: the entries of v are 1', 'Compare Av with v.'], ['4: the sum of the output', 'Compare Av with v.']], q: 'A = [2 0; 0 2] and v = [1, 1]. What is the eigenvalue for v?', sol: 'Av = [2, 2] = 2v, so λ = 2.' },
         ] },
       ],
       takeaways: ['Logs turn products into sums, so log returns add.', 'n(n + 1)/2 and 1/(1 − r) cover most sums.', 'Maximise by setting the derivative to zero.', 'Integrals are areas, and ∫xⁿ dx = xⁿ⁺¹/(n + 1).', 'A portfolio\'s return is w·r and its variance is wᵀΣw.'],
@@ -232,7 +232,7 @@
           { widget: 'dice', predict: { q: 'You roll two dice 10,000 times. Which total comes up most often, and roughly how often?', opts: ['7, about 1 time in 6', '7, about 1 time in 11', 'All totals equally often', '6 and 8 tie for first'], then: 'Now roll them and see.' } },
           { q: 'Two dice are rolled. What is the probability their total is 7?', a: 1 / 6, hint: 'Count the ordered pairs that add to 7.', sol: '6 of the 36 pairs: (1,6), (2,5), …, (6,1). <b>1/6</b>.' },
           { q: 'Two dice: what is the probability they show the same number?', a: 1 / 6, hint: 'Whatever the first die shows, what must the second do?', sol: 'The second die must match the first: <b>1/6</b>.' },
-          { id: 'm1', q: 'Two coins are flipped. Someone says the outcomes are "0, 1 or 2 heads", so P(1 head) = 1/3. What is wrong?', opts: [['Those three outcomes are not equally likely'], ['There are four totals, not three', 'There are three totals. Are they equally likely?'], ['Coins are not independent', 'They are.'], ['Nothing, 1/3 is right', 'List HH, HT, TH, TT.']], sol: 'The equally likely outcomes are HH, HT, TH and TT. One head covers two of them, so P = 1/2.' },
+          { id: 'm1', q: 'Two coins are flipped. Someone says the outcomes are "0, 1 or 2 heads", so P(1 head) = 1/3. What is wrong?', opts: [['The three aren\'t equally likely'], ['There are four totals, not three', 'There are three totals. Are they equally likely?'], ['Coins are not independent', 'They are.'], ['Nothing, 1/3 is right', 'List HH, HT, TH, TT.']], sol: 'The equally likely outcomes are HH, HT, TH and TT. One head covers two of them, so P = 1/2.' },
         ] },
         { h: 'The complement rule', blocks: [
           `<p>P(not A) = 1 − P(A). It turns "at least one" problems into "none" problems, which usually multiply cleanly.</p>`,
@@ -255,7 +255,7 @@
           { trap: 'Independent is not the same as mutually exclusive. Two events that can\'t happen together are very dependent: if one happens, the other certainly didn\'t.' },
           { q: 'A fair coin is flipped three times. What is the probability of heads, heads, tails, in that order?', a: 1 / 8, hint: 'Flips are independent: multiply.', sol: '(½)³ = <b>1/8</b>.' },
           { q: 'Three flips: what is the probability of at least one head?', a: 7 / 8, hint: 'Complement.', sol: '1 − (½)³ = <b>7/8</b>.' },
-          { id: 'm2', q: 'A fair coin lands heads five times in a row. What is the chance of heads on the next flip?', opts: [['1/2: the coin has no memory'], ['Less than 1/2: tails is due', 'That\'s the gambler\'s fallacy. Past flips don\'t affect the next one.'], ['1/64', 'That\'s the chance of six heads in a row, before any flips.'], ['1/32', 'That\'s the chance of the five heads you already saw.']], sol: 'If the coin is fair, the flips are independent. (After 50 heads in a row, though, you\'d start to doubt it is fair. That\'s Bayes, in the next chapter.)' },
+          { id: 'm2', q: 'A fair coin lands heads five times in a row. What is the chance of heads on the next flip?', opts: [['1/2: no memory'], ['Less than 1/2: tails is due', 'That\'s the gambler\'s fallacy. Past flips don\'t affect the next one.'], ['1/64', 'That\'s the chance of six heads in a row, before any flips.'], ['1/32', 'That\'s the chance of the five heads you already saw.']], sol: 'If the coin is fair, the flips are independent. (After 50 heads in a row, though, you\'d start to doubt it is fair. That\'s Bayes, in the next chapter.)' },
         ] },
       ],
       takeaways: ['Pick outcomes that are genuinely equally likely (ordered pairs, not totals).', '"At least one": 1 − P(none).', 'Or: add, then subtract the overlap.', 'Independent ≠ mutually exclusive.', 'Coins have no memory.'],
@@ -369,7 +369,7 @@
         { h: 'Pricing a game', blocks: [
           `<p>A game's value is E[payout] − cost. Positive means you'd play at that price; the fair price makes it zero.</p>`,
           { q: 'You pay $1 to roll a die and receive $5 if it shows a six. What is your expected profit?', a: -1 / 6, tol: { abs: 0.005 }, hint: 'Expected winnings minus the cost.', sol: '5 × 1/6 − 1 = <b>−1/6</b> ≈ −$0.17 a game.' },
-          { id: 'm1', q: 'A game is worth $100 on average, but pays $0 with probability 99% and $10,000 with probability 1%. What should you pay to play it once?', opts: [['Less than $100, depending on your wealth and risk appetite'], ['Exactly $100: that\'s its value', 'That\'s the fair price if you can repeat it many times. Once, you also carry risk.'], ['Nothing: you will almost surely lose', 'You\'d take it for $1.'], ['$10,000: that\'s the prize', 'You only win it 1% of the time.']], sol: 'Expected value is the price of a repeatable bet. For a one-off bet that\'s large for you, risk also matters. Chapter 21 makes this precise.' },
+          { id: 'm1', q: 'A game is worth $100 on average, but pays $0 with probability 99% and $10,000 with probability 1%. What should you pay to play it once?', opts: [['Less than $100, for most people'], ['Exactly $100: that\'s its value', 'That\'s the fair price if you can repeat it many times. Once, you also carry risk.'], ['Nothing: you will almost surely lose', 'You\'d take it for $1.'], ['$10,000: that\'s the prize', 'You only win it 1% of the time.']], sol: 'Expected value is the price of a repeatable bet. For a one-off bet that\'s large for you, risk also matters. Chapter 21 makes this precise.' },
         ] },
         { h: 'E[g(X)] is not g(E[X])', blocks: [
           `<p>The expected square isn't the square of the expectation. For a convex g (a curve that bends upward, like x²), E[g(X)] ≥ g(E[X]). This is <b>Jensen's inequality</b>.</p>`,
@@ -434,7 +434,7 @@
             ['What would it be at ρ = 0 and ρ = 1?', 'ρ = 0: √0.02 ≈ 14.1%. ρ = 1: 20%, so no benefit at all.'],
           ] },
           { id: 'a1', q: 'n stocks are uncorrelated, each with 30% volatility. You hold them equally weighted, with n = 25. What is the portfolio\'s volatility, as a decimal?', a: 0.06, hint: 'σ/√n.', sol: '0.3/5 = <b>0.06</b>, or 6%.' },
-          { id: 'm1', q: '100 stocks all have 30% volatility and pairwise correlation 0.25. You hold them equally. As you add more stocks, the portfolio volatility…', opts: [['falls towards about 15%, and no further'], ['falls towards 0', 'That needs zero correlation.'], ['stays at 30%', 'Diversification helps while ρ is below 1.'], ['falls to 3%', 'That\'s 30%/√100, which ignores correlation.']], sol: 'For equal weights, variance = σ²/n + (1 − 1/n)ρσ² → ρσ². So volatility → √0.25 × 30% = 15%. Common factors put a floor under risk, which is why market-neutral hedging matters.' },
+          { id: 'm1', q: '100 stocks all have 30% volatility and pairwise correlation 0.25. You hold them equally. As you add more stocks, the portfolio volatility…', opts: [['falls to about 15%'], ['falls towards 0, given enough names', 'That needs zero correlation.'], ['stays at 30%, as all stocks are risky', 'Diversification helps while ρ is below 1.'], ['falls to 3%', 'That\'s 30%/√100, which ignores correlation.']], sol: 'For equal weights, variance = σ²/n + (1 − 1/n)ρσ² → ρσ². So volatility → √0.25 × 30% = 15%. Common factors put a floor under risk, which is why market-neutral hedging matters.' },
         ] },
       ],
       takeaways: ['Var = E[X²] − (E[X])²; σ = √Var.', 'Var(aX + b) = a² Var(X).', 'Independent variances add: totals spread like √n, averages shrink like 1/√n.', 'Var(X ± Y) = Var X + Var Y ± 2Cov.', 'ρ only sees straight lines: zero correlation ≠ independence.', 'Portfolio variance: w₁²σ₁² + w₂²σ₂² + 2w₁w₂ρσ₁σ₂.'],

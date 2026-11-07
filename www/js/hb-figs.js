@@ -185,7 +185,7 @@
     // An order book: asks above, bids below, with bars for size.
     book(spec) {
       const rowH = 26, W = 380, rows = [...spec.asks.map(([p, s]) => ['ask', p, s]), ...spec.bids.map(([p, s]) => ['bid', p, s])];
-      const max = Math.max(...rows.map((r) => r[2])), H = rows.length * rowH + 30, cx = W / 2, unit = 130 / max, o = [];
+      const max = Math.max(...rows.map((r) => r[2])), H = rows.length * rowH + 30, cx = W / 2, unit = 112 / max, o = [];
       o.push(text(cx - 44, 14, 'bids (buyers)', 'hf-s', 'end'), text(cx, 14, 'price', 'hf-s'), text(cx + 44, 14, 'asks (sellers)', 'hf-s', 'start'));
       rows.forEach(([side, p, s], i) => {
         const y = 22 + i * rowH, w = s * unit, x = side === 'ask' ? cx + 34 : cx - 34 - w;

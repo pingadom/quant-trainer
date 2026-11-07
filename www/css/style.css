@@ -1023,4 +1023,4 @@ mark { background: var(--accent-soft); color: inherit; border-radius: 2px; paddi
 .hb-next { margin-top: 10px; }
 .hb-takeaways li { margin-bottom: 4px; }
 .hb-practice { display: flex; flex-wrap: wrap; gap: 6px; }
-.hb-scatter, .hb-plot { width: 100%; display: block; }
+.hb-code { font: 0.86rem var(--mono); background: var(--panel-2); border-radius: 8px; padding: 10px 12px; overflow-x: auto; }

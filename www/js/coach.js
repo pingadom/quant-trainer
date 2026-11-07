@@ -273,6 +273,8 @@
     // The handbook: suggest the next chapter to newcomers, and to anyone part-way through it.
     const HP = QT.handbookProgress;
     if (HP) {
+      const due = HP.dueReviews();
+      if (due.length) recs.push({ pri: 48, kind: 'handbook', voice: `${due.length} handbook chapter${due.length > 1 ? 's are' : ' is'} due for review. A few mixed questions now stop it fading.`, title: 'Handbook review', why: 'Coming back after a gap is what moves a chapter into long-term memory.', href: '#/handbook/review', label: 'Review' });
       const nextId = HP.nextChapter(), started = Object.keys(st.handbook || {}).length;
       if (nextId && (started || (st.days || []).length < 3)) {
         const ch = QT.handbook.CHAPTERS[nextId];

@@ -139,9 +139,9 @@
     // Kelly: growth rate against bet size, with simulated paths at your chosen fraction.
     kelly(box) {
       box.innerHTML = `<b>Try it: bet a fixed fraction every time</b>
-        <p class="small">A coin wins with probability 0.55, paying even money.</p>
-        <div class="hb-sliders">${slider('f', 'Fraction of wealth bet', 0, 0.5, 0.01, 0.3)}</div><div class="hb-out"></div>`;
-      const p = 0.55, g = (x) => p * Math.log(1 + x) + (1 - p) * Math.log(1 - x);
+        <p class="small">A coin wins with probability 0.58, paying even money.</p>
+        <div class="hb-sliders">${slider('f', 'Fraction of wealth bet', 0, 0.5, 0.01, 0.4)}</div><div class="hb-out"></div>`;
+      const p = 0.58, g = (x) => p * Math.log(1 + x) + (1 - p) * Math.log(1 - x);
       const draw = () => {
         const x = val(box, 'f');
         show(box, 'f', f(x, 2));
@@ -150,7 +150,7 @@
           for (let i = 1; i <= 500; i++) v.push(v[i - 1] + Math.log(1 + (Math.random() < p ? x : -x)));
           return { name: `Run ${k + 1}`, values: v.map((y) => y / Math.LN10) };
         });
-        out(box, `${Fig()({ fig: 'plot', x: [0, 0.5], y: [-0.08, 0.01], h: 190, xl: 'fraction bet', yl: 'growth per bet', xt: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yt: [-0.06, -0.03, 0], fns: [{ f: g }], pts: [{ x, y: Math.max(-0.08, g(x)), tone: 'bad' }], alt: 'Growth rate against fraction bet: it rises, peaks at 0.1 and falls below zero.' })}
+        out(box, `${Fig()({ fig: 'plot', x: [0, 0.5], y: [-0.08, 0.02], h: 190, xl: 'fraction bet', yl: 'growth per bet', xt: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yt: [-0.06, -0.03, 0], fns: [{ f: g }], pts: [{ x, y: Math.max(-0.08, g(x)), tone: 'bad' }], alt: 'Growth rate against fraction bet: it rises to a peak, then falls below zero.' })}
           ${QT.chart.line(paths, { label: 'Four runs of 500 bets, log scale', xFirst: '0', xLast: '500 bets', fmt: (y) => `10^${f(y, 1)}` })}
           <p class="small">Expected log growth per bet: <b>${f(g(x), 4)}</b>${g(x) < 0 ? ', which is negative: you are going broke on a winning bet.' : '.'}</p>`);
       };

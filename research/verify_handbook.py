@@ -14,7 +14,7 @@ from math import comb, exp, log, pi, sqrt
 
 import numpy as np
 from scipy.integrate import quad
-from scipy.stats import norm, poisson
+from scipy.stats import beta, norm
 
 DIE = range(1, 7)
 TWO = list(itertools.product(DIE, DIE))
@@ -129,6 +129,55 @@ def max_two():
     return Fr(sum(max(p) for p in TWO), 36)
 
 
+def min_third_corr(a):
+    """The lowest corr(X, Z) that keeps [1 a z; a 1 a; z a 1] positive semi-definite, by bisection."""
+    lo, hi = -1.0, a
+    for _ in range(80):
+        z = (lo + hi) / 2
+        if np.linalg.eigvalsh(np.array([[1, a, z], [a, 1, a], [z, a, 1]]))[0] >= -1e-13:
+            hi = z
+        else:
+            lo = z
+    return hi
+
+
+def min_equal_corr(n):
+    lo, hi = -1.0, 0.0
+    for _ in range(80):
+        r = (lo + hi) / 2
+        m = np.full((n, n), r)
+        np.fill_diagonal(m, 1)
+        if np.linalg.eigvalsh(m)[0] >= -1e-13:
+            hi = r
+        else:
+            lo = r
+    return hi
+
+
+def top_share(n, r):
+    m = np.full((n, n), float(r))
+    np.fill_diagonal(m, 1)
+    return float(np.linalg.eigvalsh(m)[-1] / n)
+
+
+def equal_game(a, b, c, d):
+    """Row's mix and value in the zero-sum game [[a, b], [c, d]], by making Column indifferent."""
+    p = (d - c) / (a - b - c + d)
+    return p, p * a + (1 - p) * c
+
+
+def rps_paper():
+    """Equilibrium of rock-paper-scissors with rock v scissors worth 2: solve A x = 0, sum x = 1."""
+    A = np.array([[0, -1, 2], [1, 0, -1], [-2, 1, 0], [1, 1, 1]], float)
+    return float(np.linalg.lstsq(A, np.array([0, 0, 0, 1.0]), rcond=None)[0][1])
+
+
+def one_step(s, up, down, k):
+    q = (s - down) / (up - down)
+    return q * max(up - k, 0) + (1 - q) * max(down - k, 0)
+
+
+FIT = np.polyfit([0, 1, 2], [1, 2, 4], 1)
 full_deck = [(r, s) for r in range(13) for s in range(4)]
 
 ANSWERS = {
@@ -187,5 +236,57 @@ ANSWERS = {
     },
     "continuous": {
         "h0": 0.125, "h1": 0.25, "h2": 0.2, "h3": 0.75, "h4": Fr(1, 3), "h5": pi / 4, "h6": quad(lambda x: x * x * 2 * x, 0, 1)[0],
+    },
+    "clt": {
+        0: round(norm.sf(1), 5), 1: 2 / sqrt(400), 2: 2 * sqrt(10000 / 4), 3: (2 * 0.5 / 0.01) ** 2,
+        "h0": sqrt(36 * 35 / 12), "h1": round(norm.sf(2), 4), "h2": 10 / 5, "h3": 100 * 4, "h4": (2 / 0.01) ** 2, "h5": 0.05 * sqrt(252),
+    },
+    "estimation": {
+        0: 0.1 ** 2 + 0.02, 1: Fr(4, 5), 2: Fr(7, 10), 3: Fr(2 + 4 + 3 + 3, 4), 4: 100 * 1.25 - 1, 5: 1.96 * 20 / 10, 6: beta(9, 3).mean(),
+        "h0": 3 / (2 + 3 + 7), "h1": sqrt(0.55 * 0.45 / 400), "h2": 0.55 - 1.96 * sqrt(0.55 * 0.45 / 400), "h3": 0.9, "h4": beta(5, 15).mean(), "h5": (1.96 * 0.5 / 0.02) ** 2,
+    },
+    "testing": {
+        0: (60 - 50) / sqrt(100 / 4), 1: round(2 * norm.sf(2), 4), 2: 1.5 * sqrt(4), 3: (2 / 0.4) ** 2, 4: 1 - 0.95 ** 100, 5: 0.05 / 50, 6: 0.05 * 900 / (0.05 * 900 + 0.8 * 100),
+        "h0": 30 / sqrt(1000 / 4), "h1": 0.1 / (2 / sqrt(400)), "h2": round(norm.sf(-0.04), 3), "h3": (2 / 2) ** 2, "h4": 1 - (1 - 0.0062) ** 20, "h5": 0.01 * 0.5 / (0.01 * 0.5 + 0.99 * 0.01),
+    },
+    "regression": {
+        0: 0.5 * 30 / 10, 1: 2 + 1.5 * 4, 2: 0.6 ** 2, 3: (1 - 0.36) * 25, 4: 0.6 / 0.2, 5: 0.5 * 2,
+        "h0": float(FIT[0]), "h1": float(FIT[1]), "h2": 0.7 * 30 / 15, "h3": 2 / (1 * sqrt(100)), "h4": 2 * 2 / (1 * sqrt(100)), "h5": 0.02 ** 2, "h6": 4 / 5,
+    },
+    "matrix": {
+        0: float(np.array([0.6, 0.4]) @ np.array([[0.04, 0.01], [0.01, 0.01]]) @ np.array([0.6, 0.4])), 1: 0.3 / sqrt(3), 2: min_equal_corr(4), 3: min_third_corr(0.8), 4: float(np.linalg.eigvalsh(np.array([[1, 0.6], [0.6, 1]]))[-1]), 5: top_share(10, 0.3),
+        "h0": min_third_corr(0.6), "h1": sqrt(0.16) * 0.25, "h2": (0.04 - 0.01) / (0.01 + 0.04 - 2 * 0.01), "h3": 3, "h4": 0.09 / (0.01 + 0.09), "h5": top_share(500, 0.2), "h6": min_third_corr(0.9),
+    },
+    "timeseries": {
+        0: 1 + 0.2, 1: 3 / (1 - 0.25), 2: log(0.5) / log(0.9), 3: 0.8 ** 2 * 10, 4: 0.94 * 1 + 0.06 * 4,
+        "h0": log(0.5) / log(0.5), "h1": 1 / (1 - 0.81), "h2": sqrt(2 * 1 * (1 - 0.5)), "h3": 2 * 0.95 ** 14, "h4": log(0.5) / log(0.94), "h5": 2 * 100,
+    },
+    "betting": {
+        0: 1.5 * 0.6, 1: Fr(1 * 6 - 4, 10), 2: (2 * 0.5 - 0.5) / 2, 3: 0.6 * log(1.2) + 0.4 * log(0.8), 4: 0.1 / 0.2 ** 2, 5: 0.5 ** 2 / 2, 6: Fr(1, 2) ** 3,
+        "h0": 2 * 0.55 - 1, "h1": (3 * 0.4 - 0.6) / 3, "h2": 0.55 * log(1.1) + 0.45 * log(0.9), "h3": 0.08 / 0.16 ** 2, "h4": 100000 * 0.25, "h5": 0.5, "h6": 2 * (0.5 - 0.125),
+    },
+    "market-making": {
+        0: 100.01 - 99.99, 1: (100.01 + 99.99) / 2, 2: (100 * 100.01 + 200 * 100.02) / 300, 3: 3 * 3.5, 4: (52 - 50) * 5, 5: 0.2 * 10, 6: 0.6 * 110 + 0.4 * 90, 7: 5 + 3.5,
+        "h0": 10 * (101 - 99), "h1": sqrt(10 / 4), "h2": 0.3 * 10, "h3": (300 * 99.99 + 100 * 99.98) / 400, "h4": 3 * sum(range(1, 14)) / 13, "h5": 13 + 2 * sum(range(1, 13)) / 12, "h6": 100 - 0.05 - 0.02 * 3,
+    },
+    "options": {
+        0: max(115 - 100, 0), 1: max(100 - 115, 0), 2: 15 - 6, 3: 8 - 100 + 100, 4: 10 - 105 + 100, 5: one_step(100, 120, 80, 90), 6: 0.4 * 100 * 0.25, 7: 0.4 * 100 * 0.2 * 0.5, 8: 100 * 0.5, 9: 0.5 * 0.05 * 4, 10: 2 * 0.4 * 100 * 0.2,
+        "h0": 10 - 100 + 100 * exp(-0.05), "h1": one_step(100, 110, 90, 100), "h2": (10 - 0) / (110 - 90), "h3": 0.25 * max(120 - 100, 0), "h4": 0.8 * 50 * 0.4 * 0.5, "h5": 10 - 9.52, "h6": 48 / 16,
+    },
+    "fermi": {
+        0: sqrt(100 * 10000), 1: 3e4 * 2e3, 2: 2 ** sqrt(4), 3: 10 * 0.1,
+        "h0": sqrt(2 * 200), "h1": 365.25 * 86400, "h2": 70 * 60 * 24 * 365.25 * 80,
+    },
+    "games": {
+        0: equal_game(3, 0, 0, 1)[0], 1: equal_game(3, 0, 0, 1)[1], 2: 50 / (100 + 2 * 50), 3: 100 / (100 + 2 * 100), 4: 100 / (100 + 50), 5: 99, 6: 0, 7: 0.8 / 2,
+        "h0": equal_game(1, -1, -1, 1)[0], "h1": equal_game(3, -1, -1, 1)[0], "h2": 60 / (120 + 120), "h3": 100 / (100 + 100), "h4": 200 / (100 + 400), "h5": 98, "h6": rps_paper(),
+    },
+    "factors": {
+        0: (12 - 2) / 20, 1: 0.1 * sqrt(252), 2: (120 - 90) / 120, 3: 5 * 1.2, 4: 15 - 1.2 * 10, 5: sqrt(0.4 ** 2 - 0.2 ** 2), 6: 0.03 * sqrt(1600),
+        "h0": (15 - 5) / 10, "h1": 20 * 0.8 - 10 * 1.1, "h2": 0.5 ** 2, "h3": (1 / 0.02) ** 2, "h4": 10 / 1, "h5": 4 / 20, "h6": 0.2 * sqrt(100),
+    },
+    "backtest": {
+        0: 0.9 * 0.1 + 0.1 * -1, 1: sqrt(2 * log(100)) / sqrt(9), 2: 10 * sqrt(9), 3: 15 - 40 * 0.05, 4: 10 / 100 * 100,
+        "h0": 0.75 * 0.08 + 0.25 * -0.3, "h1": 20 - 50 * 0.1, "h2": 16 * sqrt(1 / 4), "h3": 252 / 5, "h4": sqrt(2 * log(1000)) / sqrt(4), "h5": (40 - 200 * 0.05) / 20, "h6": 2 ** (5 - 3),
     },
 }

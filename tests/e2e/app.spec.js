@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -506,14 +506,92 @@ test('reset keeps a backup that can be restored', async ({ page }) => {
 
 test('handbook: a check answered right counts towards the chapter', async ({ page }) => {
   await page.goto('./#/handbook/counting');
-  await expect(page.locator('#hb-progress')).toContainText('0 of 6');
+  await expect(page.locator('#hb-progress')).toContainText('0 of 10');
   const first = page.locator('.hb-check').first();
   await first.locator('input').fill('17576');
   await first.getByRole('button', { name: 'Check' }).click();
   await expect(first.locator('.hb-fb')).toContainText('Correct');
-  await expect(page.locator('#hb-progress')).toContainText('1 of 6');
+  await expect(page.locator('#hb-progress')).toContainText('1 of 10');
   await page.goto('./#/handbook');
   await expect(page.locator('.hb-chapter.started')).toHaveCount(1);
+});
+
+test('handbook: worked steps, predictions, concept checks, homework and your own explanation', async ({ page }) => {
+  await page.goto('./#/handbook/conditional');
+  const worked = page.locator('.hb-worked').first(), step = worked.locator('[data-step]').first();
+  await expect(step).toBeHidden();
+  await worked.locator('[data-next]').click();
+  await expect(step.locator('.hb-ask')).toBeVisible();
+  await expect(step.locator('[data-body]')).toBeHidden();
+  await worked.locator('[data-next]').click();
+  await expect(step.locator('[data-body]')).toBeVisible();
+
+  const mcq = page.locator('.hb-mcq').first();
+  await mcq.getByRole('button', { name: '1/2', exact: true }).click();
+  await expect(mcq.locator('.hb-fb')).toContainText('Not that one');
+  await mcq.getByRole('button', { name: '1/3', exact: true }).click();
+  await expect(mcq.locator('.hb-fb')).toContainText('Correct');
+
+  const hw = page.locator('.hb-hw').first();
+  await hw.locator('input').fill('1/2');
+  await hw.getByRole('button', { name: 'Check' }).click();
+  await expect(hw.locator('.hb-fb')).toContainText('Correct');
+  await expect(page.locator('#hb-progress')).toContainText('homework done: 1 of');
+
+  await page.goto('./#/handbook/variance');
+  const predict = page.locator('.hb-predict').first(), tool = predict.locator('+ .hb-widget');
+  await expect(tool).toBeHidden();
+  await predict.getByRole('button').first().click();
+  await expect(tool).toBeVisible();
+
+  await page.goto('./#/handbook/craft');
+  const written = page.locator('.hb-hw').first();
+  await written.getByRole('button', { name: 'Show the model answer' }).click();
+  await written.getByRole('button', { name: 'Got it' }).click();
+  await expect(written).toHaveClass(/solved/);
+  await page.locator('.hb-explain textarea').fill('My own words');
+  await page.locator('.hb-explain textarea').blur();
+  await page.reload();
+  await expect(page.locator('.hb-explain textarea')).toHaveValue('My own words');
+});
+
+test('handbook: an exam runs to a report, and a finished chapter comes back for review', async ({ page }) => {
+  await page.goto('./#/handbook/exam/equities');
+  await page.getByRole('button', { name: 'Begin' }).click();
+  for (let i = 0; i < 40; i++) {
+    if (await page.locator('.hb-score').isVisible()) break;
+    const opt = page.locator('.hb-run .hb-opt').first();
+    if (await opt.isVisible()) await opt.click();
+    else {
+      await page.locator('.hb-run input').fill('1');
+      await page.getByRole('button', { name: 'Submit' }).click();
+    }
+  }
+  await expect(page.locator('.hb-score')).toContainText('%');
+  await page.goto('./#/handbook');
+  await expect(page.getByRole('link', { name: /Exam: Quant equities · best/ })).toBeVisible();
+
+  await page.evaluate(() => {
+    const s = QT.store.get();
+    s.handbook.counting = { c: {}, h: {}, note: '', done: false, rv: { due: Date.now() - 1000, st: 0 } };
+    QT.store.save();
+  });
+  await page.goto('./#/handbook/sheet');
+  await page.goto('./#/handbook');
+  await expect(page.locator('.hb-due')).toContainText('1 chapter due');
+  await page.locator('.hb-due a').click();
+  for (let i = 0; i < 3; i++) {
+    const opt = page.locator('.hb-run .hb-opt').first();
+    if (await opt.isVisible()) await opt.click();
+    else {
+      await page.locator('.hb-run input').fill('1');
+      await page.getByRole('button', { name: 'Check' }).click();
+    }
+    await page.locator('.hb-next').click();
+  }
+  await expect(page.locator('#hb-run')).toContainText('Review done');
+  await page.goto('./#/handbook');
+  await expect(page.locator('.hb-due')).toHaveCount(0);
 });
 
 test('coding: run JavaScript, see what failed, fix it and submit; then a knowledge quiz', async ({ page }) => {

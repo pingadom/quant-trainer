@@ -48,5 +48,5 @@
   // A chapter's words, for search.
   const text = (ch) => [ch.goals.join(' '), ...ch.sections.map((s) => `${s.h} ${s.blocks.map((b) => (typeof b === 'string' ? b : [b.q, b.idea, b.trap, b.market, b.proof].filter(Boolean).join(' '))).join(' ')}`)].join(' ');
 
-  QT.handbook = { PARTS: PARTS.map((p) => ({ ...p, chapters: p.chapters.filter((id) => CHAPTERS[id]) })).filter((p) => p.chapters.length), CHAPTERS, ROUTES: ROUTES.map((r) => ({ ...r, chapters: r.chapters.filter((id) => CHAPTERS[id]) })), checksOf, homeworkOf, text };
+  QT.handbook = { PARTS, CHAPTERS, ROUTES, checksOf, homeworkOf, text };
 })();

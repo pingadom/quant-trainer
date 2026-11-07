@@ -27,6 +27,8 @@ python research/verify_results.py
 node tests/export-answers.js > answers.json && python research/verify_results.py --js answers.json
 ```
 
+The handbook's checks and homework are re-derived in [verify_handbook.py](verify_handbook.py), which `verify_results.py` loads. With `--js`, any handbook answer with no derivation there fails the run.
+
 ## 3. Are the Citadel SSE answers right? → [verify_sse.py](verify_sse.py)
 
 Re-derives every numeric answer in `content/*.md` by exact enumeration, dynamic programming or a direct formula, and checks the stored answer is within that question's tolerance.
