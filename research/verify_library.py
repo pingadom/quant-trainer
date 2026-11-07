@@ -926,3 +926,69 @@ ARITH = ["17*13", "441**0.5", "23**2", "144/12", "0.15*240", "2**8", "73+89", "1
          "196**0.5", "28*25", "675/25", "0.6*85", "17**2", "346-178", "16*31", "5**6", "92+219", "361**0.5"]
 for i, expr in enumerate(ARITH):
     put(f"ep-arith-{i // 10 + 1}.{i % 10}", round(eval(expr), 9))  # noqa: S307 (fixed literal list)
+
+
+# ---------------------------------------------------------------- Xiaodong Yang's notes, part 1
+put("xy-first-head.0", sum(k * Fr(1, 2 ** k) for k in range(1, 200)).__float__())
+put("xy-max-uniform.0", quad(lambda x: 1 - x ** 4, 0, 1)[0])
+put("xy-poisson-even.0", sum(math.exp(-1) / math.factorial(k) for k in range(0, 60, 2)))
+put("xy-ruin-fair.0", round(ruin_p(3, 10, 0.5), 12))
+put("xy-bernoulli-var.0", 0.3 - 0.3 ** 2)
+from scipy.stats import binom  # noqa: E402
+
+put("xy-binomial-moments.0", round(binom(20, 0.3).mean(), 9))
+put("xy-binomial-moments.1", round(binom(20, 0.3).var(), 9))
+put("xy-ruin-unfair.0", round(ruin_p(10, 20, 0.45), 12))
+put("xy-meet-15.0", round(quad(lambda x: min(1, x + 0.25) - max(0, x - 0.25), 0, 1)[0], 12))
+put("xy-meet-unequal.0", round(quad(lambda x: min(1, x + 0.25) - max(0, x - 0.5), 0, 1, points=[0.5, 0.75])[0], 12))
+p_all_diff = Fr(1)
+for i in range(23):
+    p_all_diff *= Fr(365 - i, 365)
+put("xy-birthday-23.0", 1 - p_all_diff)
+
+
+def empty_bins(n):
+    # exact: enumerate the number of balls in a fixed bin (binomial) is enough for one bin; use linearity
+    return n * sum(math.comb(n, 0) * Fr(1, n) ** 0 * Fr(n - 1, n) ** n for _ in [0])
+
+
+put("xy-empty-bins.0", empty_bins(10))
+from scipy.stats import gamma as gamma_dist  # noqa: E402
+
+put("xy-gamma-moments.0", round(gamma_dist(a=3, scale=2).mean(), 9))
+put("xy-gamma-moments.1", round(gamma_dist(a=3, scale=2).var(), 9))
+
+
+def die_pattern_wait(pat):
+    # KMP automaton over die faces
+    n = len(pat)
+    A = np.zeros((n, n))
+    b = np.ones(n)
+    for st in range(n):
+        A[st, st] += 1
+        for c in range(1, 7):
+            s = pat[:st] + [c]
+            while s and s != pat[:len(s)]:
+                s = s[1:]
+            if len(s) < n:
+                A[st, len(s)] -= 1 / 6
+    return float(np.linalg.solve(A, b)[0])
+
+
+put("xy-die-11.0", round(die_pattern_wait([1, 1]), 9))
+put("xy-max-two-uniform.0", 1 - 0.8 ** 2)
+put("xy-two-white.0", Fr(math.comb(3, 2), math.comb(5, 2)))
+put("xy-exp-residual.0", quad(lambda x: x * math.exp(-x), 1, np.inf)[0] / math.exp(-1))
+put("xy-uniform-range.0", quad(lambda x: 1 - x ** 4, 0, 1)[0] - quad(lambda x: (1 - x) ** 4, 0, 1)[0])
+put("xy-exp-difference.0", quad(lambda x: math.exp(-x) * (1 - math.exp(-(x - 1))), 1, np.inf)[0])
+put("xy-third-arrival.0", 3 / 2)
+put("xy-two-heads.0", 2 / 0.3)
+put("xy-geometric-var.0", round(sum(k * k * 0.25 * 0.75 ** (k - 1) for k in range(1, 2000)) - 4 ** 2, 9))
+put("xy-exp-capped.0", quad(lambda t: math.exp(-t), 0, 2)[0])
+put("xy-min-exponentials.0", quad(lambda t: math.exp(-2 * t), 0, np.inf)[0])
+put("xy-square-triangle.0", Fr(1, 2))
+put("xy-five-heads.0", Fr(math.comb(10, 5), 1024))
+put("xy-forward-dividend.0", 100 * math.exp(0.05 - 0.02))
+d1 = 0.2 / 2
+put("xy-bs-atm.0", 100 * norm.cdf(d1) - 100 * norm.cdf(d1 - 0.2))
+put("xy-time-value.0", 8 - max(105 - 100, 0))

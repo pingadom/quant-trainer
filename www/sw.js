@@ -23,6 +23,7 @@ const ASSETS = [
   'js/bank-library.js',
   'js/bank-lib-bs.js',
   'js/bank-lib-ep.js',
+  'js/bank-lib-xy.js',
   'js/bank-hints.js',
   'js/bank-solutions.js',
   'js/keypad.js',

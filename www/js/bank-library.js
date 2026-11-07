@@ -26,14 +26,19 @@
     sources: Object.values(SOURCES).map(([name, url]) => [name, url]),
   };
 
+  // Questions with only two hints get a third that is about checking or structuring the answer.
+  const CHECK = `Before you commit, sanity-check: try a tiny case, or bound the answer roughly from above and below.`;
+  const STRUCTURE = `Answer in four beats: the definition, the intuition, a quick example, and one caveat or limitation.`;
+  const topUp = (h, extra) => (h && h.length >= 3 ? h : [...(h || []), extra]);
+
   function add(src, entries) {
     const [name, url] = SOURCES[src];
     for (const [id, cat, lvl, title, q, body] of entries) {
       const b = { id: `${src}-${id}`, firm: 'library', role: LEVEL[lvl], stage: name, cat, kind: 'guide', title, src: [`${name}: ${title}`, url], q };
       if (Array.isArray(body)) {
-        b.parts = body.map(({ q: pq, a, tol, sim, h, s }) => ({ q: pq, a, ...(tol ? { tol } : {}), ...(sim ? { sim } : {}), h, s, sol: '' }));
+        b.parts = body.map(({ q: pq, a, tol, sim, h, s }) => ({ q: pq, a, ...(tol ? { tol } : {}), ...(sim ? { sim } : {}), h: topUp(h, CHECK), s, sol: '' }));
       } else {
-        b.open = { model: body.open, h: body.h };
+        b.open = { model: body.open, h: topUp(body.h, STRUCTURE) };
       }
       QT.bank.push(b);
     }
