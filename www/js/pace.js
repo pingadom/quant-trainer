@@ -1,8 +1,10 @@
-// End-of-run pacing for the timed games (Zetamac, 80 in 8, 60 in 6, the rhythm drill). A column
-// for each slice of the run shows how many questions you answered in it, against a reference pace,
-// so a dip shows where momentum went. Below it: first half against second half, the fastest and
-// slowest stretches, the point you fell behind a fixed pace, and the single questions that stalled
-// you. Hover, focus or tap a column for what happened in that slice.
+// End-of-run pacing for the timed games (Zetamac, 80 in 8, 60 in 6, the rhythm drill). A line
+// with a point for every answer, placed at the moment you gave it, at the score you were on pace
+// for then: your score so far scaled up to the full time (and, in 80 in 8 and 60 in 6, to at most
+// the questions there are). Where the line falls is where momentum went. Below it: your peak pace,
+// first half against second half, the fastest and slowest stretches, the point you fell behind a
+// fixed pace, and the single questions that stalled you. Point at, tap or arrow through the line
+// for each answer.
 (function () {
   const esc = QT.escapeHtml, f = QT.fmtNum;
   const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -74,70 +76,123 @@
     return out;
   }
 
-  const readout = (s, badName) => {
-    const parts = [`${clock(s.t0)}–${clock(s.t1)}: ${s.n} answered`];
-    if (s.bad) parts[0] += ` (${s.ok} right, ${s.bad} ${badName.toLowerCase()})`;
-    if (!s.full) parts[0] += ` in the last ${Math.round(s.t1 - s.t0)} s`;
-    if (s.long && s.longIn >= 1500) parts.push(`Longest on ${qText(s.long)}, ${sec(s.long.ms)}${s.long.open ? ' and unanswered' : ''}`);
-    return parts.join('. ') + '.';
-  };
+  // The score you were on pace for after each answer. Net scoring (+1/−1) and a question cap for
+  // the fixed-length tests; a count of right answers for Zetamac and the rhythm drill.
+  function track(A, opts) {
+    const fixed = !!(opts.pace && opts.pace.fixed), N = fixed ? opts.pace.n : Infinity, T = opts.secs * 1000;
+    let right = 0, wrong = 0;
+    return A.xs.map((x, i) => {
+      if (x.ok) right++;
+      else wrong++;
+      const score = fixed ? right - wrong : right;
+      return { ...x, i, score, proj: score * Math.min(T / Math.max(x.t, 1), N / (i + 1)) };
+    });
+  }
+
+  // Tidy axis: a handful of round values spanning lo..hi.
+  function ticks(lo, hi) {
+    if (hi - lo < 1) { hi += 1; lo -= 1; }
+    const step = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500].find((st) => (hi - lo) / st <= 4) || 1000;
+    const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, out = [];
+    for (let v = a; v <= b + 1e-9; v += step) out.push(v);
+    return out;
+  }
 
   function card(items, opts = {}) {
-    if (!items.length && !(opts.open && opts.open.ms)) return '';
-    const A = analyse(items, opts), { slices, b, dur } = A, badName = opts.bad || 'Wrong';
-    const anyBad = slices.some((s) => s.bad);
-    // Reference: the target pace for fixed-length tests, otherwise your own average.
-    const ref = opts.pace
-      ? { y: (opts.pace.n * b) / opts.secs, name: opts.pace.name }
-      : { y: (A.xs.length / dur) * b, name: 'Your average' };
-    const top = Math.max(1, ref.y, ...slices.map((s) => s.n));
-    const step = top <= 5 ? 1 : top <= 10 ? 2 : top <= 25 ? 5 : 10, yMax = Math.ceil(top / step) * step;
-    const h = (n) => `${((100 * n) / yMax).toFixed(2)}%`;
-    const cols = slices.map((s) => {
-      const label = readout(s, badName);
-      // The whole column height is the hit target, so empty slices can be inspected too.
-      return `<button type="button" class="pace-col${s.full ? '' : ' part'}" data-read="${esc(label)}" aria-label="${esc(label)}"><span class="pace-bar" style="height:${h(s.n)}">${s.bad ? `<i class="pace-bad" style="flex-grow:${s.bad}"></i>` : ''}${s.ok ? `<i class="pace-ok${anyBad ? '' : ' one'}" style="flex-grow:${s.ok}"></i>` : ''}</span></button>`;
-    }).join('');
-    const ns = notes(A, opts);
-    const per = ref.y.toFixed(ref.y < 10 ? 1 : 0).replace(/\.0$/, '');
-    const legend = [anyBad && '<span><i class="pace-key pace-ok"></i>Right</span>', anyBad && `<span><i class="pace-key pace-bad"></i>${esc(badName)}</span>`, `<span><i class="ch-key ch-target pace-refkey"></i>${esc(ref.name)} (${per} per ${b} s)</span>`].filter(Boolean).join('');
+    if (!items.length) return '';
+    const A = analyse(items, opts), { dur } = A, badName = opts.bad || 'Wrong';
+    const fixed = !!(opts.pace && opts.pace.fixed), pts = track(A, opts);
+    // The first few seconds say little (one quick answer extrapolates to a huge score), so the
+    // line starts from the third answer and 8% of the way in, unless that leaves almost nothing.
+    const minT = Math.max(5000, opts.secs * 80);
+    let shown = pts.filter((p) => p.i >= 2 && p.t >= minT);
+    if (shown.length < 2) shown = pts;
+    const final = pts[pts.length - 1].score, best = Number.isFinite(opts.best) ? opts.best : null;
+    const projs = shown.map((p) => p.proj), extra = best === null ? [final] : [final, best];
+    const ys = ticks(Math.min(...projs, ...extra), Math.max(...projs, ...extra));
+    const lo = ys[0], hi = ys[ys.length - 1];
+    const X = (t) => (100 * t) / (dur * 1000), Y = (v) => 100 - (100 * (v - lo)) / (hi - lo);
+    const r1 = (v) => Math.round(v);
+    const read = (p) => `${clock(p.t / 1000)}, answer ${p.i + 1}: ${qText(p)}${p.ok ? '' : ` (${badName.toLowerCase()})`}, ${sec(p.ms)}. Score ${p.score}, on pace for ${r1(p.proj)}.`;
+    const line = shown.map((p, k) => `${k ? 'L' : 'M'}${X(p.t).toFixed(2)} ${Y(p.proj).toFixed(2)}`).join('');
+    const dots = shown.map((p) => `<i class="pl-dot${p.ok ? '' : ' bad'}" style="left:${X(p.t).toFixed(2)}%;top:${Y(p.proj).toFixed(2)}%" data-read="${esc(read(p))}"></i>`).join('');
+    const grid = ys.map((v) => `<i class="pl-grid${v === 0 && lo < 0 ? ' zero' : ''}" style="top:${Y(v).toFixed(2)}%"></i>`).join('');
+    const anyBad = shown.some((p) => !p.ok);
+    // Your best pace, and the last moment you held it: where the slide (if any) began.
+    const top = Math.max(...shown.map((p) => Math.round(p.proj))), peak = shown.filter((p) => Math.round(p.proj) === top).pop();
+    const ns = [];
+    if (shown.length >= 3) {
+      const fell = peak !== shown[shown.length - 1] && peak.proj - final >= Math.max(3, 0.1 * Math.abs(peak.proj));
+      ns.push(`<b>On pace for:</b> ${top} at your best (last at ${clock(peak.t / 1000)}). You finished on ${final}${best !== null ? ` (previous best ${best})` : ''}.${fell ? ' Where the line falls after that is where momentum went.' : ''}`);
+    }
+    ns.push(...notes(A, opts));
+    const legend = [
+      `<span><i class="pl-key"></i>${anyBad ? 'Right' : 'Answer'}</span>`,
+      anyBad && `<span><i class="pl-key bad"></i>${esc(badName)}</span>`,
+      best !== null && `<span><i class="ch-key ch-target pace-refkey"></i>Your previous best (${best})</span>`,
+    ].filter(Boolean).join('');
+    const total = opts.secs >= 60 ? `${opts.secs / 60} minute${opts.secs === 60 ? '' : 's'}` : `${opts.secs} seconds`;
     return `
       <h2>Pacing</h2>
       <div class="card pace">
-        <p class="small" style="margin-top:0">Questions answered in each ${b}-second slice of the run. Dips show where you lost momentum.</p>
+        <p class="small" style="margin-top:0">Each point is an answer, at the moment you gave it. Its height is the score you were on pace for then: your score so far, scaled up to the full ${total}${fixed ? ` (and to at most ${opts.pace.n} questions)` : ''}. Where the line falls is where you lost momentum.</p>
         <figure class="chart">
           <div class="chart-plot">
-            <div class="chart-y" aria-hidden="true"><span>${yMax}</span><span>${yMax / 2 === Math.round(yMax / 2) ? yMax / 2 : ''}</span><span>0</span></div>
-            <div class="pace-plot" role="group" aria-label="${esc(`${opts.label || 'Run'} pacing: ${A.xs.length} answers in ${clock(dur)}, in ${b}-second slices`)}">
-              <i class="pace-mid" aria-hidden="true"></i>
-              <i class="pace-ref" style="bottom:${h(ref.y)}" aria-hidden="true"></i>
-              <div class="pace-cols">${cols}</div>
+            <div class="chart-y pl-y" aria-hidden="true">${ys.map((v) => `<span style="top:${Y(v).toFixed(2)}%">${v}</span>`).join('')}</div>
+            <div class="pl-plot" tabindex="0" role="group" aria-label="${esc(`${opts.label || 'Run'} pacing: on pace for ${top} at best, finished on ${final}. Use the arrow keys to step through your answers.`)}">
+              ${grid}
+              ${best !== null ? `<i class="pl-best" style="top:${Y(best).toFixed(2)}%"></i>` : ''}
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="${line}"/></svg>
+              <i class="pl-cross" hidden></i>
+              ${dots}
             </div>
             <div></div>
             <div class="chart-x" aria-hidden="true"><span>0:00</span><span>${clock(dur / 2)}</span><span>${clock(dur)}</span></div>
           </div>
           <figcaption class="chart-legend">${legend}</figcaption>
         </figure>
-        <p class="small pace-read" aria-live="polite">Hover over or tap a column to see that slice.</p>
+        <p class="small pace-read" aria-live="polite">Point at or tap the line to see each answer.</p>
         ${ns.map((t) => `<p class="small" style="margin:6px 0 0">${t}</p>`).join('')}
       </div>`;
   }
 
-  // One set of listeners for every pacing chart: hovering, focusing or tapping a column shows its
-  // slice under the chart.
-  const show = (col) => {
-    const box = col.closest('.pace'), read = box && box.querySelector('.pace-read');
-    if (!read) return;
-    box.querySelectorAll('.pace-col.on').forEach((c) => c.classList.remove('on'));
-    col.classList.add('on');
-    read.textContent = col.dataset.read;
+  // One set of listeners for every pacing chart: the answer nearest the pointer (or stepped to
+  // with the arrow keys) is marked, with a guide line and its details under the chart.
+  const select = (plot, dot) => {
+    if (!dot) return;
+    plot.querySelectorAll('.pl-dot.on').forEach((d) => d.classList.remove('on'));
+    dot.classList.add('on');
+    const cross = plot.querySelector('.pl-cross');
+    cross.hidden = false;
+    cross.style.left = dot.style.left;
+    const read = plot.closest('.pace').querySelector('.pace-read');
+    if (read) read.textContent = dot.dataset.read;
   };
-  if (typeof document !== 'undefined') for (const ev of ['pointerover', 'focusin', 'click']) {
-    document.addEventListener(ev, (e) => {
-      const col = e.target.closest && e.target.closest('.pace-col');
-      if (col) show(col);
+  const nearest = (plot, clientX) => {
+    let best = null, d = Infinity;
+    for (const dot of plot.querySelectorAll('.pl-dot')) {
+      const r = dot.getBoundingClientRect(), dd = Math.abs(r.left + r.width / 2 - clientX);
+      if (dd < d) { d = dd; best = dot; }
+    }
+    return best;
+  };
+  if (typeof document !== 'undefined') {
+    for (const ev of ['pointermove', 'pointerdown']) {
+      document.addEventListener(ev, (e) => {
+        const plot = e.target.closest && e.target.closest('.pl-plot');
+        if (plot) select(plot, nearest(plot, e.clientX));
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      const plot = e.target.closest && e.target.closest('.pl-plot');
+      if (!plot || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const dots = [...plot.querySelectorAll('.pl-dot')], cur = dots.findIndex((d) => d.classList.contains('on'));
+      const step = e.key === 'ArrowLeft' ? -1 : 1;
+      const k = e.key === 'Home' ? 0 : e.key === 'End' ? dots.length - 1 : cur < 0 ? (step < 0 ? dots.length - 1 : 0) : Math.max(0, Math.min(dots.length - 1, cur + step));
+      select(plot, dots[k]);
     });
   }
 
-  QT.pace = { card, analyse, notes, sliceFor };
+  QT.pace = { card, analyse, notes, track, sliceFor };
 })();

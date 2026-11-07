@@ -169,7 +169,8 @@ test('slow and missed 80-in-8 questions come back with the fast method', async (
   await expect(page.locator('.review-item .flag.slow')).toHaveCount(1);
   expect(await page.locator('.review-item .flag.bad').count()).toBeGreaterThan(5);
   await expect(page.locator('.review-item').first()).toContainText('Faster:');
-  await expect(page.locator('.pace .chart-legend')).toContainText('Pace for all 80');
+  await expect(page.locator('.pace')).toContainText('at most 80 questions');
+  expect(await page.locator('.pl-dot').count()).toBeGreaterThan(1);
   await page.getByRole('button', { name: /Practise these types/ }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Speed drill');
   await page.getByRole('link', { name: '← Mental maths' }).click();
@@ -197,7 +198,7 @@ test('60 in 6: one question at a time, unreached questions score nothing', async
   await expect(page.locator('.tile').nth(1)).toContainText(isMobile ? '1 / 1 / 58' : /1 \/ 2 \/ 57|2 \/ 1 \/ 57/);
   await expect(page.getByText(/Every question \(\d+\)/)).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Pacing' })).toBeVisible();
-  await expect(page.locator('.pace-col')).toHaveCount(18); // 20-second slices of 6 minutes
+  await expect(page.locator('.pl-dot')).toHaveCount(isMobile ? 2 : 3); // a point per answer
   await page.goto('./#/mental');
   await expect(page.getByRole('link', { name: 'Open' })).toBeVisible();
 });
@@ -256,10 +257,12 @@ test('Zetamac: answers go through without Enter; slow and unfinished questions c
   await expect(page.locator('.review-item .flag.slow')).toHaveCount(1);
   await expect(page.locator('.review-item .flag.bad')).toHaveText('time ran out');
   await expect(page.locator('.review-item').first()).toContainText('Faster:');
-  // Pacing: 10-second slices; all four answers came in the first, then the run stalled.
-  await expect(page.locator('.pace-col')).toHaveCount(12);
-  await page.locator('.pace-col').first().click();
-  await expect(page.locator('.pace-read')).toContainText('0:00–0:10: 4 answered');
+  // Pacing: a point per answer (all four came at about 0:08), then the run stalled.
+  await expect(page.locator('.pl-dot')).toHaveCount(4);
+  await page.locator('.pl-plot').click({ position: { x: 10, y: 60 } });
+  await expect(page.locator('.pace-read')).toContainText(/0:08, answer \d: .* on pace for \d+\./);
+  await page.locator('.pl-plot').press('End');
+  await expect(page.locator('.pace-read')).toContainText('answer 4:');
   await expect(page.locator('.pace')).toContainText('still on it when time ran out');
 });
 

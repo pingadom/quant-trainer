@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.45.0
+
+- **The pacing chart is now a line of points.** After Zetamac, 80 in 8, 60 in 6 and the rhythm drill, each answer is a point at the moment you gave it, at the score you were on pace for then: your score so far scaled up to the full time (in 80 in 8 and 60 in 6, net of wrong answers and capped at the questions there are). A stall shows as a drop and a wrong answer as a hollow red ring; your previous best is a dashed line. Point at, tap or arrow-key along the line to see each answer, its time and the pace it left you on. A new note gives your best pace, the last moment you held it, and your final score. The first few seconds are left off, since one quick answer extrapolates to a silly score.
+- **Zetamac is at the top of Mental maths.**
+
 ## 0.44.0
 
 A visual polish pass, aimed at using Theo on a computer.

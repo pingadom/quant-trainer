@@ -394,7 +394,7 @@
         <div class="tile"><div class="v">${rec.best}</div><div class="k">personal best</div></div>
       </div>
       ${notes.length ? `<div class="card">${notes.map((t) => `<p class="small" style="margin:4px 0">${t}</p>`).join('')}</div>` : ''}
-      ${QT.pace ? QT.pace.card(answered, { secs: SECS, elapsed: run.elapsed, open: run.open, label: '60 in 6', pace: { n: N, name: `Pace for all ${N}`, fixed: true } }) : ''}
+      ${QT.pace ? QT.pace.card(answered, { secs: SECS, elapsed: run.elapsed, open: run.open, label: '60 in 6', best: prev, pace: { n: N, name: `Pace for all ${N}`, fixed: true } }) : ''}
       ${QT.mental.review(answered, slow)}
       ${added.length ? `<p class="small">Added to your speed reps: ${added.map((k) => QT.mentalTips.KINDS[k].label).join(', ')}. They come back tomorrow as short timed sets.</p>` : ''}
       ${answered.length ? `<details class="card ft-all"><summary>Every question (${answered.length})</summary><div class="table-wrap"><table><tr><th class="num">#</th><th>Question</th><th>Answer</th><th class="num">Score</th><th class="num">Time</th></tr>${rows}</table></div></details>` : ''}

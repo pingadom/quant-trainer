@@ -228,14 +228,24 @@
       if (A.b !== 10 || counts !== '5,5,5,5,5,5,0,1,2,3,2,3') fail(`pacing: slices ${A.b} s, counts ${counts}`);
       if (A.slices[6].long !== null && A.slices[6].long.ms !== 20000) fail('pacing: the empty slice should point at the 20 s question');
       const html = P.card(zm, { secs: 120, label: 'Zetamac' });
-      if ((html.match(/class="pace-col[ "]/g) || []).length !== 12 || /undefined|NaN|<script>/.test(html) || !html.includes('slowed down by 63%') || !html.includes('<b>Slowest:</b> 1:00–1:10, 0.') || !html.includes('1 question took over twice your usual 2.0 s')) fail('pacing: Zetamac card text');
+      // A point per answer from 0:10 (the first seconds are left off): 26 in the first minute, 11 after.
+      if ((html.match(/class="pl-dot[ "]/g) || []).length !== 37 || /undefined|NaN|Infinity|<script>/.test(html) || !html.includes('slowed down by 63%') || !html.includes('<b>Slowest:</b> 1:00–1:10, 0.') || !html.includes('1 question took over twice your usual 2.0 s')) fail('pacing: Zetamac card text');
+      // On pace for 60 while answering every 2 s; 41 at the end.
+      const zt = P.track(A, { secs: 120 });
+      if (zt[29].proj !== 60 || zt[30].score !== 31 || Math.abs(zt[30].proj - 46.5) > 1e-9 || zt[40].proj !== 41) fail(`pacing: on-pace scores ${zt[29].proj}, ${zt[30].proj}, ${zt[40].proj}`);
+      if (!html.includes('<b>On pace for:</b> 60 at your best (last at 1:00). You finished on 41.')) fail('pacing: peak note');
+      const withBest = P.card(zm, { secs: 120, best: 50 });
+      if (!withBest.includes('class="pl-best"') || !withBest.includes('previous best 50')) fail('pacing: previous best line');
       // Without t values the timeline comes from the times on each question.
       if (P.analyse(zm.map(({ t, ...x }) => x), { secs: 120 }).slices.map((s) => s.n).join(',') !== counts) fail('pacing: timeline from ms');
       const ft = [];
       for (let i = 1; i <= 30; i++) ft.push({ q: 'x', al: '1', ok: i % 5 !== 0, ms: 5000, t: i * 5000 });
       for (let t = 160000; t <= 360000; t += 10000) ft.push({ q: 'y', al: '2', ok: true, ms: 10000, t });
       const fh = P.card(ft, { secs: 360, pace: { n: 60, name: 'Pace for all 60', fixed: true } });
-      if (!fh.includes('until question 37 at 3:40') || !fh.includes('pace-bad') || (fh.match(/class="pace-col[ "]/g) || []).length !== 18) fail('pacing: fixed-pace note or wrong answers');
+      if (!fh.includes('until question 37 at 3:40') || !fh.includes('pl-dot bad') || (fh.match(/class="pl-dot[ "]/g) || []).length !== 46) fail('pacing: fixed-pace note or wrong answers');
+      // Net scoring, capped at 60 questions: 24 right and 6 wrong after 30 answers at 2:30 is on pace for 18 × 2 = 36.
+      const ftr = P.track(P.analyse(ft, { secs: 360 }), { secs: 360, pace: { n: 60, fixed: true } });
+      if (ftr[29].proj !== 36 || ftr[50].score !== 39 || ftr[50].proj !== 39) fail(`pacing: fixed-test on-pace scores ${ftr[29].proj}, ${ftr[50].proj}`);
       const early = P.analyse(ft.slice(0, 30), { secs: 360, elapsed: 150000 });
       if (early.slices.length !== 8 || early.slices.slice(0, 7).some((s) => s.n !== 4)) fail(`pacing: a run finished early should stop at the finish (${early.slices.map((s) => s.n)})`);
       if (P.card([], { secs: 120 }) !== '') fail('pacing: no answers should draw nothing');

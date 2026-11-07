@@ -57,6 +57,7 @@
     el.innerHTML = `
       <h1>Mental maths</h1>
       <p class="lede">Market-making firms screen with fast arithmetic tests. Speed comes from practice plus a handful of tricks you can learn in an afternoon.</p>
+      ${zetamacCard()}
       <div class="shortcuts two">
         <a class="card shortcut primary" href="#/tricks"><b>Learn the speed tricks →</b><span>${(QT.tricks || []).length} short guides (squaring, near-100 multiplication, fractions, last-digit checks, guessing strategy…) each with a practice drill</span></a>
         <a class="card shortcut" href="#/mental/flow"><b>Flow training for + and − →</b><span>Find the sums that drop you into slow, step-by-step mode, then a rhythm drill and method drills to make them automatic</span></a>
@@ -80,7 +81,6 @@
           <p class="small">Best: <b>${best('ft60')}</b> net</p>
           <a class="btn" href="#/mental/60in6">Open</a>
         </div>` : ''}
-        ${zetamacCard()}
       </div>
       <div class="card" style="margin-top:12px">
         <label for="slow">Review questions slower than</label>
@@ -219,7 +219,7 @@
       store.save();
       const acc = correct + wrong ? Math.round((100 * correct) / (correct + wrong)) : 0;
       const elapsed = Math.min(Date.now() - start, mode.secs * 1000), allDone = mode.max && answered.length >= mode.max;
-      const pacing = QT.pace ? QT.pace.card(answered, { secs: mode.secs, elapsed, label: mode.label, open: allDone ? null : { ...cur, ms: Date.now() - shownAt }, pace: mode.max ? { n: mode.max, name: `Pace for all ${mode.max}`, fixed: true } : null }) : '';
+      const pacing = QT.pace ? QT.pace.card(answered, { secs: mode.secs, elapsed, label: mode.label, best: prevBest, open: allDone ? null : { ...cur, ms: Date.now() - shownAt }, pace: mode.max ? { n: mode.max, name: `Pace for all ${mode.max}`, fixed: true } : null }) : '';
       el.innerHTML = `
         <div class="title-row"><h1>${mode.label}: done</h1>${prevBest === null || score > prevBest ? QT.flair.milestone('New best') : ''}</div>
         <div class="tiles">
@@ -297,7 +297,7 @@
     const bestD = st.zetamac?.best, bestC = st.zetamacCustom?.best;
     const num = (id, v, label) => `<input type="number" inputmode="numeric" min="0" max="10000" id="${id}" value="${v}" aria-label="${label}" class="zm-num">`;
     return `
-      <div class="card wide">
+      <div class="card zm-card">
         <h3>Zetamac</h3>
         <p class="small">The classic arithmetic speed game (<a href="https://arithmetic.zetamac.com/" target="_blank" rel="noopener">arithmetic.zetamac.com</a>). Each answer goes through the moment it's right, with no Enter key, so type fast and fix mistakes on the fly. Score = number right.</p>
         <p class="small"><b>${def ? 'Zetamac default settings' : 'Custom settings'}:</b> ${zmSummary(s)}</p>
@@ -425,7 +425,7 @@
       // already spent longer than your threshold on it.
       const stuckMs = Date.now() - shownAt;
       // Drawn before the stuck question joins the list: it isn't an answer, just time spent.
-      const pacing = QT.pace ? QT.pace.card(answered, { secs: s.secs, label: 'Zetamac', open: cur ? { ...cur, ms: stuckMs } : null }) : '';
+      const pacing = QT.pace ? QT.pace.card(answered, { secs: s.secs, label: 'Zetamac', best: prev, open: cur ? { ...cur, ms: stuckMs } : null }) : '';
       if (cur && stuckMs > slowSecs() * 1000) answered.push({ ...cur, ok: false, you: 'time ran out', ms: stuckMs });
       rec.best = prev === null ? score : Math.max(prev, score);
       rec.runs.push({ date: new Date().toISOString(), correct: score, wrong: 0 });
