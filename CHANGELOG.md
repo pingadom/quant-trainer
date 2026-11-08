@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.49.0
+
+- **Question library: the last two collections**, bringing the bank to 732 questions.
+  - **55 from andyhu4023's question bank:** a million coin flips and the CLT, normal variables that are uncorrelated but dependent, betting games with optimal stopping (stop before a six, red and black cards, two coins), Penney's game, the World Series replication bet, Brownian motion (sign changes, exit times, hitting probabilities, drift), calculus and ODEs, linear algebra (determinants, eigenvalues, positive definiteness, QR, LU, SVD), and geometry teasers. Exercises the source takes from the Green Book are left out.
+  - **13 from QFin UWA's notes:** the six and seven of clubs, Bayes with three suppliers, Beta posteriors, counting with constraints and power-ups, race to 50, simulating 3/13 with a die, bluffing frequencies, a mixed-strategy equilibrium, the d20 threshold game and place-or-take.
+  - As before, every numeric answer is re-derived independently in Python.
+
 ## 0.48.0
 
 - **Question library: 275 more questions from Xiaodong Yang's quant interview notes**, bringing the bank to 664.

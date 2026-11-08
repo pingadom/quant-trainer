@@ -5,6 +5,7 @@ Each value is worked out here a different way from the app's solution where that
 answers against them. Keys are "<question id>.<part>".
 """
 from fractions import Fraction as Fr
+from functools import lru_cache
 import itertools
 import math
 
@@ -1093,3 +1094,206 @@ arr2 = [-2, 1, -3, 4, -1, 2, 1, -5, 4]
 put("xy-kadane.0", max(sum(arr2[i:j]) for i in range(len(arr2)) for j in range(i + 1, len(arr2) + 1)))
 put("xy-turnover.0", 0.5 * (abs(0.7 - 0.5) + abs(0.3 - 0.5)))
 put("xy-portfolio-return.0", 0.6 * 0.02 + 0.4 * -0.01)
+
+
+# ---------------------------------------------------------------- andyhu4023's question bank
+@lru_cache(None)
+def grid_paths(x, y):
+    return 1 if x == 0 or y == 0 else grid_paths(x - 1, y) + grid_paths(x, y - 1)
+
+
+put("ah-grid-paths.0", grid_paths(10, 10))
+put("ah-million-flips.0", norm.cdf((499_000 - 500_000) / math.sqrt(1_000_000 / 4)))
+
+
+@lru_cache(None)
+def double_game(w, seen):
+    # seen: 0 = no double yet, 1 = one kind seen; returns value with optimal stopping (cap w at 40)
+    if w >= 40:
+        return w
+    if seen == 0:
+        return max(w, Fr(1, 2) * double_game(w + 1, 0) + Fr(1, 2) * double_game(w + 1, 1))
+    return max(w, Fr(3, 4) * double_game(w + 1, 1))
+
+
+put("ah-double-coin-game.0", min(w for w in range(0, 40) if double_game(w, 1) == w))
+put("ah-eleven-ten.0", Fr(sum(math.comb(11, a) * math.comb(10, b) for a in range(12) for b in range(11) if a > b), 2 ** 21))
+deck = [r for r in range(13) for _ in range(4)]
+put("ah-higher-card.0", Fr(sum(1 for i in range(52) for j in range(52) if i != j and deck[i] > deck[j]), 52 * 51))
+put("ah-normal-moments.0", quad(lambda x: x ** 3 * norm.pdf(x), -np.inf, np.inf)[0] + 0.0)
+put("ah-normal-moments.1", round(quad(lambda x: x ** 4 * norm.pdf(x), -np.inf, np.inf)[0], 9))
+cov_sum = np.array([[1, 1], [1, 4]])  # (X, X + Y)
+put("ah-normal-given-sum.0", cov_sum[0, 1] / cov_sum[1, 1] * 4)
+put("ah-next-head.0", (0.5 * 0.4 ** 2 + 0.5 * 0.6 ** 2) / (0.5 * 0.4 + 0.5 * 0.6))
+def beta_fn(a, b):
+    return Fr(math.factorial(a - 1) * math.factorial(b - 1), math.factorial(a + b - 1))
+
+
+# Posterior mean of p after 48 heads and 16 tails from a uniform prior: B(50, 17) / B(49, 17).
+put("ah-beta-coin.0", beta_fn(50, 17) / beta_fn(49, 17))
+pb_total = sum(Fr(3, 4) ** (2 * k - 1) * Fr(1, 4) for k in range(1, 300))
+put("ah-beth-second.0", float(Fr(3, 4) ** 3 * Fr(1, 4) / pb_total))
+
+
+def race(p1, p2):
+    # P(pattern p1 before p2) for a fair coin, by brute force over a long horizon with absorbing states
+    states = {"": Fr(1)}
+    win = Fr(0)
+    for _ in range(80):
+        nxt = {}
+        for s, pr in states.items():
+            for c in "HT":
+                t = (s + c)[-3:]
+                if t.endswith(p1):
+                    win += pr / 2
+                elif t.endswith(p2):
+                    continue
+                else:
+                    nxt[t] = nxt.get(t, 0) + pr / 2
+        states = nxt
+    return float(win)
+
+
+put("ah-penney-hhh.0", round(race("HHH", "THH"), 12))
+A7 = np.array([[1 - 29 / 36, -1 / 6], [-29 / 36, 1]])
+put("ah-seven-seven.0", round(float(np.linalg.solve(A7, np.array([0, 1 / 6]))[0]), 12))
+
+
+def drunk_steps(i, N):
+    A = np.zeros((N + 1, N + 1))
+    b = np.zeros(N + 1)
+    for k in range(N + 1):
+        A[k, k] = 1
+        if 0 < k < N:
+            A[k, k - 1] = A[k, k + 1] = -0.5
+            b[k] = 1
+    return float(np.linalg.solve(A, b)[i])
+
+
+put("ah-drunk-17.0", round(drunk_steps(17, 100), 6))
+good = sum(1 for seq in set(itertools.permutations("1111122222")) if all(seq[:k].count("1") >= seq[:k].count("2") for k in range(1, 11)))
+put("ah-ticket-line.0", Fr(good, math.comb(10, 5)))
+
+
+@lru_cache(None)
+def series_value(a, b):
+    if a == 4:
+        return Fr(200)
+    if b == 4:
+        return Fr(0)
+    return (series_value(a + 1, b) + series_value(a, b + 1)) / 2
+
+
+put("ah-world-series.0", (series_value(1, 0) - series_value(0, 1)) / 2)
+
+
+@lru_cache(None)
+def six_game(w):
+    if w > 60:
+        return Fr(w)
+    return max(Fr(w), sum(Fr(1, 6) * six_game(w + k) for k in range(1, 6)))
+
+
+put("ah-stop-before-six.0", min(w for w in range(0, 40) if six_game(w) == w))
+
+
+@lru_cache(None)
+def red_black(r, b):
+    if r + b == 0:
+        return Fr(0)
+    cont = (Fr(r, r + b) * (1 + red_black(r - 1, b)) if r else 0) + (Fr(b, r + b) * (-1 + red_black(r, b - 1)) if b else 0)
+    return max(Fr(0), cont)
+
+
+put("ah-red-black.0", red_black(5, 5))
+# P(B1 > 0, B2 < 0): integrate over B1.
+put("ah-bm-sign-change.0", quad(lambda x: norm.pdf(x) * norm.cdf(-x), 0, np.inf)[0])
+put("ah-bm-exit.0", 1 * 1)
+put("ah-bm-exit.1", round(ruin_p(5, 8, 0.5), 12))  # +3 before -5 is reaching 8 before 0 from 5
+put("ah-bm-drift-down.0", math.exp(-2 * 1 * 1))
+put("ah-scaled-bm.0", 2 * 2)
+x_t = math.sqrt(2)
+for _ in range(2000):
+    x_t = math.sqrt(2) ** x_t
+put("ah-power-tower.0", round(x_t, 12))
+put("ah-nested-root.0", next(a for a in range(1, 100) if any(x * x - x == a for x in range(1, 50))))
+put("ah-gauss-half.0", quad(lambda x: math.exp(-x * x / 2), 0, np.inf)[0])
+put("ah-half-normal-mean.0", quad(lambda x: x * norm.pdf(x), 0, np.inf)[0] / 0.5)
+put("ah-bells.0", math.lcm(60 // 4, 60 // 5))
+put("ah-sum-100.0", sum(range(1, 101)))
+put("ah-circle-tangent.0", max(r for r in np.roots([1, -30, 125]).real))
+put("ah-bug-room.0", math.hypot(1, 2))
+put("ah-painted-cube.0", sum(1 for x in range(10) for y in range(10) for z in range(10) if min(x, y, z) == 0 or max(x, y, z) == 9))
+put("ah-tank-convoy.0", 1000 * sum(1 / k for k in range(1, 11)))
+put("ah-clock-615.0", abs((6 * 30 + 15 * 0.5) - 15 * 6))
+
+
+# ---------------------------------------------------------------- QFin UWA
+post_new = (Fr(1, 2) * 1) / (Fr(1, 2) * 1 + Fr(1, 2) * Fr(1, 51))
+put("qf-six-seven-clubs.0", post_new + (1 - post_new) * Fr(1, 50))
+put("qf-late-computer.0", (0.4 * 0.05) / (0.4 * 0.05 + 0.3 * 0.03 + 0.3 * 0.025))
+put("qf-coin-posterior.0", beta_fn(9, 4) / beta_fn(8, 4))
+put("qf-coin-posterior.1", beta_fn(72, 31) / beta_fn(71, 31))
+put("qf-dinner-party.0", sum(1 for c in itertools.combinations(range(8), 5) if not (0 in c and 1 in c)))
+def lattice_paths(start, end):
+    return math.comb((end[0] - start[0]) + (end[1] - start[1]), end[0] - start[0])
+
+
+def visits(steps, point):
+    x = y = 0
+    for c in steps:
+        x, y = (x + 1, y) if c == "R" else (x, y + 1)
+        if (x, y) == point:
+            return True
+    return False
+
+
+all_paths = set(itertools.permutations("RRRRRRUUUUUU"))
+put("qf-grid-powerups.0", sum(1 for s in all_paths if visits(s, (2, 3)) or visits(s, (4, 6))))
+assert lattice_paths((0, 0), (6, 6)) == len(all_paths)
+
+
+@lru_cache(None)
+def race50(total):
+    # True if the player to move from `total` can force reaching exactly 50
+    return any(total + k == 50 or (total + k < 50 and not race50(total + k)) for k in range(1, 11))
+
+
+put("qf-race-to-50.0", next(k for k in range(1, 11) if not race50(k)))
+
+
+def picture_rolls():
+    # expected rolls to decide U < 3/13 by generating base-6 digits of U
+    target, lo, width, e, p_open = Fr(3, 13), Fr(0), Fr(1), Fr(0), Fr(1)
+    for _ in range(60):
+        e += p_open  # one more roll is needed while undecided
+        width /= 6
+        # which digits leave the interval [lo + d*w, lo + (d+1)*w) straddling the target?
+        straddle = [d for d in range(6) if lo + d * width < target < lo + (d + 1) * width]
+        if not straddle:
+            break
+        lo += straddle[0] * width
+        p_open *= Fr(1, 6)
+    return float(e)
+
+
+put("qf-picture-from-die.0", round(picture_rolls(), 9))
+put("qf-missing-number.0", sum(range(1, 101)) - 5000)
+put("qf-fixed-bracket.0", Fr(64, 127))
+# Aces and queens: bluff fraction p making the caller indifferent: P(win call) = p / (1 + p) = 1/3.
+put("qf-aces-queens.0", next(Fr(k, 1000) for k in range(1, 1000) if Fr(k, 1000) / (1 + Fr(k, 1000)) == Fr(1, 3)))
+# Mixed equilibrium of the 2x2 zero-sum game, by solving the indifference equations directly.
+A_game = np.array([[3, -2], [-1, 0]], dtype=float)
+q_left = (A_game[1, 1] - A_game[0, 1]) / (A_game[0, 0] - A_game[0, 1] - A_game[1, 0] + A_game[1, 1])
+p_up = (A_game[1, 1] - A_game[1, 0]) / (A_game[0, 0] - A_game[0, 1] - A_game[1, 0] + A_game[1, 1])
+put("qf-mixed-grid.0", round(q_left, 12))
+put("qf-mixed-grid.1", round(p_up, 12))
+
+
+def d20_value(X):
+    p = Fr(21 - X, 20)
+    return Fr(X + 20, 2) * sum((1 - p) ** (t - 1) * p * (100 - t) for t in range(1, 101))
+
+
+put("qf-d20-threshold.0", max(range(1, 21), key=d20_value))
+put("qf-place-or-take.0", max((100 - n) * (1 - Fr(1, 2) ** n) for n in range(1, 100)))
