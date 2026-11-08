@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.48.0
+
+- **Question library: 275 more questions from Xiaodong Yang's quant interview notes**, bringing the bank to 664.
+  - Probability and statistics: order statistics, Poisson and exponential results, ruin, the birthday problem, empty bins, MLE, OLS, the CLT, bias and variance, p-values, bootstrapping, multiple testing, the delta method, AIC v BIC, endogeneity and more.
+  - Time series and machine learning: stationarity, AR(1), unit roots, cointegration, GARCH, the Kalman filter, walk-forward validation, regularisation, tree ensembles, calibration, leakage, precision and recall.
+  - Derivatives and Greeks: Black–Scholes deltas, gamma, vega and digitals on real numbers, binomial trees, no-arbitrage bounds, butterflies and straddles, the smile, local and stochastic volatility, Breeden–Litzenberger.
+  - Stochastic calculus: Brownian motion, Itô's lemma and isometry, GBM mean v median, Girsanov, the market price of risk, Ornstein–Uhlenbeck half-lives, optional stopping, Feynman–Kac.
+  - Coding: Python for returns, volatility, VaR, expected shortfall, Monte Carlo, binomial trees, implied vol, backtests without lookahead, as-of merges and bars; algorithms (sliding windows, Kadane, streaming median, LRU cache); C++ and low-latency engineering (RAII, move semantics, cache locality, false sharing, order-book design).
+  - Concept questions have a model answer to compare with; wherever a formula can be tried on numbers, the question asks for the number, re-derived independently in Python.
+- Weak spots: **Stochastic calculus** joins the Markov chains and random walks area.
+
 ## 0.47.0
 
 - **Question library: 80 more questions from EigenPrep** (CU Quants), bringing the bank to 389.

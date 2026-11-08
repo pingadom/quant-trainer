@@ -481,5 +481,659 @@ def historical_var(returns, level=0.95, value=1.0):
     r = np.asarray(returns, dtype=float)
     return -np.quantile(r, 1 - level) * value</code></pre><p>Sort past returns and take the (1 − level) quantile; VaR is minus that times the position value. It makes no distribution assumption but needs a long window, ignores scenarios not in the data, and says nothing about losses beyond the quantile (use expected shortfall for that).</p>`,
       [`Which quantile of past returns marks the worst 5%?`, `Express it as a positive loss on the position.`]),
+
+    O('code-es', 'Coding', 'm', 'Expected shortfall', `Write a function for historical expected shortfall (CVaR).`,
+      `<pre><code>import numpy as np
+def expected_shortfall(returns, level=0.975):
+    r = np.asarray(returns, dtype=float)
+    q = np.quantile(r, 1 - level)
+    return -r[r &lt;= q].mean()</code></pre><p>Find the lower-tail quantile, average the returns at or below it, and report it as a positive loss. Unlike VaR it says how bad the tail is, and it's subadditive (diversification never increases it), which is why regulators moved to 97.5% ES.</p>`,
+      [`Start from the VaR quantile.`, `Average everything beyond it rather than stopping at the cut-off.`]),
+    ['max-drawdown', 'Statistics', 'e', 'Maximum drawdown', `A portfolio's value goes 100, 120, 90, 130, 104.`,
+      [{ q: `What is its maximum drawdown, as a fraction?`, a: 0.25,
+        h: [`Track the running peak and the drop from it at each point.`, `Peaks: 100, 120, 120, 130, 130.`, `Drops: 0, 0, 30/120, 0, 26/130. Take the largest.`],
+        s: [`Max drawdown = max over time of (running peak − value)/running peak.`, [`From 120 to 90: 25%. From 130 to 104: 20%.`, `Maximum: <b>0.25</b>.`], `In code: wealth / wealth.cummax() − 1, then the minimum.`, `Using the global max and min (130 and 90), which come in the wrong order.`] }]],
+    O('code-sharpe', 'Coding', 'm', 'Sharpe ratio in code', `Write a function for the annualised Sharpe ratio from daily returns.`,
+      `<pre><code>import numpy as np
+def sharpe(returns, rf_annual=0.0, periods=252):
+    r = np.asarray(returns, dtype=float) - rf_annual / periods
+    return r.mean() / r.std(ddof=1) * np.sqrt(periods)</code></pre><p>Subtract the per-period risk-free rate, divide the mean excess return by its standard deviation, and annualise by √periods. Caveats: autocorrelated returns make the √T scaling wrong, and a high Sharpe from a short sample has a large standard error (≈ √((1 + SR²/2)/n)).</p>`,
+      [`Excess return over volatility, per period first.`, `How does the ratio scale from daily to annual?`]),
+    O('code-backtest', 'Coding', 'h', 'A backtest loop without lookahead', `Sketch a simple backtest of a daily trading signal.`,
+      `<pre><code>import pandas as pd
+def backtest(prices, signal, cost_bps=1.0):
+    ret = prices.pct_change()
+    pos = signal.shift(1).fillna(0)        # trade on yesterday's signal
+    turnover = pos.diff().abs().fillna(0)
+    pnl = pos * ret - turnover * cost_bps / 1e4
+    return pnl.cumsum()</code></pre><p>The key line is <code>shift(1)</code>: today's position may only use information known before today's return. Then charge transaction costs on turnover, and test out of sample. Common bugs: computing the signal with the same bar's close, survivorship bias in the universe, and ignoring costs and slippage.</p>`,
+      [`When is the signal known, and which return can it earn?`, `What else does a realistic P&L subtract?`]),
+    O('first-unique', 'Coding', 'e', 'First non-repeating character', `How do you find the first character in a string that appears only once?`,
+      `<pre><code>from collections import Counter
+def first_unique(s):
+    counts = Counter(s)
+    return next((c for c in s if counts[c] == 1), None)</code></pre><p>Two passes: count every character, then scan in order for the first with count 1. O(n) time, O(alphabet) space.</p>`,
+      [`Count first, then search.`, `What data structure counts in O(1) per character?`]),
+    ['best-trade', 'Logic', 'e', 'One buy, one sell', `Prices over six days: 7, 1, 5, 3, 6, 4. You may buy once and later sell once.`,
+      [{ q: `What is the largest possible profit?`, a: 5, tol: EXACT,
+        h: [`Scan once, remembering the lowest price so far.`, `At each day, the best sale today is today's price minus that minimum.`],
+        s: [`Single pass with the running minimum: O(n).`, [`Buy at 1 (day 2), sell at 6 (day 5).`, `Profit <b>5</b>.`], `Selling at 7 isn't allowed: it comes before the 1.`, `Taking max − min regardless of order (6).`] }]],
+    O('moving-average', 'Coding', 'e', 'An efficient moving average', `How do you compute a moving average efficiently?`,
+      `Keep a running sum of the current window: add the new value and subtract the one leaving, then divide by the window size. That's O(1) per step instead of O(k). In NumPy, <code>np.convolve(x, np.ones(k)/k, 'valid')</code> or a cumulative-sum difference (c[k:] − c[:−k])/k; for long series, recompute the sum now and then to stop floating-point drift.`,
+      [`What changes between one window and the next?`, `How could cumulative sums give every window at once?`]),
+    O('missing-dates', 'Coding', 'e', 'Finding missing dates', `How do you find missing dates in a daily time series?`,
+      `Build the expected calendar and compare: <code>expected = pd.bdate_range(start, end)</code> (or an exchange calendar, to skip holidays), then <code>expected.difference(df.index)</code>. Also check for duplicate dates and unsorted indices. Using plain calendar days would flag every weekend.`,
+      [`Generate what the full index should be.`, `Which calendar: every day, business days, or exchange trading days?`]),
+    O('code-bisection', 'Coding', 'm', 'Bisection root-finding', `Write a bisection root-finder.`,
+      `<pre><code>def bisect(f, a, b, tol=1e-10, max_iter=200):
+    fa, fb = f(a), f(b)
+    if fa * fb &gt; 0:
+        raise ValueError("f(a) and f(b) must have opposite signs")
+    for _ in range(max_iter):
+        m = 0.5 * (a + b); fm = f(m)
+        if fm == 0 or b - a &lt; tol:
+            return m
+        if fa * fm &lt; 0: b, fb = m, fm
+        else: a, fa = m, fm
+    return 0.5 * (a + b)</code></pre><p>Each step halves the bracket, so it gains one bit of accuracy per iteration and always converges for a continuous function with a sign change.</p>`,
+      [`Start with an interval where f changes sign.`, `Keep the half that still contains the sign change.`]),
+    ['newton-sqrt2', 'Logic', 'm', "Newton's method", `Use Newton's method on f(x) = x² − 2, starting from x₀ = 1.`,
+      [{ q: `What is x₂ (after two steps)?`, a: 17 / 12,
+        h: [`The update is x − f(x)/f′(x) = x − (x² − 2)/(2x) = (x + 2/x)/2.`, `x₁ = (1 + 2)/2.`, `Apply it once more.`],
+        s: [`Newton for √2 averages x and 2/x.`, [`x₁ = 1.5.`, `x₂ = (1.5 + 2/1.5)/2 = 17/12 ≈ <b>1.4167</b>.`], `√2 ≈ 1.41421: the number of correct digits roughly doubles each step. It fails if f′ ≈ 0 or the start is far away.`, ``] }]],
+    O('why-cpp', 'Coding', 'e', 'Why C++ in quant finance', `Why is C++ used in some quant roles?`,
+      `For speed and control: low-latency trading, market-data handlers, pricing and risk libraries, and anything on the hot path. It compiles to fast native code, gives control over memory layout and allocation, has no garbage-collector pauses, and has mature numerical and systems libraries. Research and prototyping are usually in Python, with C++ underneath or in production.`,
+      [`What do trading systems need that Python struggles with?`, `Think about memory control and predictable latency.`]),
+    O('cpp-mean', 'Coding', 'e', 'Mean of a vector in C++', `Write a C++ function for the mean of a vector.`,
+      `<pre><code>#include &lt;numeric&gt;
+#include &lt;stdexcept&gt;
+#include &lt;vector&gt;
+double mean(const std::vector&lt;double&gt;&amp; v) {
+    if (v.empty()) throw std::invalid_argument("empty");
+    return std::accumulate(v.begin(), v.end(), 0.0) / v.size();
+}</code></pre><p>Take the vector by const reference (no copy), handle the empty case, and start the sum at 0.0 (not 0, which would make accumulate sum in int).</p>`,
+      [`How should you pass a large vector you won't modify?`, `What's the trap in std::accumulate's initial value?`]),
+    ['normal-mle', 'Statistics', 'e', 'MLE of a normal mean', `Observations 2, 4 and 9 come from a normal distribution with known variance.`,
+      [{ q: `What is the maximum-likelihood estimate of the mean?`, a: 5, tol: { abs: 0.001, rel: 0 },
+        h: [`The log-likelihood is −Σ(xᵢ − μ)²/(2σ²) plus a constant.`, `Maximising it means minimising the sum of squared deviations.`],
+        s: [`For a normal mean, the MLE is the sample mean.`, [`(2 + 4 + 9)/3 = <b>5</b>.`], ``, ``] }]],
+    ['ols-slope', 'Regression', 'e', 'An OLS slope', `Fit y = a + bx by least squares to the points (1, 2), (2, 3), (3, 5).`,
+      [{ q: `What is the slope b?`, a: 1.5,
+        h: [`b = Σ(x − x̄)(y − ȳ)/Σ(x − x̄)².`, `x̄ = 2 and ȳ = 10/3.`],
+        s: [`Slope = sample covariance / sample variance of x (in matrix form, (XᵀX)⁻¹Xᵀy).`, [`Σ(x − x̄)(y − ȳ) = (−1)(−4/3) + 0 + (1)(5/3) = 3. Σ(x − x̄)² = 2.`, `b = 3/2 = <b>1.5</b>.`], `Intercept a = ȳ − b x̄ = 1/3.`, ``] }]],
+    O('p-value', 'Statistics', 'e', 'What a p-value is', `What is a p-value?`,
+      `The probability, assuming the null hypothesis is true, of a test statistic at least as extreme as the one observed. Small means the data would be surprising under the null. It is <b>not</b> the probability the null is true, and not the size of the effect; with many tests some will be small by chance (multiple testing).`,
+      [`Probability of what, under which assumption?`, `Name two things it is commonly mistaken for.`]),
+    O('conf-interval', 'Statistics', 'e', 'Confidence intervals', `How should you interpret a 95% confidence interval?`,
+      `It comes from a procedure that, over repeated samples, produces intervals containing the true parameter 95% of the time. Once you've computed one interval, the parameter is either in it or not; the 95% describes the method. (A Bayesian credible interval is the one with the "95% probability the parameter is here" reading.)`,
+      [`Is the parameter random, or the interval?`, `What happens over many repeated samples?`]),
+    ['clt-dice', 'Statistics', 'e', 'The CLT and dice', `You average 100 rolls of a fair die.`,
+      [{ q: `What is the standard deviation of the average?`, a: Math.sqrt(35 / 12) / 10, tol: { abs: 0.002, rel: 0 },
+        h: [`One die has variance 35/12.`, `The average of n independent rolls has variance σ²/n.`],
+        s: [`SD of a mean = σ/√n; by the CLT the average is roughly normal.`, [`√(35/12) ≈ 1.708, divided by 10: <b>≈ 0.171</b>.`], `So the average lands in 3.5 ± 0.34 about 95% of the time.`, ``] }]],
+    O('bias-variance', 'Statistics', 'm', 'The bias–variance trade-off', `What is the bias–variance trade-off?`,
+      `Expected squared prediction error = bias² + variance + irreducible noise. Simple models miss real structure (high bias); flexible models chase noise in the particular sample (high variance). Regularisation, simpler features and more data move you along the trade-off; cross-validation on held-out data finds a good point. In finance, with low signal-to-noise, variance usually dominates.`,
+      [`Split the expected error into three parts.`, `What does making a model more flexible do to each?`]),
+    O('multicollinearity', 'Regression', 'm', 'Multicollinearity', `What is multicollinearity and why is it a problem?`,
+      `Regressors that are highly correlated with each other. X'X is nearly singular, so individual coefficients have huge standard errors and can flip sign with small data changes, even though the fit and predictions may be fine. Diagnose with variance inflation factors or the condition number; fix by dropping or combining variables, using PCA, or ridge regression.`,
+      [`What happens to X'X when two columns move together?`, `Does it hurt prediction, or the individual coefficients?`]),
+    O('heteroskedasticity', 'Regression', 'm', 'Heteroskedasticity', `What is heteroskedasticity and how does it affect OLS?`,
+      `The error variance changes with the regressors (or over time). OLS coefficients stay unbiased if the errors are exogenous, but they're no longer the most efficient and the usual standard errors are wrong, so t-tests mislead. Use White (robust) standard errors, or weighted least squares if you can model the variance.`,
+      [`Which OLS assumption does it break?`, `Are the coefficients or the standard errors affected?`]),
+    O('autocorr-resid', 'Regression', 'm', 'Autocorrelated residuals', `What is autocorrelation in regression residuals, and what do you do about it?`,
+      `Errors correlated across observations, typical in time series and overlapping-horizon returns. Coefficients can stay unbiased (if regressors are exogenous) but standard errors are usually too small, overstating significance. Detect with Durbin–Watson or Ljung–Box; use Newey–West (HAC) standard errors, or model the dynamics (lags, ARMA errors).`,
+      [`Why are overlapping returns a classic source?`, `Which standard errors fix it?`]),
+    O('logistic', 'Statistics', 'm', 'Logistic regression', `What is logistic regression, and why is it fitted by maximum likelihood rather than OLS?`,
+      `It models a binary outcome: P(Y = 1 | x) = 1/(1 + e<sup>−xᵀβ</sup>), so the log-odds are linear in x. Uses: default prediction, classification, whether a fill happens. It's fitted by maximising the Bernoulli likelihood: OLS on 0/1 data can predict probabilities outside [0, 1] and assumes constant-variance errors, while the true variance p(1 − p) changes with x.`,
+      [`What does the model say about the log-odds?`, `What goes wrong if you fit a straight line to 0/1 outcomes?`]),
+    ['sample-variance', 'Statistics', 'e', 'Sample v population variance', `The data are 2, 4 and 6.`,
+      [{ q: `(a) What is the unbiased sample variance (dividing by n − 1)?`, a: 4, tol: { abs: 0.001, rel: 0 },
+        h: [`The mean is 4; the squared deviations are 4, 0, 4.`, `Divide their sum by n − 1 = 2.`],
+        s: [`Divide by n − 1 because the mean was estimated from the same data.`, [`8/2 = <b>4</b>.`], ``, ``] },
+      { q: `(b) And dividing by n?`, a: 8 / 3,
+        h: [`Same sum of squares, divided by 3.`, `This version is biased low.`],
+        s: [`Divide by n.`, [`8/3 ≈ <b>2.67</b>.`], `The n − 1 correction matters for small samples only.`, ``] }]],
+    O('correlation-causation', 'Statistics', 'e', 'Correlation and causation', `Why doesn't correlation imply causation?`,
+      `Two variables can move together because a third drives both (confounding: ice cream and drownings both rise in summer), because causation runs the other way, through selection or survivorship effects, or by chance (especially after searching many pairs). Establishing causation needs experiments, instruments, natural experiments or a structural argument.`,
+      [`List three ways two variables could be correlated without one causing the other.`, `What would convince you of a causal effect?`]),
+    O('code-ols', 'Coding', 'm', 'OLS in NumPy', `Write NumPy code to estimate OLS coefficients.`,
+      `<pre><code>import numpy as np
+def ols(X, y, intercept=True):
+    X = np.asarray(X, float); y = np.asarray(y, float)
+    if intercept:
+        X = np.column_stack([np.ones(len(X)), X])
+    beta, *_ = np.linalg.lstsq(X, y, rcond=None)
+    return beta</code></pre><p>Use <code>lstsq</code> (QR/SVD) rather than computing (X'X)⁻¹X'y explicitly, which squares the condition number and is unstable for nearly collinear columns.</p>`,
+      [`Remember the intercept column.`, `Why not invert X'X directly?`]),
+    ['ar1', 'Statistics', 'm', 'An AR(1) process', `X<sub>t</sub> = 1 + 0.5 X<sub>t−1</sub> + ε<sub>t</sub>, with ε independent, mean 0, variance 1.`,
+      [{ q: `(a) What is its long-run mean?`, a: 2, tol: { abs: 0.001, rel: 0 },
+        h: [`It's stationary because |φ| = 0.5 < 1.`, `In the long run E[X<sub>t</sub>] = E[X<sub>t−1</sub>] = m, so m = 1 + 0.5m.`],
+        s: [`Mean = c/(1 − φ).`, [`1/(1 − 0.5) = <b>2</b>.`], ``, ``] },
+      { q: `(b) What is its long-run variance?`, a: 4 / 3,
+        h: [`Var(X<sub>t</sub>) = φ² Var(X<sub>t−1</sub>) + σ².`, `In the long run both variances are equal.`],
+        s: [`Variance = σ²/(1 − φ²).`, [`1/(1 − 0.25) = <b>4/3</b>.`], `As φ → 1 the variance blows up: a unit root.`, ``] }]],
+    O('random-walk-ns', 'Statistics', 'e', 'Why a random walk is non-stationary', `Why is a random walk X<sub>t</sub> = X<sub>t−1</sub> + ε<sub>t</sub> not stationary?`,
+      `Var(X<sub>t</sub>) = Var(X₀) + tσ², which grows with time, so the variance isn't constant. Shocks never die away. Its first difference, ε<sub>t</sub>, is stationary, which is why we model returns rather than prices.`,
+      [`What is Var(X<sub>t</sub>) as a function of t?`, `What about its first difference?`]),
+    O('unit-root', 'Statistics', 'm', 'Unit roots', `What is a unit root, and why does it matter?`,
+      `In X<sub>t</sub> = φX<sub>t−1</sub> + ε<sub>t</sub>, φ = 1 is a unit root: the process is a random walk, shocks are permanent and the variance grows without bound. Regressing one unit-root series on another gives spurious significance, so test first (augmented Dickey–Fuller), and difference or look for cointegration.`,
+      [`What value of φ makes the AR(1) a random walk?`, `What goes wrong when you regress two random walks on each other?`]),
+    O('acf', 'Statistics', 'e', 'Autocorrelation', `What is autocorrelation in a time series?`,
+      `The correlation of a series with its own lagged values: ρ(k) = Corr(X<sub>t</sub>, X<sub>t−k</sub>). Positive at short lags suggests momentum or persistence, negative suggests mean reversion (e.g. bid–ask bounce). The ACF and PACF help choose AR and MA orders; Ljung–Box tests whether autocorrelations are jointly zero.`,
+      [`Correlated with what?`, `What do positive and negative values suggest for trading?`]),
+    O('ar-ma', 'Statistics', 'm', 'AR v MA models', `What's the difference between AR and MA models?`,
+      `<b>AR(p)</b>: the series depends on its own past values, so shocks echo forever with decaying weight; the PACF cuts off after p lags. <b>MA(q)</b>: the series is a weighted sum of the current and last q shocks, so a shock matters for only q periods; the ACF cuts off after q. ARMA combines both for a compact fit.`,
+      [`What does each regress on: past values or past shocks?`, `Which plot cuts off for each?`]),
+    O('cointegration', 'Statistics', 'm', 'Cointegration', `What is cointegration?`,
+      `Two (or more) non-stationary series are cointegrated if some linear combination of them is stationary: they wander, but together, with a mean-reverting spread. Test with Engle–Granger (regress one on the other, test the residual for a unit root) or Johansen. It's the basis of pairs trading; mere correlation of returns isn't enough.`,
+      [`Each series alone is non-stationary. What about a combination?`, `How would you test for it?`]),
+    ['garch-longrun', 'Statistics', 'm', 'GARCH long-run volatility', `Daily variance follows GARCH(1,1): h<sub>t</sub> = 0.00002 + 0.10 ε²<sub>t−1</sub> + 0.85 h<sub>t−1</sub>.`,
+      [{ q: `What is the long-run daily volatility?`, a: 0.02, tol: { abs: 0.0002, rel: 0 },
+        h: [`In the long run E[h] = E[ε²] = V, so V = ω + αV + βV.`, `V = ω/(1 − α − β). It needs α + β < 1.`, `Then take the square root.`],
+        s: [`Long-run variance ω/(1 − α − β).`, [`0.00002/0.05 = 0.0004.`, `Volatility √0.0004 = <b>0.02</b> (2% a day).`], `α + β = 0.95 means shocks decay slowly: a half-life of about 13.5 days.`, ``] }]],
+    O('kalman', 'Statistics', 'h', 'The Kalman filter', `What is the Kalman filter used for?`,
+      `Estimating a hidden state that evolves over time from noisy observations, recursively: predict the state and its uncertainty forward, then update with the new observation, weighting it by the Kalman gain (more weight when the observation is precise relative to the prediction). It's optimal for linear-Gaussian state-space models. Uses: time-varying hedge ratios in pairs trading, dynamic betas, term-structure and latent-factor models.`,
+      [`Two steps repeat: what are they?`, `How much should a noisy observation move the estimate?`]),
+    O('forecast-eval', 'Statistics', 'm', 'Evaluating forecasts', `How do you evaluate time-series forecasts?`,
+      `Strictly out of sample, respecting time: walk-forward (rolling or expanding) re-estimation, never shuffling. Pick a loss that matches the use: RMSE or MAE for levels, hit rate and directional accuracy for signs, log score for probabilities, and for trading the P&L after costs. Compare with a naive benchmark (random walk, historical mean), and test whether the difference is significant (Diebold–Mariano).`,
+      [`How do you split the data without leaking the future?`, `What do you compare the model against?`]),
+    O('lag-features', 'Coding', 'e', 'Lagged features', `Write pandas code to create lagged features.`,
+      `<pre><code>def add_lags(df, col, lags=(1, 2, 5)):
+    out = df.copy()
+    for k in lags:
+        out[f"{col}_lag{k}"] = out[col].shift(k)
+    return out.dropna()</code></pre><p><code>shift(k)</code> moves values down k rows, so each row sees only past values. Drop the rows made incomplete by shifting, and build features on the full series before splitting into train and test so the first test rows still have lags (without peeking at future targets).</p>`,
+      [`Which pandas method moves values forward in time?`, `What happens to the first few rows?`]),
+    O('supervised', 'Statistics', 'e', 'Supervised v unsupervised learning', `What's the difference between supervised and unsupervised learning?`,
+      `<b>Supervised</b>: learn a mapping from features to a known label or target (predict tomorrow's return, classify default). <b>Unsupervised</b>: no labels; find structure (clustering stocks, PCA risk factors, anomaly detection). Reinforcement learning, learning from rewards (e.g. execution), is a third type.`,
+      [`Is there a target to predict?`, `Give a finance example of each.`]),
+    O('ts-split', 'Statistics', 'e', 'Splitting time-series data', `Why is a train–test split different for time series?`,
+      `Observations are ordered and dependent, so a random split leaks future information into training and overstates performance. Train on the past and test on the future: a chronological split, or walk-forward with rolling or expanding windows, ideally with a gap (purging/embargo) so overlapping labels don't leak.`,
+      [`What does a random shuffle let the model see?`, `How should the test set relate in time to the training set?`]),
+    O('overfitting', 'Statistics', 'e', 'Overfitting', `What is overfitting?`,
+      `A model that fits the noise in its training data: excellent in-sample, poor out of sample. In finance it's endemic because signal is weak and researchers try many ideas. Guard against it with held-out and walk-forward testing, fewer parameters, regularisation, economic reasoning for features, and adjusting for the number of strategies tried (deflated Sharpe ratio).`,
+      [`What does the model learn that won't recur?`, `How do you detect and prevent it?`]),
+    O('l1-l2', 'Statistics', 'm', 'L1 v L2 regularisation', `What's the difference between L1 and L2 regularisation?`,
+      `<b>L1 (lasso)</b> adds λΣ|β|: its corner-shaped penalty sets some coefficients exactly to zero, so it selects features. <b>L2 (ridge)</b> adds λΣβ²: it shrinks all coefficients smoothly towards zero, handles correlated predictors well, and has a closed form. Elastic net mixes both. Choose λ by cross-validation, and standardise features first.`,
+      [`Which penalty can make coefficients exactly zero?`, `Which copes better with correlated features?`]),
+    O('random-forest', 'Statistics', 'm', 'Random forests', `What is a random forest?`,
+      `An ensemble of decision trees, each grown on a bootstrap sample of the data and, at each split, a random subset of features; predictions are averaged (regression) or voted (classification). Decorrelating the trees means averaging cuts variance a lot without adding much bias. Robust and needs little tuning, but on financial data it can still overfit and its feature importances can mislead.`,
+      [`What two sources of randomness are there?`, `Why does averaging decorrelated trees help?`]),
+    O('boosting', 'Statistics', 'm', 'Gradient boosting', `What is gradient boosting?`,
+      `Build an ensemble sequentially: each new small tree is fitted to the gradient of the loss (for squared error, the residuals) of the current ensemble, and added with a small learning rate. It reduces bias step by step and is very accurate on tabular data (XGBoost, LightGBM), but overfits without early stopping, shallow trees and regularisation.`,
+      [`Trees are added one at a time. What does each new tree fit?`, `What stops it overfitting?`]),
+    O('pca-uses', 'Statistics', 'm', 'Uses of PCA', `What is PCA used for in finance?`,
+      `PCA rotates correlated variables into uncorrelated components ordered by the variance they explain (eigenvectors of the covariance matrix). Uses: the yield curve (level, slope, curvature explain most moves), statistical risk factors for equities (the first component is roughly the market), reducing many features to a few, and denoising covariance matrices. Components are linear and may not be economically interpretable.`,
+      [`What do the components correspond to mathematically?`, `What are the first three components of yield-curve moves?`]),
+    ['precision-recall', 'Statistics', 'e', 'Precision and recall', `A default model flags 50 loans: 40 really default (true positives) and 10 don't (false positives). It misses 20 other defaults (false negatives).`,
+      [{ q: `(a) What is its precision?`, a: 0.8,
+        h: [`Precision = TP/(TP + FP): of the loans flagged, how many defaulted?`],
+        s: [`Precision = TP/(TP + FP).`, [`40/50 = <b>0.8</b>.`], ``, ``] },
+      { q: `(b) What is its recall?`, a: 2 / 3,
+        h: [`Recall = TP/(TP + FN): of all defaults, how many were caught?`],
+        s: [`Recall = TP/(TP + FN).`, [`40/60 = <b>2/3</b>.`], `With rare events, accuracy is misleading; precision and recall aren't.`, ``] }]],
+    O('features', 'Statistics', 'm', 'Feature engineering in quant ML', `Why is feature engineering so important in quant machine learning?`,
+      `Financial data has a low signal-to-noise ratio and non-stationary relationships, so models do best with inputs that already encode domain knowledge: returns over several horizons, volatility, momentum and reversal, spreads and order-book imbalance, carry, option-implied measures, and properly lagged fundamentals. Good features are stationary, scaled, available at the time used (no lookahead), and have an economic reason to work.`,
+      [`Why can't a model just learn from raw prices?`, `Name features with an economic rationale, and the main pitfall in building them.`]),
+    O('code-ts-split', 'Coding', 'e', 'A time-series train–test split in code', `Write Python code for a chronological train–test split.`,
+      `<pre><code>def time_split(df, test_frac=0.2, gap=0):
+    df = df.sort_index()
+    n_test = int(len(df) * test_frac)
+    cut = len(df) - n_test
+    return df.iloc[:cut - gap], df.iloc[cut:]</code></pre><p>Sort by time, take the earliest part for training and the latest for testing, optionally leaving a gap. For model selection use <code>sklearn.model_selection.TimeSeriesSplit</code> rather than shuffled K-fold.</p>`,
+      [`Sort first, never shuffle.`, `Why might you leave a gap between train and test?`]),
+    O('cpp-passing', 'Coding', 'e', 'Value, pointer, reference', `In C++, what's the difference between passing by value, by pointer and by reference?`,
+      `<b>By value</b> copies the argument (safe, costly for big objects). <b>By pointer</b> passes an address that may be null; the callee can modify the object and must check for null. <b>By reference</b> aliases the caller's object, can't be null, and avoids a copy. Default: <code>const T&amp;</code> for large read-only inputs, value for small types and things you'd copy anyway, non-const reference or pointer for outputs.`,
+      [`Which copies, which can be null, which aliases?`, `What's the usual choice for a large read-only argument?`]),
+    O('raii', 'Coding', 'm', 'RAII', `What is RAII in C++?`,
+      `Resource Acquisition Is Initialisation: tie each resource (memory, file, socket, lock) to an object's lifetime, acquiring it in the constructor and releasing it in the destructor. Destructors run on every exit path, including exceptions, so resources can't leak. Examples: <code>std::unique_ptr</code>, <code>std::lock_guard</code>, <code>std::fstream</code>.`,
+      [`When does a C++ destructor run?`, `Give a standard-library example.`]),
+    O('smart-pointers', 'Coding', 'm', 'unique_ptr v shared_ptr', `What's the difference between std::unique_ptr and std::shared_ptr?`,
+      `<code>unique_ptr</code> has sole ownership: it can be moved but not copied, and costs nothing over a raw pointer. <code>shared_ptr</code> allows several owners via an atomic reference count and control block, so it's heavier (atomic increments, extra allocation) and can leak through cycles (break them with <code>weak_ptr</code>). Prefer <code>unique_ptr</code> unless ownership is genuinely shared; create with <code>make_unique</code>/<code>make_shared</code>.`,
+      [`How many owners does each allow?`, `What does shared ownership cost?`]),
+    O('vector-perf', 'Coding', 'm', 'Why std::vector is fast', `Why is std::vector often preferred in performance-sensitive code?`,
+      `Its elements are contiguous, so iteration is cache-friendly and prefetchable, and indexing is O(1); <code>push_back</code> is amortised O(1). Node-based containers (list, map) scatter elements across the heap and chase pointers, causing cache misses that usually outweigh their better big-O for inserts. Call <code>reserve</code> up front to avoid reallocations on the hot path.`,
+      [`How are the elements laid out in memory?`, `Why does that beat a linked list in practice?`]),
+    O('map-unordered', 'Coding', 'm', 'map v unordered_map', `What's the difference between std::map and std::unordered_map?`,
+      `<code>std::map</code> is a balanced tree: keys sorted, O(log n) operations, ordered iteration and range queries (useful for an order book's price levels). <code>std::unordered_map</code> is a hash table: average O(1), no order, worst case O(n), and rehashing can cause latency spikes. Choose by whether you need ordering.`,
+      [`What data structure is behind each?`, `When do you need the keys sorted?`]),
+    ['binary-search', 'Logic', 'e', 'Binary search', `You binary-search a sorted array of 1,000,000 elements.`,
+      [{ q: `In the worst case, how many comparisons (probes) are needed?`, a: 20, tol: EXACT,
+        h: [`Each probe halves the remaining range.`, `Find the smallest k with 2<sup>k</sup> ≥ n + 1.`],
+        s: [`Binary search takes ⌈log₂(n + 1)⌉ probes: O(log n).`, [`2<sup>19</sup> = 524,288 is too small; 2<sup>20</sup> = 1,048,576 suffices.`, `<b>20</b> probes.`], `A linear scan would need up to a million.`, ``] }]],
+    O('streaming-median', 'Coding', 'h', 'Median of a stream', `How do you keep track of the median of a stream of numbers?`,
+      `Two heaps: a max-heap for the lower half and a min-heap for the upper half, with sizes differing by at most one. Insert into the right heap, then rebalance by moving a top element across. The median is the top of the larger heap, or the average of both tops. O(log n) per insert, O(1) to read. (In Python, store negatives in heapq for the max-heap.)`,
+      [`Split the numbers into a lower and an upper half.`, `Which heap type gives quick access to each half's boundary?`]),
+    O('lru-cache', 'Coding', 'h', 'An LRU cache', `Implement an LRU cache.`,
+      `<pre><code>from collections import OrderedDict
+class LRU:
+    def __init__(self, cap): self.cap, self.d = cap, OrderedDict()
+    def get(self, k):
+        if k not in self.d: return None
+        self.d.move_to_end(k); return self.d[k]
+    def put(self, k, v):
+        self.d[k] = v; self.d.move_to_end(k)
+        if len(self.d) &gt; self.cap: self.d.popitem(last=False)</code></pre><p>A hash map gives O(1) lookup; a doubly linked list keeps recency order with O(1) moves and evictions. OrderedDict is exactly that pair.</p>`,
+      [`You need O(1) lookup and O(1) "move to most recent".`, `Which two structures combine to give both?`]),
+    O('window-max', 'Coding', 'h', 'Rolling-window maximum', `How do you find the maximum of every window of size k in O(n)?`,
+      `<pre><code>from collections import deque
+def window_max(a, k):
+    dq, out = deque(), []
+    for i, x in enumerate(a):
+        while dq and a[dq[-1]] &lt;= x: dq.pop()
+        dq.append(i)
+        if dq[0] &lt;= i - k: dq.popleft()
+        if i &gt;= k - 1: out.append(a[dq[0]])
+    return out</code></pre><p>Keep a deque of indices whose values decrease from front to back. A new value evicts smaller ones from the back (they can never be a maximum again); the front drops out when it leaves the window. Each index is pushed and popped once: O(n).</p>`,
+      [`Which elements can never be a window's maximum again?`, `Keep candidates in decreasing order in a deque.`]),
+    O('cache-locality', 'Coding', 'm', 'Cache locality', `What is cache locality and why does it matter in low-latency systems?`,
+      `CPUs fetch memory in cache lines (typically 64 bytes); a cache hit costs a few cycles, a main-memory miss hundreds. Code that accesses memory sequentially or reuses recently touched data (arrays, struct-of-arrays layouts, small hot data) runs much faster than pointer-chasing (linked lists, maps). In trading systems, keeping the hot path's data in cache can matter more than algorithmic complexity.`,
+      [`How much slower is a cache miss than a hit?`, `Which data layouts make the most of each cache line?`]),
+    O('allocation', 'Coding', 'm', 'Allocation on the hot path', `Why can dynamic memory allocation be expensive in low-latency code?`,
+      `malloc/new may take locks, search free lists, fragment memory, touch cold cache lines, or ask the OS for pages, so its latency is unpredictable. Low-latency systems avoid it on the hot path: pre-allocate at start-up, use object pools and arenas, reserve container capacity, and keep data on the stack or in fixed buffers.`,
+      [`What does the allocator have to do on each call?`, `How do low-latency systems avoid it?`]),
+    O('latency-throughput', 'Coding', 'e', 'Latency v throughput', `What's the difference between latency and throughput?`,
+      `Latency: how long one event takes from input to output. Throughput: how many events you process per unit time. Batching raises throughput but adds latency. Trading cares about latency, and especially tail latency (the 99th or 99.9th percentile), because the slow cases are often the busy, important ones.`,
+      [`Time per event, or events per time?`, `Why look at percentiles rather than the average?`]),
+    O('false-sharing', 'Coding', 'h', 'False sharing', `What is false sharing?`,
+      `Two threads write to different variables that happen to share a cache line. Each write invalidates the line in the other core's cache, so the line ping-pongs between cores and both threads slow down, although they share no data logically. Fix by padding or aligning hot per-thread data to separate cache lines (e.g. <code>alignas(64)</code>).`,
+      [`What's the unit of memory the cache coherence protocol tracks?`, `How do you keep two threads' variables apart?`]),
+    O('order-book', 'Market making', 'e', 'The limit order book', `What is a limit order book?`,
+      `The list of resting buy (bid) and sell (ask) limit orders for an instrument, by price level and time. The best bid is the highest buy price, the best ask the lowest sell price; their difference is the spread. A marketable order crosses the spread and matches against resting orders, usually by price then time priority. Depth and queue position matter for execution.`,
+      [`What's on each side, and how are orders ranked?`, `What happens when an order crosses the spread?`]),
+    O('top-of-book', 'Coding', 'h', 'Tracking the top of the book', `Implement a simple top-of-book tracker from bid and ask updates.`,
+      `<pre><code>class TopOfBook:
+    def __init__(self): self.bid = self.ask = None
+    def update(self, bid=None, ask=None):
+        if bid is not None: self.bid = bid
+        if ask is not None: self.ask = ask
+        if self.bid is not None and self.ask is not None and self.bid &gt;= self.ask:
+            raise ValueError("crossed book")
+    def spread(self): return None if None in (self.bid, self.ask) else self.ask - self.bid
+    def mid(self): return None if None in (self.bid, self.ask) else (self.bid + self.ask) / 2</code></pre><p>Keep the latest best bid and ask (with sizes in practice), validate (crossed or locked books, stale data), and expose spread and mid.</p>`,
+      [`What state do you need to keep?`, `What checks belong in the update?`]),
+    O('order-book-design', 'Coding', 'h', 'Designing an order book', `How would you design an order-book data structure?`,
+      `Two sides, each mapping price level → queue of orders (FIFO for time priority), plus a hash map from order id → its location for O(1) cancels and amends. Bids need fast access to the highest price, asks to the lowest: a sorted map (<code>std::map</code> with greater&lt;&gt; for bids), or, for speed with a bounded tick range, an array indexed by price ticks with a pointer to the best level. Matching walks from the best level, filling in time order.`,
+      [`What operations must be fast: add, cancel, match?`, `What gives quick access to the best price on each side?`]),
+    O('numerical-stability', 'Coding', 'm', 'Numerical stability', `What is numerical stability and why does it matter?`,
+      `An algorithm is stable if rounding errors don't grow to swamp the answer. Pitfalls: subtracting nearly equal numbers (catastrophic cancellation, e.g. one-pass variance), summing numbers of very different sizes, exponentials overflowing (use log-sum-exp), inverting ill-conditioned matrices, and finite-difference Greeks with too small a step. In pricing and risk these give wrong prices, noisy Greeks and failed calibrations.`,
+      [`What happens when you subtract two nearly equal floating-point numbers?`, `Give a finance calculation where it bites.`]),
+    O('avoid-inverse', 'Coding', 'm', 'Avoiding matrix inverses', `Why avoid computing a matrix inverse explicitly in numerical code?`,
+      `To solve Ax = b, factorise A (LU, Cholesky for covariance matrices, QR) and solve: <code>np.linalg.solve(A, b)</code>. Forming A⁻¹ then multiplying is about three times the work and loses accuracy when A is ill-conditioned. You rarely need the inverse itself.`,
+      [`What are you actually trying to compute?`, `Which factorisation suits a covariance matrix?`]),
+    O('finite-difference', 'Options', 'h', 'Finite differences for Black–Scholes', `Explain finite-difference pricing for the Black–Scholes PDE.`,
+      `Discretise S and t on a grid, replace V<sub>S</sub>, V<sub>SS</sub>, V<sub>t</sub> by differences, set the payoff at expiry and boundary values at the grid's edges, and step backwards to today. <b>Explicit</b> schemes are simple but only stable for small time steps (Δt ≲ ΔS²/(σ²S²)); <b>implicit</b> is unconditionally stable but first-order in time; <b>Crank–Nicolson</b> averages them for second-order accuracy (with a few implicit steps first to damp oscillations from the payoff kink). American options: take the max with exercise value at each step.`,
+      [`Which direction in time do you march, and from what condition?`, `What's the trade-off between explicit and implicit schemes?`]),
+    O('stable-sort', 'Coding', 'e', 'Stable sorting', `What is a stable sort and when does it matter?`,
+      `A stable sort keeps equal elements in their original order. It matters when sorting by several keys in turn (sort by time, then stably by price, and orders at the same price stay in time order, which is exactly price-time priority). Merge sort and Timsort (Python's sort) are stable; quicksort and heapsort typically aren't.`,
+      [`What happens to ties?`, `How does that help with multi-key sorting?`]),
+    O('merge-sorted', 'Coding', 'e', 'Merging sorted arrays', `How do you merge two sorted arrays?`,
+      `<pre><code>def merge(a, b):
+    i = j = 0; out = []
+    while i &lt; len(a) and j &lt; len(b):
+        if a[i] &lt;= b[j]: out.append(a[i]); i += 1
+        else: out.append(b[j]); j += 1
+    return out + a[i:] + b[j:]</code></pre><p>Two pointers, always taking the smaller head; O(m + n). Using &lt;= keeps it stable. For k arrays, use a heap (<code>heapq.merge</code>).</p>`,
+      [`Compare the two front elements.`, `What do you do when one array runs out?`]),
+    O('intersect-sorted', 'Coding', 'e', 'Intersecting sorted arrays', `How do you intersect two sorted arrays efficiently?`,
+      `Two pointers: if a[i] == b[j], record it and advance both; otherwise advance the pointer at the smaller value. O(m + n) time, O(1) extra space. If one array is much shorter, binary-search each of its elements in the longer one: O(m log n).`,
+      [`Walk through both arrays together.`, `Which pointer moves when the values differ?`]),
+    O('lookahead', 'Coding', 'm', 'Lookahead bias', `What is lookahead bias in a trading system?`,
+      `Using information that wouldn't have been available at decision time: same-bar closing prices for signals traded at that close, revised economic data, fundamentals before their release date, a universe chosen with hindsight (survivorship), or features normalised with full-sample statistics. Backtests look great and live trading doesn't. Prevent it with point-in-time data, explicit lags, and code that only ever reads the past.`,
+      [`What did you know, and when did you know it?`, `List subtle sources beyond simply using tomorrow's price.`]),
+    O('validate-data', 'Coding', 'm', 'Validating market data', `How would you validate market data before using it in a model?`,
+      `Check timestamps (time zones, ordering, gaps, duplicates), sequence numbers in feeds, missing values, outliers and bad ticks, crossed or locked quotes, zero or negative prices, stale quotes, symbol changes and corporate actions (splits, dividends), and consistency across sources. Log and quarantine bad records rather than silently dropping them.`,
+      [`Think about time, values, and identity of the instrument.`, `What do corporate actions do to a price series?`]),
+    O('crossed-markets', 'Coding', 'm', 'Detecting crossed markets', `Write Python to flag crossed markets in bid/ask data.`,
+      `<pre><code>def crossed(df):
+    return df[df["bid"] &gt;= df["ask"]]   # crossed (&gt;) or locked (==)</code></pre><p>A crossed quote (bid above ask) is usually a data error, a stale quote on one side, or quotes from different venues mixed together; locked (equal) can be real briefly. Flag them, don't trade off them, and investigate the source.</p>`,
+      [`What relation between bid and ask should always hold?`, `What could cause it to fail?`]),
+    ['vwap', 'Finance', 'e', 'VWAP', `Trades print at 100 shares @ $10, 300 @ $11 and 100 @ $12.`,
+      [{ q: `What is the volume-weighted average price?`, a: 11, tol: { abs: 0.001, rel: 0 },
+        h: [`VWAP = Σ price × volume / Σ volume.`, `Total volume is 500 shares.`],
+        s: [`Weight each price by its volume.`, [`(1000 + 3300 + 1200)/500 = 5500/500 = <b>$11</b>.`], `In pandas: (df.price * df.size).sum() / df.size.sum().`, ``] }]],
+    ['impl-shortfall', 'Finance', 'm', 'Implementation shortfall', `You decide to buy 1,000 shares when the price is $50.00, and end up buying them at an average of $50.20.`,
+      [{ q: `What is the implementation shortfall, in dollars?`, a: 200, tol: { abs: 0.01, rel: 0 },
+        h: [`Shortfall for a buy = (average execution price − decision price) × quantity.`, `Unfilled shares would add an opportunity cost.`],
+        s: [`Compare what you paid with the price when you decided.`, [`(50.20 − 50.00) × 1000 = <b>$200</b>, i.e. 40 basis points.`], `For a sell the sign flips.`, ``] }]],
+    O('idempotency', 'Coding', 'm', 'Idempotency', `What is idempotency and why does it matter in trading systems?`,
+      `An operation is idempotent if doing it twice has the same effect as once. Networks retry and messages get redelivered, so handlers must not double-count: dedupe orders and fills by a unique id, make "set state to X" rather than "add X", and keep client order ids so a resent order isn't placed twice.`,
+      [`What happens if a message is delivered twice?`, `How do unique ids help?`]),
+    O('sequence-numbers', 'Coding', 'h', 'Sequence numbers in feeds', `What are sequence numbers for in market-data feeds?`,
+      `Each message carries an increasing number. Consumers use it to detect gaps (a missed UDP packet), request retransmission or recover from a snapshot, drop duplicates, and process messages in order (merging A/B redundant feeds). Acting on a book with a gap means trading on wrong prices.`,
+      [`Multicast UDP can drop or reorder packets. How would you notice?`, `What do you do when you see a gap?`]),
+    O('move-semantics', 'Coding', 'h', 'Move semantics', `What are move semantics in C++, and why are they useful?`,
+      `Moving transfers a resource (heap buffer, file handle) from an object that's about to die, or that you've marked with <code>std::move</code>, instead of copying it. Rvalue references (<code>T&amp;&amp;</code>) select move constructors and move assignment, which just steal pointers and leave the source empty. Returning big containers, growing vectors and passing temporaries become cheap; mark move constructors <code>noexcept</code> so std::vector will use them.`,
+      [`Why copy a buffer from a temporary that's about to be destroyed?`, `What does T&amp;&amp; bind to?`]),
+    O('inclusion-exclusion', 'Probability', 'e', 'Inclusion–exclusion', `State inclusion–exclusion for two and three events.`,
+      `P(A ∪ B) = P(A) + P(B) − P(A ∩ B). For three: P(A ∪ B ∪ C) = ΣP(single) − ΣP(pairs) + P(A ∩ B ∩ C). Each step corrects the over- or under-counting of the last. It gives derangements (no one gets their hat: 1 − 1/1! + 1/2! − …) and "at least one" counts.`,
+      [`Adding P(A) and P(B) counts the overlap how many times?`, `Extend the correction to three events.`]),
+    O('total-variance', 'Statistics', 'm', 'The law of total variance', `What is the law of total variance?`,
+      `Var(X) = E[Var(X | Y)] + Var(E[X | Y]): average variance within groups plus variance between the group means. Example: returns in calm and stressed regimes; total variance is the average within-regime variance plus the spread between regime means. It also gives the variance of a random sum: Var = E[N]Var(X) + Var(N)E[X]².`,
+      [`Split the variance into a within part and a between part.`, `Apply it to a sum with a random number of terms.`]),
+    O('jensen', 'Probability', 'm', "Jensen's inequality", `What is Jensen's inequality and why does it matter in finance?`,
+      `For convex φ, φ(E[X]) ≤ E[φ(X)] (reversed for concave). So convex payoffs (options) are worth more than their payoff at the expected price, and uncertainty has value for the holder; volatility drag (E[log return] < log E[return]) and E[1/X] ≥ 1/E[X] are other cases.`,
+      [`Draw a convex curve and two points on it.`, `What does that say about an option's value?`]),
+    ['exp-race', 'Probability', 'e', 'An exponential race', `X and Y are independent exponentials with rates 2 and 3.`,
+      [{ q: `What is P(X < Y)?`, a: 0.4,
+        h: [`Think of two Poisson clocks; the first tick comes from X's clock with probability proportional to its rate.`, `Or integrate: ∫ λe<sup>−λx</sup> e<sup>−μx</sup> dx.`],
+        s: [`P(X first) = λ/(λ + μ).`, [`2/(2 + 3) = <b>0.4</b>.`], ``, ``] }]],
+    O('mgf', 'Probability', 'm', 'Moment generating functions', `What is a moment generating function and why is it useful?`,
+      `M<sub>X</sub>(t) = E[e<sup>tX</sup>]. Its derivatives at 0 give the moments (M′(0) = E[X], M″(0) = E[X²]); the MGF of a sum of independent variables is the product of their MGFs; and when it exists near 0 it determines the distribution. So sums of independent normals are normal, sums of Poissons are Poisson, and so on.`,
+      [`What do its derivatives at zero give?`, `What happens to MGFs when you add independent variables?`]),
+
+    ['normal-combo', 'Statistics', 'e', 'Combining independent normals', `X ~ N(1, 4) and Y ~ N(2, 9) are independent (variances 4 and 9).`,
+      [{ q: `What is the variance of 2X − Y?`, a: 25, tol: { abs: 0.001, rel: 0 },
+        h: [`A linear combination of independent normals is normal.`, `Var(aX + bY) = a²Var X + b²Var Y when they're independent.`],
+        s: [`Constants come out squared, and independent variances add.`, [`4 × 4 + 1 × 9 = <b>25</b>, so 2X − Y ~ N(0, 25).`], `The minus sign doesn't reduce the variance.`, `Subtracting the variances (16 − 9).`] }]],
+    O('change-variables', 'Probability', 'm', 'Change of variables', `How do you find the density of Y = g(X)?`,
+      `If g is monotonic and differentiable, f<sub>Y</sub>(y) = f<sub>X</sub>(g⁻¹(y)) · |d g⁻¹(y)/dy|: the density is stretched or squeezed by how fast g changes. Safer in general: find the CDF P(Y ≤ y) = P(g(X) ≤ y), then differentiate (this also handles non-monotonic g, like Y = X², by adding the branches). Example: if X is uniform on (0, 1), −ln X is exponential(1).`,
+      [`Start from the CDF of Y.`, `Why does the derivative of the inverse appear?`]),
+    ['bivariate-normal', 'Statistics', 'h', 'Conditioning a bivariate normal', `X and Y are standard normal with correlation 0.6. You observe Y = 1.`,
+      [{ q: `(a) What is E[X | Y = 1]?`, a: 0.6,
+        h: [`For a bivariate normal, E[X | Y = y] = μ<sub>X</sub> + ρ(σ<sub>X</sub>/σ<sub>Y</sub>)(y − μ<sub>Y</sub>).`, `Both are standard, so it's just ρy.`],
+        s: [`The regression line through the means.`, [`0.6 × 1 = <b>0.6</b>.`], ``, ``] },
+      { q: `(b) What is Var(X | Y = 1)?`, a: 0.64,
+        h: [`Conditional variance doesn't depend on the observed y.`, `It's σ<sub>X</sub>²(1 − ρ²).`],
+        s: [`Var(X | Y) = σ<sub>X</sub>²(1 − ρ²).`, [`1 − 0.36 = <b>0.64</b>.`], `Knowing Y removes ρ² = 36% of X's variance.`, ``] }]],
+    ['stationary-dist', 'Markov chains', 'm', 'A stationary distribution', `A two-state chain moves from state 0 to 1 with probability 0.3, and from 1 to 0 with probability 0.1 (otherwise it stays).`,
+      [{ q: `In the long run, what fraction of time is it in state 1?`, a: 0.75,
+        h: [`The stationary distribution π satisfies πP = π.`, `Balance the flows: π₀ × 0.3 = π₁ × 0.1.`],
+        s: [`Flow balance between the two states.`, [`π₁/π₀ = 3 and π₀ + π₁ = 1.`, `π₁ = <b>0.75</b>.`], ``, ``] }]],
+    O('martingale-example', 'Random walks', 'e', 'A martingale example', `Give a simple example of a martingale.`,
+      `A symmetric random walk S<sub>n</sub> (steps ±1 with equal probability): E[S<sub>n+1</sub> | history] = S<sub>n</sub>. Others: S<sub>n</sub>² − n; for a biased walk with p ≠ q, (q/p)<sup>S<sub>n</sub></sup>; your wealth when repeatedly making fair bets; the running conditional expectation E[X | information so far] of any fixed X.`,
+      [`Start with a fair coin game.`, `Can you correct S<sub>n</sub>² so it becomes a martingale?`]),
+    O('score', 'Statistics', 'm', 'The score function', `What is the score function in maximum likelihood?`,
+      `The derivative of the log-likelihood with respect to the parameter, ∂ℓ/∂θ. At an interior maximum the score is zero, which is the MLE's defining equation. At the true parameter its expectation is zero and its variance is the Fisher information.`,
+      [`Differentiate the log-likelihood.`, `What is its value at an interior maximum?`]),
+    O('fisher-info', 'Statistics', 'h', 'Fisher information', `What is Fisher information?`,
+      `How much information the data carry about θ: I(θ) = Var(score) = −E[∂²ℓ/∂θ²]. More curvature of the log-likelihood means the peak is sharper and θ is pinned down better. The MLE's variance is about 1/(n I(θ)) for large n, and no unbiased estimator can do better (the Cramér–Rao bound). For a normal mean with known σ², I = 1/σ².`,
+      [`Think about the curvature of the log-likelihood at its peak.`, `How does it bound the variance of an estimator?`]),
+    ['delta-method', 'Statistics', 'h', 'The delta method', `The sample mean of 100 observations with mean 2 and standard deviation 1 is X̄.`,
+      [{ q: `Approximately what is the standard error of X̄²?`, a: 0.4,
+        h: [`SE(X̄) = 1/√100 = 0.1.`, `Delta method: SE(g(X̄)) ≈ |g′(μ)| × SE(X̄).`, `g(x) = x², so g′(2) = 4.`],
+        s: [`Linearise g around the true mean.`, [`|g′(2)| × 0.1 = 4 × 0.1 = <b>0.4</b>.`], `It's an approximation that improves with n and fails near points where g′ = 0.`, ``] }]],
+    O('bootstrap', 'Statistics', 'm', 'The bootstrap', `What is the bootstrap?`,
+      `Estimate a statistic's sampling distribution by resampling your data with replacement many times, recomputing the statistic each time, and using the spread of those values for standard errors or confidence intervals. It needs few assumptions, but the data must be (close to) independent and representative: for time series use block bootstraps to keep the dependence, and it struggles with extremes (e.g. the maximum).`,
+      [`Treat the sample as if it were the population.`, `What goes wrong if observations are dependent?`]),
+    O('prior-posterior', 'Bayes', 'e', 'Prior, likelihood, posterior', `What are the prior, likelihood and posterior?`,
+      `The <b>prior</b> is your belief about a parameter before the data. The <b>likelihood</b> is how probable the observed data are for each parameter value. The <b>posterior</b> ∝ prior × likelihood is the updated belief. With lots of data the likelihood dominates; with little, the prior matters. Conjugate pairs (Beta–Binomial, Normal–Normal) keep the posterior in the same family.`,
+      [`Which comes before the data and which after?`, `How do they combine?`]),
+    O('ridge', 'Regression', 'm', 'Ridge regression', `How is ridge regression related to least squares?`,
+      `Ridge minimises Σ(y − Xβ)² + λΣβ², giving β̂ = (X'X + λI)⁻¹X'y. The λI term makes the matrix well conditioned when predictors are correlated, and shrinks coefficients towards zero: a little bias for a large cut in variance. It's the posterior mode with a normal prior on β. Choose λ by cross-validation; don't penalise the intercept; standardise features.`,
+      [`What term is added to the least-squares objective?`, `What does λI do to X'X?`]),
+    ['multiple-testing', 'Statistics', 'm', 'Testing many signals', `You test 100 independent trading signals, none of which has any real edge, each at the 5% level.`,
+      [{ q: `(a) How many do you expect to come out "significant"?`, a: 5, tol: { abs: 0.001, rel: 0 },
+        h: [`Each useless signal passes with probability 0.05.`, `Use linearity.`],
+        s: [`Expected false positives = tests × α.`, [`100 × 0.05 = <b>5</b>.`], ``, ``] },
+      { q: `(b) What is the probability at least one does?`, a: 1 - 0.95 ** 100, tol: { abs: 0.001, rel: 0 },
+        h: [`Compute the chance that none passes.`, `0.95<sup>100</sup>.`],
+        s: [`Complement of "none passes".`, [`1 − 0.95<sup>100</sup> ≈ 1 − 0.006 = <b>0.994</b>.`], `Hence Bonferroni (test at 0.05/100), false-discovery-rate control, or a deflated Sharpe ratio.`, ``] }]],
+    O('acf-pacf', 'Statistics', 'm', 'Identifying ARMA orders', `How do the ACF and PACF help choose AR and MA orders?`,
+      `For an AR(p) the PACF cuts off after lag p while the ACF decays gradually; for an MA(q) the ACF cuts off after lag q while the PACF decays. If both decay, try ARMA, then compare candidates with AIC/BIC and check the residuals are white noise (Ljung–Box).`,
+      [`Which function cuts off for an AR, and which for an MA?`, `What do you do when neither cuts off cleanly?`]),
+    O('seasonality', 'Statistics', 'e', 'Seasonality', `What is seasonality in a time series?`,
+      `Regular, calendar-linked patterns: intraday U-shaped volume and volatility, day-of-week and turn-of-month effects, quarterly earnings seasons, holiday effects. Model it (seasonal dummies, seasonal differencing, normalising by time-of-day averages) before looking for other signals, or it will masquerade as one.`,
+      [`Give an intraday example from markets.`, `How would you remove it before modelling?`]),
+    O('structural-break', 'Statistics', 'm', 'Structural breaks', `What is a structural break?`,
+      `A change in a process's parameters or behaviour at some point: a regulation change, a crisis, a new market structure, a central-bank regime. Models fitted across the break average two different worlds and forecast badly. Detect with Chow tests or rolling/recursive estimates; respond with shorter or weighted windows, regime-switching models, or by re-estimating.`,
+      [`What happens to a model fitted across two different regimes?`, `How could you spot one?`]),
+    O('walk-forward', 'Statistics', 'm', 'Walk-forward validation', `What is walk-forward validation?`,
+      `Repeatedly train on data up to a point and test on the period just after, then roll forward (fixed-size or expanding window) and repeat; stitch the test periods together for an out-of-sample record. It mimics live use and respects time order; add a gap if labels span several periods.`,
+      [`How do the training and test windows move?`, `Why is this closer to live trading than K-fold?`]),
+    O('calibration', 'Statistics', 'm', 'Probability calibration', `What does it mean for a classifier's probabilities to be calibrated?`,
+      `Among cases given probability p, about a fraction p happen. Check with a reliability diagram or the Brier score; fix with Platt scaling or isotonic regression on held-out data. It matters whenever you size bets or set thresholds using the probabilities themselves, not just the ranking.`,
+      [`If a model says 70% for many events, what fraction should occur?`, `When do you care about calibration rather than ranking?`]),
+    O('feature-importance', 'Statistics', 'm', 'Limits of feature importance', `What are the limitations of feature importance in tree models?`,
+      `Impurity-based importance is computed in-sample and favours high-cardinality or continuous features; correlated features split the credit between them (so each looks less important), and permutation importance can understate them too. Importance shows what the model used, not causal effect. Use out-of-sample permutation importance, group correlated features, or SHAP, and sanity-check with economics.`,
+      [`What happens when two features carry the same information?`, `Is importance in-sample or out-of-sample?`]),
+    O('leakage', 'Statistics', 'm', 'Data leakage', `What is data leakage in machine learning?`,
+      `Information from outside the training data's legitimate past gets into training or features, so test results look better than reality. Finance examples: future returns in features, overlapping labels across the train/test boundary, normalising with full-sample statistics, revised (non-point-in-time) data, survivorship, and random shuffling of time series.`,
+      [`What could the model know that it wouldn't know live?`, `List finance-specific sources.`]),
+    ['parity-dividend', 'Options', 'm', 'Parity with a dividend yield', `S = 100, K = 100, r = 5%, dividend yield q = 3% (both continuous), T = 1. The call costs 10.`,
+      [{ q: `What should the European put cost?`, a: 10 - 100 * Math.exp(-0.03) + 100 * Math.exp(-0.05), tol: { abs: 0.02, rel: 0 },
+        h: [`With a dividend yield, C − P = S e<sup>−qT</sup> − K e<sup>−rT</sup>.`, `S e<sup>−0.03</sup> ≈ 97.04 and K e<sup>−0.05</sup> ≈ 95.12.`],
+        s: [`Parity with the stock replaced by its dividend-adjusted value.`, [`P = 10 − 97.04 + 95.12 ≈ <b>8.08</b>.`], ``, `Forgetting the e<sup>−qT</sup> factor.`] }]],
+    O('static-replication', 'Options', 'm', 'Static replication', `What is static replication?`,
+      `Building a portfolio, once, whose payoff at expiry matches the target, with no trading afterwards. Put–call parity is the simplest case; any smooth payoff of S<sub>T</sub> can be built from a bond, a forward and a strip of calls and puts (Carr–Madan), which is how variance swaps are replicated. It's robust because it doesn't depend on a model for the path.`,
+      [`Do you trade after setting it up?`, `How can a strip of options build a curved payoff?`]),
+    O('vega-hedge', 'Options', 'm', 'Vega hedging', `What is vega hedging?`,
+      `Offsetting exposure to implied volatility using other options, since the underlying itself has no vega. Choose option positions so total vega is near zero, then re-hedge delta with the stock. Vegas at different strikes and expiries don't move together (skew and term-structure changes), so a single option is only a partial hedge.`,
+      [`Can the stock hedge volatility exposure?`, `Why might hedging with one other option not be enough?`]),
+    O('bs-smile-fail', 'Options', 'm', 'Why Black–Scholes can’t produce a smile', `Why can't the Black–Scholes model explain the volatility smile?`,
+      `It assumes one constant volatility for the underlying, so every option on it should imply the same vol. Real returns have fat tails, jumps, and volatility that moves (and correlates negatively with price), and there's demand for crash protection, so different strikes and expiries need different vols to match prices. Local-vol, stochastic-vol and jump models are attempts to fix this.`,
+      [`How many volatility parameters does the model have?`, `What features of real returns does that miss?`]),
+    O('local-vol', 'Options', 'h', 'Local volatility', `What is the idea behind local volatility?`,
+      `Let volatility be a deterministic function of price and time, dS/S = μ dt + σ(S, t) dW. Dupire's formula then picks the unique σ(S, t) that reproduces today's whole implied-vol surface (from call prices' derivatives in strike and expiry). It fits today's prices exactly but predicts unrealistic smile dynamics (the smile flattens and moves the wrong way as spot moves), which matters for hedging and forward-starting exotics.`,
+      [`Volatility as a function of what?`, `What does it get right, and what does it get wrong?`]),
+    O('barrier-path', 'Options', 'e', 'Path dependence of barriers', `What makes barrier options path-dependent?`,
+      `Their payoff depends on whether the price touched a level at any time before expiry, not just on the final price. Two paths ending at the same price can pay differently if one crossed the barrier. That's why they're priced with the reflection principle or simulation and have awkward Greeks near the barrier (discontinuous payoffs, large gamma).`,
+      [`Does the final price alone decide the payoff?`, `Compare two paths ending at the same level.`]),
+    O('ito-product', 'Stochastic calculus', 'm', 'The Itô product rule', `What is the Itô product rule?`,
+      `d(XY) = X dY + Y dX + dX dY. The last term is new compared with ordinary calculus and is non-zero when both X and Y have Brownian parts: with dX = σ<sub>X</sub> dW¹, dY = σ<sub>Y</sub> dW², dX dY = ρ σ<sub>X</sub> σ<sub>Y</sub> dt. Example: d(e<sup>−rt</sup>S<sub>t</sub>) uses it (the cross term is zero there, since e<sup>−rt</sup> has no dW).`,
+      [`Apply Itô to f(x, y) = xy.`, `When is the extra term zero?`]),
+    O('ito-mean-zero', 'Stochastic calculus', 'm', 'Why Itô integrals have mean zero', `Why does an Itô integral ∫ H dW have expectation zero?`,
+      `It's a limit of sums Σ H(t<sub>i</sub>) ΔW<sub>i</sub> where H(t<sub>i</sub>) is known before the increment ΔW<sub>i</sub>, which has mean zero and is independent of the past. So each term has expectation E[H(t<sub>i</sub>)] · 0 = 0. More strongly, the integral is a martingale when E∫H² dt is finite. If H could look ahead, this would fail.`,
+      [`Is H(t<sub>i</sub>) independent of the next increment?`, `What condition makes the integral a true martingale?`]),
+    O('generator', 'Stochastic calculus', 'h', 'The generator of a diffusion', `What is the infinitesimal generator of a diffusion?`,
+      `For dX = μ(X) dt + σ(X) dW, the generator acts on smooth f as Af = μ f′ + ½ σ² f″: the expected rate of change of f(X) right now, i.e. lim (E[f(X<sub>t</sub>) | X₀ = x] − f(x))/t. It's the drift term in Itô's lemma, and the operator in the Kolmogorov backward and Feynman–Kac PDEs (Black–Scholes is ∂V/∂t + AV − rV = 0).`,
+      [`It's the dt term in Itô's lemma applied to f(X).`, `Where does it appear in pricing PDEs?`]),
+    O('code-walk-forward', 'Coding', 'm', 'Walk-forward splits in code', `Write Python that generates walk-forward train/test splits.`,
+      `<pre><code>def walk_forward(n, train, test, step=None, expanding=False):
+    step = step or test
+    start = 0
+    while start + train + test &lt;= n:
+        tr0 = 0 if expanding else start
+        yield range(tr0, start + train), range(start + train, start + train + test)
+        start += step</code></pre><p>Each test window lies after its training window; roll by <code>step</code>, with a fixed or expanding training window. Add an embargo gap if labels overlap.</p>`,
+      [`Keep track of a moving start index.`, `Fixed or expanding training window?`]),
+    O('winsorize', 'Coding', 'm', 'Winsorising returns', `Write Python to winsorise a return series.`,
+      `<pre><code>def winsorize(r, lower=0.01, upper=0.99):
+    lo, hi = r.quantile(lower), r.quantile(upper)
+    return r.clip(lo, hi)</code></pre><p>Cap extreme values at chosen quantiles rather than deleting them, so a few outliers (or bad ticks) don't dominate means and regressions. In a backtest compute the cut-offs from past data only, or you've added lookahead.</p>`,
+      [`Cap rather than delete.`, `Where do the cut-offs come from in a backtest?`]),
+    ['die-six', 'Expected value', 'e', 'Waiting for a six', `You roll a fair die until you see a 6.`,
+      [{ q: `What is the expected number of rolls?`, a: 6, tol: { abs: 0.001, rel: 0 },
+        h: [`The wait is geometric with success probability 1/6.`, `E = 1/p.`],
+        s: [`Geometric waiting time.`, [`1/(1/6) = <b>6</b>.`], ``, ``] }]],
+    ['thinning', 'Probability', 'm', 'Thinning a Poisson process', `Orders arrive as a Poisson process at 10 per minute, and each is a buy independently with probability 0.3.`,
+      [{ q: `What is the expected number of buys in 5 minutes?`, a: 15, tol: { abs: 0.001, rel: 0 },
+        h: [`Keeping each event independently with probability p gives a Poisson process with rate pλ.`, `So buys arrive at 3 per minute.`],
+        s: [`Thinning: rate pλ.`, [`3 × 5 = <b>15</b>.`], `Buys and sells are then independent Poisson processes, a surprising fact.`, ``] }]],
+    O('indicators', 'Expected value', 'e', 'Indicator variables', `Why are indicator variables useful in expectation problems?`,
+      `Write a count as a sum of 0/1 indicators, X = Σ Iᵢ, so E[X] = Σ P(Iᵢ = 1) by linearity, with no need for the distribution of X or independence. Fixed points of a permutation, empty boxes, runs, matching pairs and records all fall to it; for variances add the pairwise covariances.`,
+      [`What is E[I] for an indicator?`, `Give a problem where the count's distribution is hard but its mean is easy.`]),
+    O('zero-cov', 'Statistics', 'm', 'Zero covariance and independence', `When does zero covariance imply independence?`,
+      `In general it doesn't: if X is symmetric about 0 and Y = X², Cov(X, Y) = E[X³] = 0, yet Y is a function of X. It does when X and Y are <b>jointly</b> normal (being normal separately isn't enough). Covariance only measures linear dependence.`,
+      [`Find a counterexample with Y a function of X.`, `What special case makes it true?`]),
+    ['base-rate', 'Conditional probability', 'm', 'Base rates', `A disease affects 1% of people. A test catches 99% of cases and gives a false positive to 5% of healthy people.`,
+      [{ q: `If someone tests positive, what is the probability they have the disease?`, a: 0.0099 / (0.0099 + 0.0495), tol: { abs: 0.002, rel: 0 },
+        h: [`Think of 10,000 people: how many are ill, and how many healthy people test positive?`, `True positives 99; false positives 5% of 9,900.`],
+        s: [`Bayes: true positives against all positives.`, [`True positives 99, false positives 495.`, `P = 99/594 ≈ <b>0.167</b>.`], `False positives from the big healthy group swamp the true ones.`, `Answering 99%, the test's sensitivity.`] }]],
+    O('aic-bic', 'Statistics', 'm', 'AIC v BIC', `What's the difference between AIC and BIC?`,
+      `Both trade fit against complexity: AIC = 2k − 2 ln L, BIC = k ln n − 2 ln L (lower is better). BIC's penalty grows with sample size, so it picks smaller models and is consistent (finds the true model if it's among the candidates); AIC aims at predictive accuracy and tends to choose larger models. Neither replaces out-of-sample testing.`,
+      [`Compare the penalty per parameter in each.`, `Which prefers smaller models as n grows?`]),
+    O('lr-test', 'Statistics', 'm', 'Likelihood-ratio tests', `What is a likelihood-ratio test?`,
+      `Fit the model with and without the restriction and compare maximised log-likelihoods: LR = 2(ℓ<sub>unrestricted</sub> − ℓ<sub>restricted</sub>). Under the null and regularity conditions, LR is approximately χ² with degrees of freedom equal to the number of restrictions. Example: testing whether extra lags in an AR model are needed.`,
+      [`Fit two nested models.`, `What distribution does twice the log-likelihood gap follow?`]),
+    O('omitted-variable', 'Regression', 'm', 'Omitted-variable bias', `What is omitted-variable bias?`,
+      `If a variable that affects y is left out and is correlated with an included regressor, that regressor's coefficient soaks up part of the omitted effect: bias = (effect of omitted variable) × (slope of omitted on included). Example: regressing returns on momentum without controlling for market beta.`,
+      [`Two conditions are needed for bias. What are they?`, `Which direction does the bias go?`]),
+    O('endogeneity', 'Regression', 'm', 'Endogeneity', `What is endogeneity?`,
+      `A regressor correlated with the error term, E[ε | X] ≠ 0, from omitted variables, reverse causality, simultaneity (price and quantity set together) or measurement error. OLS is then biased and inconsistent. Fixes: instrumental variables, natural experiments, panel fixed effects, or better controls.`,
+      [`Which OLS assumption breaks?`, `List four ways it arises.`]),
+    ['adjusted-r2', 'Regression', 'm', 'Adjusted R²', `A regression with 5 regressors on 50 observations has R² = 0.5.`,
+      [{ q: `What is its adjusted R²?`, a: 1 - 0.5 * 49 / 44,
+        h: [`Adjusted R² = 1 − (1 − R²)(n − 1)/(n − k − 1).`, `n = 50 and k = 5.`],
+        s: [`Penalise R² for the number of regressors.`, [`1 − 0.5 × 49/44 ≈ <b>0.443</b>.`], `Adding a useless regressor raises R² but can lower adjusted R².`, ``] }]],
+    O('newey-west', 'Regression', 'm', 'Newey–West standard errors', `Why are Newey–West standard errors used in finance?`,
+      `They stay valid when residuals are heteroskedastic and autocorrelated (HAC), which is usual in financial time series, and especially with overlapping returns (monthly returns sampled daily). Ordinary standard errors then overstate significance. Newey–West weights autocovariances up to a chosen lag with declining (Bartlett) weights.`,
+      [`What two problems in residuals do they handle?`, `Why do overlapping returns create the need?`]),
+    O('vol-clustering', 'Statistics', 'e', 'Volatility clustering', `What is volatility clustering?`,
+      `Large moves tend to follow large moves (of either sign) and calm follows calm, so squared or absolute returns are autocorrelated even when returns themselves barely are. It's why GARCH and stochastic-vol models exist, and why volatility forecasts are much better than return forecasts.`,
+      [`Are returns autocorrelated? What about squared returns?`, `Which models capture this?`]),
+    O('arch-garch', 'Statistics', 'm', 'ARCH v GARCH', `What's the difference between ARCH and GARCH?`,
+      `ARCH(q) makes today's variance depend on the last q squared shocks; GARCH(p, q) also adds lagged variances. One lagged variance term acts like an infinite ARCH with geometrically decaying weights, so GARCH(1,1) captures persistent volatility with three parameters, where ARCH would need many lags.`,
+      [`What does each use to predict today's variance?`, `Why is GARCH(1,1) so economical?`]),
+    O('arima-i', 'Statistics', 'e', 'The I in ARIMA', `What does the I in ARIMA stand for?`,
+      `Integrated: ARIMA(p, d, q) differences the series d times to make it stationary, then fits an ARMA(p, q). d = 1 for a random-walk-like series such as a price. Over-differencing introduces artificial negative autocorrelation (an MA unit root), so test for unit roots first.`,
+      [`What operation does the d parameter apply?`, `What happens if you difference too much?`]),
+    O('multi-step', 'Statistics', 'm', 'One-step v multi-step forecasts', `What's the difference between one-step-ahead and multi-step-ahead forecasting?`,
+      `One-step forecasts predict the next period from the latest data. Multi-step forecasts predict h periods ahead: either iterate a one-step model (feeding forecasts back in, so errors compound) or fit a direct model for horizon h. Forecast uncertainty grows with h, and for stationary series forecasts revert to the mean.`,
+      [`Two ways to forecast h steps ahead: what are they?`, `What happens to the error as the horizon grows?`]),
+    O('ts-lookahead', 'Statistics', 'e', 'Lookahead in time-series features', `How can lookahead bias creep into time-series features?`,
+      `Rolling statistics that include the current bar used to trade that bar (shift them); labels whose horizon overlaps the next features; z-scores or scalers fitted on the full sample; point-in-time data replaced by later revisions; and joins on timestamps that ignore publication lags. Each makes a backtest look better than reality.`,
+      [`Was every input known before the decision?`, `Check rolling windows, scalers and data revisions.`]),
+    O('roc-auc', 'Statistics', 'm', 'ROC-AUC', `What is ROC-AUC?`,
+      `The area under the curve of true-positive rate against false-positive rate as the classification threshold varies. It equals the probability that a random positive is scored above a random negative: 0.5 is random, 1 perfect. It measures ranking only (not calibration) and can look good on very imbalanced data where precision is poor; then use precision–recall AUC.`,
+      [`What is plotted against what, as the threshold changes?`, `What's its probabilistic interpretation?`]),
+    ['cross-entropy', 'Statistics', 'm', 'Cross-entropy loss', `A model predicts probability 0.8 that an event happens, and it does.`,
+      [{ q: `What is the cross-entropy (log) loss for this prediction (natural log)?`, a: -Math.log(0.8), tol: { abs: 0.002, rel: 0 },
+        h: [`Binary cross-entropy is −[y ln p + (1 − y) ln(1 − p)].`, `Here y = 1.`],
+        s: [`Only the term for the outcome that happened counts.`, [`−ln 0.8 ≈ <b>0.223</b>.`], `Predicting 0.99 for an event that doesn't happen costs −ln 0.01 ≈ 4.6: confident mistakes are punished hard.`, ``] }]],
+    O('accuracy-imbalanced', 'Statistics', 'e', 'Accuracy on imbalanced data', `Why is accuracy misleading for imbalanced classification?`,
+      `If 1% of loans default, predicting "no default" for everyone is 99% accurate and useless. Use metrics that focus on the rare class: precision, recall, F1, PR-AUC, and calibration, and choose thresholds by the costs of each error type. Resampling or class weights can help training.`,
+      [`What does the trivial "always the majority" model score?`, `Which metrics focus on the rare class?`]),
+    O('early-stopping', 'Statistics', 'm', 'Early stopping', `What is early stopping?`,
+      `Monitor a validation loss while training an iterative model (boosting, neural nets) and stop when it stops improving for a set number of rounds, keeping the best iteration. It limits how far the model fits noise, acting like regularisation. The validation set must be separate from the test set (and chronologically after the training data for time series).`,
+      [`What do you monitor during training?`, `Why does stopping early reduce overfitting?`]),
+    ['forward-value', 'Finance', 'm', 'Valuing an existing forward', `You're long a forward to buy a stock at K = 100 in 6 months. The stock is now at 105 and r = 5% (continuous), no dividends.`,
+      [{ q: `What is the forward contract worth now?`, a: 105 - 100 * Math.exp(-0.025), tol: { abs: 0.01, rel: 0 },
+        h: [`A long forward is like holding the stock and owing K at expiry.`, `Value = S<sub>t</sub> − K e<sup>−r(T−t)</sup>.`],
+        s: [`Stock minus the present value of the delivery price.`, [`105 − 100 e<sup>−0.025</sup> ≈ 105 − 97.53 = <b>7.47</b>.`], `Equivalently (F<sub>t</sub> − K) e<sup>−r(T−t)</sup>.`, `Answering 5, ignoring discounting.`] }]],
+    O('ito-second-order', 'Stochastic calculus', 'm', 'Why Itô has a second-derivative term', `Why does Itô's lemma have a second-derivative term?`,
+      `In ordinary calculus (dx)² is negligible next to dx. For Brownian motion, dW is of size √dt, so (dW)² is of order dt, the same order as the drift, and doesn't vanish: summed over a path it gives the quadratic variation t. So the ½ f″ (dX)² term contributes ½ σ² f″ dt to the drift. It's why E[ln S] grows at μ − σ²/2.`,
+      [`How big is dW compared with dt?`, `What is (dW)² summed over an interval?`]),
+    O('rolling-z', 'Coding', 'm', 'Rolling z-scores', `Write Python for rolling z-scores, usable as a trading signal.`,
+      `<pre><code>def rolling_z(x, window=20):
+    m = x.rolling(window).mean().shift(1)
+    s = x.rolling(window).std(ddof=1).shift(1)
+    return (x - m) / s</code></pre><p>Use the mean and standard deviation of the <b>previous</b> window (the shift), so today's value isn't standardised by statistics that include it, and the signal uses only past data. Guard against zero standard deviation.</p>`,
+      [`Rolling mean and std, then standardise.`, `Why shift the rolling statistics by one?`]),
+    O('confusion-matrix', 'Coding', 'm', 'A confusion matrix in code', `Write Python to compute a confusion matrix from binary predictions.`,
+      `<pre><code>import numpy as np
+def confusion(y_true, y_pred):
+    t = np.asarray(y_true, bool); p = np.asarray(y_pred, bool)
+    tp = int(( t &amp;  p).sum()); fp = int((~t &amp;  p).sum())
+    fn = int(( t &amp; ~p).sum()); tn = int((~t &amp; ~p).sum())
+    return {"tp": tp, "fp": fp, "fn": fn, "tn": tn}</code></pre><p>Count the four combinations of true and predicted labels; precision, recall and accuracy follow from them.</p>`,
+      [`There are four combinations of truth and prediction.`, `Boolean masks make each count one line.`]),
+    O('dedupe-order', 'Coding', 'e', 'Removing duplicates, keeping order', `How do you remove duplicates from a list while keeping the original order?`,
+      `<pre><code>def dedupe(xs):
+    seen, out = set(), []
+    for x in xs:
+        if x not in seen:
+            seen.add(x); out.append(x)
+    return out</code></pre><p>O(n) with a set. In Python 3.7+ <code>list(dict.fromkeys(xs))</code> does the same. <code>list(set(xs))</code> loses the order.</p>`,
+      [`What structure tells you in O(1) whether you've seen an item?`, `Why not just use set()?`]),
+    O('const-correct', 'Coding', 'm', 'Const correctness', `What is const correctness in C++?`,
+      `Marking everything that shouldn't change as const: const references and pointers for read-only parameters, const member functions that don't modify the object (so they can be called on const objects), and const locals. The compiler then enforces the intent, documents interfaces, prevents accidental modification and enables some optimisations.`,
+      [`Where can const appear: variables, parameters, member functions?`, `What does a const member function promise?`]),
+    ['permutations', 'Combinatorics', 'e', 'Arranging objects', `You arrange 6 distinct books on a shelf.`,
+      [{ q: `In how many orders can they stand?`, a: 720, tol: EXACT,
+        h: [`Choose the first book, then the second from those left, and so on.`, `6 × 5 × 4 × 3 × 2 × 1.`],
+        s: [`n distinct objects have n! orders.`, [`6! = <b>720</b>.`], ``, ``] }]],
+    O('rolling-sharpe', 'Coding', 'm', 'Rolling Sharpe ratio', `Write Python for a rolling annualised Sharpe ratio.`,
+      `<pre><code>import numpy as np
+def rolling_sharpe(r, window=63, periods=252, rf=0.0):
+    ex = r - rf / periods
+    return ex.rolling(window).mean() / ex.rolling(window).std(ddof=1) * np.sqrt(periods)</code></pre><p>Short windows make it very noisy: a 3-month Sharpe has a standard error of roughly 2 in annual terms, so don't read much into its swings.</p>`,
+      [`Rolling mean over rolling standard deviation.`, `How noisy is a Sharpe ratio from a short window?`]),
+    O('align-series', 'Coding', 'm', 'Aligning two series by timestamp', `Write Python to align two time series on common timestamps.`,
+      `<pre><code>import pandas as pd
+def align(a, b):
+    a = pd.Series(a).sort_index(); b = pd.Series(b).sort_index()
+    return pd.concat([a, b], axis=1, join="inner").dropna()</code></pre><p>An inner join keeps only timestamps present in both. Make sure both use the same time zone and frequency first; for prices at different times use an as-of merge instead, never a forward fill that uses data from the future.</p>`,
+      [`Which join keeps only shared timestamps?`, `What should you check about the indexes first?`]),
+    O('ohlcv', 'Coding', 'm', 'Resampling trades to daily bars', `Write pandas to turn trade data into daily OHLCV bars.`,
+      `<pre><code>def daily_bars(trades):   # DatetimeIndex, columns price and size
+    t = trades.sort_index()
+    bars = t["price"].resample("1D").ohlc()
+    bars["volume"] = t["size"].resample("1D").sum()
+    return bars.dropna(subset=["open"])</code></pre><p>First, max, min and last price per day, and summed volume. Use the exchange's session boundaries and time zone, not midnight UTC, and drop days with no trades.</p>`,
+      [`Which aggregation for each of open, high, low, close and volume?`, `Where should a "day" start and end?`]),
+    O('asof-merge', 'Coding', 'h', 'Matching trades to quotes', `Write Python to match each trade to the latest quote before it.`,
+      `<pre><code>import pandas as pd
+def match_quotes(trades, quotes):
+    t = trades.sort_values("time"); q = quotes.sort_values("time")
+    return pd.merge_asof(t, q, on="time", direction="backward",
+                         allow_exact_matches=False, by="symbol")</code></pre><p><code>merge_asof</code> joins each trade to the most recent quote at or before its time (here strictly before, so the quote isn't already updated by the trade). Both frames must be sorted; add a tolerance so stale quotes aren't used.</p>`,
+      [`Which pandas function does nearest-earlier joins?`, `Should a quote at exactly the trade time count?`]),
+    O('spread-mid', 'Coding', 'e', 'Spread and mid price', `Write pandas to add the mid price and bid–ask spread.`,
+      `<pre><code>def add_mid_spread(q):
+    q = q[q["ask"] &gt; q["bid"]].copy()      # drop crossed or locked quotes
+    q["mid"] = (q["bid"] + q["ask"]) / 2
+    q["spread"] = q["ask"] - q["bid"]
+    q["spread_bps"] = 1e4 * q["spread"] / q["mid"]
+    return q</code></pre><p>Validate first (ask above bid, positive prices), then compute. Relative spread in basis points compares instruments of different prices.</p>`,
+      [`What validity check comes first?`, `Why also express the spread relative to the mid?`]),
+    O('stale-prices', 'Coding', 'm', 'Removing stale prices', `Write Python to flag stale prices.`,
+      `<pre><code>def stale_mask(p, max_run=5):
+    run_id = (p != p.shift()).cumsum()
+    run_len = p.groupby(run_id).transform("size")
+    return run_len &gt; max_run</code></pre><p>Group consecutive identical values and flag runs longer than a threshold. Unchanged prices can be genuine for illiquid instruments, so choose the threshold per asset and check timestamps and volumes too.</p>`,
+      [`Identify runs of identical consecutive values.`, `When might a long run be genuine?`]),
+    O('vectorisation', 'Coding', 'm', 'Why NumPy vectorisation is fast', `Why is NumPy vectorisation often faster than Python loops?`,
+      `A Python loop does interpreter work (type checks, boxing, dispatch) for every element. Vectorised operations run one compiled loop over contiguous typed memory, often with SIMD instructions and good cache use. The costs: temporary arrays use memory, and some recursive or path-dependent calculations don't vectorise (use Numba or Cython there).`,
+      [`What overhead does each loop iteration carry in Python?`, `What can't be vectorised easily?`]),
+    O('cov-matrix', 'Coding', 'e', 'A covariance matrix in NumPy', `Write NumPy code for the covariance matrix of asset returns.`,
+      `<pre><code>import numpy as np
+cov = np.cov(returns, rowvar=False)        # rows = dates, columns = assets
+annual = cov * 252</code></pre><p><code>rowvar=False</code> because each column is a variable. With many assets and few dates the sample covariance is noisy or singular; shrink it (Ledoit–Wolf) or use a factor model.</p>`,
+      [`Which axis holds the variables?`, `What goes wrong with many assets and few observations?`]),
+    O('prefix-sums', 'Coding', 'e', 'Prefix sums', `Implement prefix sums and say why they're useful.`,
+      `<pre><code>from itertools import accumulate
+def prefix(a): return [0] + list(accumulate(a))
+def range_sum(p, l, r): return p[r] - p[l]    # sum of a[l:r]</code></pre><p>One O(n) pass, then any range sum in O(1). Used for rolling sums and means, cumulative volume, and 2D versions for image or grid queries.</p>`,
+      [`Store the running total up to each index.`, `How do you get the sum of a[l:r] from two totals?`]),
+    ['window-sum', 'Logic', 'e', 'Best window sum', `The array is 2, 1, 5, 1, 3, 2.`,
+      [{ q: `What is the largest sum of 3 consecutive elements?`, a: 9, tol: EXACT,
+        h: [`Compute the first window's sum, then slide: add the new element, subtract the old.`, `Windows: 2+1+5, 1+5+1, 5+1+3, 1+3+2.`],
+        s: [`Sliding window, O(n).`, [`Sums 8, 7, 9, 6.`, `Maximum <b>9</b>.`], ``, ``] }]],
+    ['kadane', 'Logic', 'm', 'Maximum subarray', `The array is −2, 1, −3, 4, −1, 2, 1, −5, 4.`,
+      [{ q: `What is the largest sum of a contiguous subarray?`, a: 6, tol: EXACT,
+        h: [`Kadane's algorithm: track the best sum ending at each position.`, `best_here = max(x, best_here + x); best = max(best, best_here).`],
+        s: [`Kadane: drop the running prefix whenever it goes negative.`, [`The subarray 4, −1, 2, 1.`, `Sum <b>6</b>.`], `O(n) time, O(1) space.`, ``] }]],
+    O('balanced-brackets', 'Coding', 'e', 'Balanced brackets', `Check whether a string's brackets are balanced.`,
+      `<pre><code>def balanced(s):
+    pairs, stack = {")": "(", "]": "[", "}": "{"}, []
+    for c in s:
+        if c in "([{": stack.append(c)
+        elif c in pairs:
+            if not stack or stack.pop() != pairs[c]: return False
+    return not stack</code></pre><p>Push openers; each closer must match the top of the stack; the stack must end empty. O(n).</p>`,
+      [`Which data structure matches the most recent opener?`, `What must be true at the end?`]),
+    O('stack-heap', 'Coding', 'm', 'Stack v heap', `What's the difference between stack and heap memory in C++?`,
+      `<b>Stack</b>: automatic storage for local variables, allocated and freed by moving a pointer, very fast and cache-friendly, but limited in size and tied to scope. <b>Heap</b>: dynamic storage with lifetime you control (new/delete, ideally via RAII types like vector and unique_ptr), larger but slower to allocate and prone to fragmentation and leaks.`,
+      [`Which has scope-bound lifetime?`, `Which is faster to allocate, and why?`]),
+    O('dtor-throw', 'Coding', 'm', 'Destructors and exceptions', `Why shouldn't destructors throw in C++?`,
+      `Destructors run during stack unwinding while another exception is in flight; a second exception then calls std::terminate. Destructors are also implicitly noexcept since C++11, so throwing terminates anyway. Handle or log errors inside the destructor, and offer an explicit close() for callers who need to see failures.`,
+      [`When are destructors called during exception handling?`, `What is the default exception specification of a destructor?`]),
+    O('rule-of-zero', 'Coding', 'm', 'The rule of zero', `What is the rule of zero in modern C++?`,
+      `Design classes so they need none of the special member functions (destructor, copy/move constructors and assignments): hold resources in members that already manage themselves (std::vector, std::string, smart pointers). The compiler-generated versions then do the right thing. Only resource-owning wrapper classes should write them (the rule of five).`,
+      [`Which special member functions does it refer to?`, `Who should manage the resources instead?`]),
+    O('reserve-resize', 'Coding', 'm', 'reserve v resize', `What's the difference between std::vector::reserve and resize?`,
+      `<code>reserve(n)</code> allocates capacity for at least n elements but doesn't create any: size is unchanged, so you still push_back. <code>resize(n)</code> changes the size, constructing (value-initialising) or destroying elements. Use reserve to avoid reallocations when appending; resize when you need n elements to index into. Indexing past size after only reserve is a bug the compiler won't catch.`,
+      [`Which changes size(), which changes capacity()?`, `What bug comes from confusing them?`]),
+    O('streaming-mean', 'Coding', 'm', 'A streaming rolling mean', `Design a rolling-mean calculator for streaming data.`,
+      `<pre><code>from collections import deque
+class RollingMean:
+    def __init__(self, n): self.n, self.q, self.s = n, deque(), 0.0
+    def update(self, x):
+        self.q.append(x); self.s += x
+        if len(self.q) &gt; self.n: self.s -= self.q.popleft()
+        return self.s / len(self.q)</code></pre><p>O(1) per update with a deque and running sum. For long-running systems, occasionally recompute the sum to stop floating-point drift, or use a fixed ring buffer to avoid allocation.</p>`,
+      [`What do you need to remember about the window?`, `How do you update the sum in O(1)?`]),
+    O('dedupe-seq', 'Coding', 'h', 'Deduplicating by sequence number', `How would you deduplicate market-data messages using sequence numbers?`,
+      `If messages arrive in order, keep the last processed sequence number: skip anything ≤ it, and treat a jump as a gap needing recovery. If they can arrive out of order (A/B feeds, retransmits), keep a bounded window of seen numbers (a bitset or set above a low-water mark), process each number once, and advance the low-water mark as gaps fill.`,
+      [`What's enough state if messages are strictly ordered?`, `What changes when they can arrive out of order?`]),
+    ['turnover', 'Finance', 'e', 'Portfolio turnover', `A two-asset portfolio rebalances from weights (50%, 50%) to (70%, 30%).`,
+      [{ q: `What is the one-way turnover?`, a: 0.2,
+        h: [`Add up the absolute changes in each weight.`, `One-way turnover is half of that total, since buys equal sells.`],
+        s: [`One-way turnover = ½ Σ|Δw|.`, [`½ × 0.4 = <b>0.2</b> (20% of the portfolio traded).`], `Multiply by trading cost to estimate the rebalance's drag.`, ``] }]],
+    ['portfolio-return', 'Finance', 'e', 'Portfolio return from weights', `A portfolio holds 60% in asset A, which returns 2%, and 40% in asset B, which returns −1%.`,
+      [{ q: `What is the portfolio's return (as a decimal)?`, a: 0.008,
+        h: [`Portfolio return = Σ weight × asset return.`, `Multiply each asset's return by its weight and add; B's contribution is negative.`],
+        s: [`Weighted sum of returns (in pandas, (w * r).sum(axis=1) with aligned indexes).`, [`0.012 − 0.004 = <b>0.008</b>, i.e. 0.8%.`], `Use the weights held at the start of the period, not the end.`, ``] }]],
   ]);
 })();

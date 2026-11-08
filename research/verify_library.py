@@ -992,3 +992,104 @@ put("xy-forward-dividend.0", 100 * math.exp(0.05 - 0.02))
 d1 = 0.2 / 2
 put("xy-bs-atm.0", 100 * norm.cdf(d1) - 100 * norm.cdf(d1 - 0.2))
 put("xy-time-value.0", 8 - max(105 - 100, 0))
+
+
+# ---------------------------------------------------------------- Xiaodong Yang's notes, part 2
+def bs_d1(S, K, r, sig, T):
+    return (math.log(S / K) + (r + sig * sig / 2) * T) / (sig * math.sqrt(T))
+
+
+def bs_call_price(S, K, r, sig, T):
+    d1 = bs_d1(S, K, r, sig, T)
+    return S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d1 - sig * math.sqrt(T))
+
+
+h_fd = 1e-4
+put("xy-bs-deltas.0", (bs_call_price(100 + h_fd, 100, 0, 0.2, 1) - bs_call_price(100 - h_fd, 100, 0, 0.2, 1)) / (2 * h_fd))
+put("xy-bs-deltas.1", norm.cdf(bs_d1(100, 100, 0, 0.2, 1)) - 1)
+put("xy-bs-gamma.0", norm.pdf(bs_d1(100, 100, 0, 0.2, 1)) / (100 * 0.2))
+put("xy-bs-vega.0", 100 * norm.pdf(bs_d1(100, 100, 0, 0.2, 1)) * 0.01)  # vega per vol point; checked by bumping below
+assert abs((bs_call_price(100, 100, 0, 0.21, 1) - bs_call_price(100, 100, 0, 0.19, 1)) / 2 - ANSWERS["xy-bs-vega.0"]) < 1e-4
+# Digital: risk-neutral probability S_T > K by integrating the lognormal density.
+mu_q, sd_q = math.log(100) - 0.02, 0.2
+put("xy-digital-call.0", 1 - norm.cdf((math.log(100) - mu_q) / sd_q))
+put("xy-put-bound.0", max(110 * math.exp(-0.05) - 100, 0))
+put("xy-butterfly.0", max(max(s - 90, 0) - 2 * max(s - 100, 0) + max(s - 110, 0) for s in range(0, 200)))
+put("xy-straddle.0", next(s / 100 for s in range(10000, 20000) if max(s / 100 - 100, 0) + max(100 - s / 100, 0) - 8 >= 0))
+p_rn = (1.05 - 0.9) / (1.2 - 0.9)
+put("xy-binomial-step.0", round(p_rn, 12))
+# Replication: shares and bond matching payoffs 20 and 0.
+delta_rep = (20 - 0) / (120 - 90)
+bond = (0 - delta_rep * 90) / 1.05
+put("xy-binomial-step.1", round(delta_rep * 100 + bond, 12))
+put("xy-bm-moments.0", 5 - 2)
+put("xy-bm-moments.1", min(2, 5))
+put("xy-quadratic-variation.0", 4)
+put("xy-gbm-median.0", 100 * math.exp(0.1))
+put("xy-gbm-median.1", 100 * math.exp((0.1 - 0.3 ** 2 / 2) * 1))
+put("xy-market-price-risk.0", (0.10 - 0.03) / 0.20)
+put("xy-ito-isometry.0", quad(lambda t: t * t, 0, 1)[0])
+put("xy-ou-process.0", math.log(2) / 0.5)
+put("xy-ou-process.1", 0.2 ** 2 / (2 * 0.5))
+put("xy-log-returns.0", 0.08 - 0.2 ** 2 / 2)
+put("xy-log-returns.1", 0.2 * math.sqrt(1))
+put("xy-vol-scaling.0", 1 * math.sqrt(252))
+
+
+# ---------------------------------------------------------------- Xiaodong Yang's notes, part 3
+wealth = np.array([100, 120, 90, 130, 104], dtype=float)
+put("xy-max-drawdown.0", float(np.max(1 - wealth / np.maximum.accumulate(wealth))))
+prices_bt = [7, 1, 5, 3, 6, 4]
+put("xy-best-trade.0", max(prices_bt[j] - prices_bt[i] for i in range(6) for j in range(i + 1, 6)))
+xn = Fr(1)
+for _ in range(2):
+    xn = xn - (xn * xn - 2) / (2 * xn)
+put("xy-newton-sqrt2.0", xn)
+put("xy-normal-mle.0", min((sum((x - m / 1000) ** 2 for x in (2, 4, 9)), m / 1000) for m in range(0, 10001))[1])
+put("xy-ols-slope.0", float(np.linalg.lstsq(np.column_stack([np.ones(3), [1, 2, 3]]), np.array([2.0, 3, 5]), rcond=None)[0][1]))
+die_var = Fr(sum(k * k for k in range(1, 7)), 6) - Fr(7, 2) ** 2
+put("xy-clt-dice.0", math.sqrt(die_var / 100))
+put("xy-sample-variance.0", float(np.var([2, 4, 6], ddof=1)))
+put("xy-sample-variance.1", float(np.var([2, 4, 6], ddof=0)))
+# AR(1): iterate the mean and variance recursions to their fixed points.
+m_ar, v_ar = 0.0, 0.0
+for _ in range(500):
+    m_ar, v_ar = 1 + 0.5 * m_ar, 0.25 * v_ar + 1
+put("xy-ar1.0", round(m_ar, 12))
+put("xy-ar1.1", round(v_ar, 12))
+h_g = 0.0001
+for _ in range(5000):
+    h_g = 0.00002 + (0.10 + 0.85) * h_g  # expectation of the GARCH recursion
+put("xy-garch-longrun.0", round(math.sqrt(h_g), 12))
+put("xy-precision-recall.0", Fr(40, 50))
+put("xy-precision-recall.1", Fr(40, 60))
+put("xy-binary-search.0", next(k for k in range(1, 40) if 2 ** k >= 1_000_000 + 1))
+put("xy-vwap.0", Fr(100 * 10 + 300 * 11 + 100 * 12, 500))
+put("xy-impl-shortfall.0", round((50.20 - 50.00) * 1000, 9))
+put("xy-exp-race.0", quad(lambda x: 2 * math.exp(-2 * x) * math.exp(-3 * x), 0, np.inf)[0])
+
+
+# ---------------------------------------------------------------- Xiaodong Yang's notes, part 4
+put("xy-normal-combo.0", 2 ** 2 * 4 + (-1) ** 2 * 9)
+cov_xy = np.array([[1, 0.6], [0.6, 1]])
+put("xy-bivariate-normal.0", cov_xy[0, 1] / cov_xy[1, 1] * 1)
+put("xy-bivariate-normal.1", cov_xy[0, 0] - cov_xy[0, 1] ** 2 / cov_xy[1, 1])
+Pm = np.array([[0.7, 0.3], [0.1, 0.9]])
+put("xy-stationary-dist.0", round(float(np.linalg.matrix_power(Pm, 500)[0, 1]), 12))
+put("xy-delta-method.0", abs(2 * 2) * (1 / math.sqrt(100)))
+put("xy-multiple-testing.0", 100 * 0.05)
+put("xy-multiple-testing.1", 1 - 0.95 ** 100)
+put("xy-parity-dividend.0", 10 - 100 * math.exp(-0.03) + 100 * math.exp(-0.05))
+put("xy-die-six.0", sum(k * Fr(5, 6) ** (k - 1) * Fr(1, 6) for k in range(1, 600)).__float__())
+put("xy-thinning.0", 10 * 0.3 * 5)
+put("xy-base-rate.0", (0.01 * 0.99) / (0.01 * 0.99 + 0.99 * 0.05))
+put("xy-adjusted-r2.0", 1 - (1 - 0.5) * (50 - 1) / (50 - 5 - 1))
+put("xy-cross-entropy.0", -math.log(0.8))
+put("xy-forward-value.0", 105 - 100 * math.exp(-0.05 * 0.5))
+put("xy-permutations.0", sum(1 for _ in itertools.permutations(range(6))))
+arr = [2, 1, 5, 1, 3, 2]
+put("xy-window-sum.0", max(sum(arr[i:i + 3]) for i in range(len(arr) - 2)))
+arr2 = [-2, 1, -3, 4, -1, 2, 1, -5, 4]
+put("xy-kadane.0", max(sum(arr2[i:j]) for i in range(len(arr2)) for j in range(i + 1, len(arr2) + 1)))
+put("xy-turnover.0", 0.5 * (abs(0.7 - 0.5) + abs(0.3 - 0.5)))
+put("xy-portfolio-return.0", 0.6 * 0.02 + 0.4 * -0.01)
