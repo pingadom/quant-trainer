@@ -13,7 +13,7 @@
     kelly: (el) => QT.kelly.render(el),
     figgie: (el) => QT.figgie.render(el),
     daily: (el) => QT.daily.render(el),
-    oa: (el) => QT.oa.render(el),
+    oa: (el, a, b, c) => QT.oa.render(el, a, b, c),
     talk: (el, id) => QT.talk.render(el, id),
     screen: (el, a, b) => QT.screen.render(el, a, b),
     stories: (el, id) => QT.stories.render(el, id),

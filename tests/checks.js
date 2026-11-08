@@ -473,6 +473,167 @@
       }
     }
 
+    // Number sequences: every kind of pattern, checked against independent next-term solvers.
+    // Each sample's answer must be what one solver predicts, and no solver whose rule also fits
+    // every term shown may predict anything else (that would make the question ambiguous).
+    if (QT.seq) {
+      function seqPredictors(t) {
+        const n = t.length, out = [];
+        const diff = (a) => a.slice(1).map((x, i) => x - a[i]);
+        const isInt = Number.isInteger;
+        // polynomial of degree d: d-th differences constant
+        for (let d = 1; d <= 3; d++) {
+          if (n < d + 3) continue;
+          const rows = [t];
+          for (let k = 0; k < d; k++) rows.push(diff(rows[rows.length - 1]));
+          const last = rows[d];
+          if (last.every((x) => x === last[0])) {
+            let v = last[0];
+            for (let k = d - 1; k >= 0; k--) v = rows[k][rows[k].length - 1] + v;
+            out.push(['poly' + d, v]);
+            break; // a lower degree fits, so higher ones say the same
+          }
+        }
+        // geometric
+        if (n >= 4 && t[0] !== 0) {
+          const r = t[1] / t[0];
+          if (t.every((x, i) => i === 0 || x === t[i - 1] * r) && isInt(t[n - 1] * r)) out.push(['geo', t[n - 1] * r]);
+        }
+        // x' = p x + q (p not 1 or 0, integer)
+        if (n >= 4 && t[1] !== t[0]) {
+          const p = (t[2] - t[1]) / (t[1] - t[0]), q = t[1] - p * t[0];
+          if (isInt(p) && p !== 1 && p !== 0 && isInt(q) && t.every((x, i) => i === 0 || x === p * t[i - 1] + q)) out.push(['lin', p * t[n - 1] + q]);
+        }
+        // sums and products of previous terms
+        if (n >= 5 && t.every((x, i) => i < 2 || x === t[i - 1] + t[i - 2])) out.push(['fib', t[n - 1] + t[n - 2]]);
+        if (n >= 6 && t.every((x, i) => i < 3 || x === t[i - 1] + t[i - 2] + t[i - 3])) out.push(['trib', t[n - 1] + t[n - 2] + t[n - 3]]);
+        if (n >= 5 && t.every((x, i) => i < 2 || x === t[i - 1] * t[i - 2])) out.push(['prod', t[n - 1] * t[n - 2]]);
+        // ratios rise by a constant (x1, x2, x3, …)
+        if (n >= 5 && t.every((x) => x !== 0)) {
+          const r = t.slice(1).map((x, i) => x / t[i]);
+          if (r.every(isInt) && diff(r).every((x) => x === r[1] - r[0]) && r[1] !== r[0]) out.push(['ratio+', t[n - 1] * (r[r.length - 1] + r[1] - r[0])]);
+        }
+        // two sequences taking turns, each arithmetic or geometric
+        if (n >= 7) {
+          const ev = t.filter((_, i) => i % 2 === 0), od = t.filter((_, i) => i % 2 === 1), nextIsEven = n % 2 === 0;
+          const sub = nextIsEven ? ev : od, other = nextIsEven ? od : ev;
+          const fitsSimple = (a) => {
+            const d = diff(a);
+            if (d.every((x) => x === d[0])) return a[a.length - 1] + d[0];
+            if (a[0] !== 0) { const r = a[1] / a[0]; if (a.every((x, i) => i === 0 || x === a[i - 1] * r)) return a[a.length - 1] * r; }
+            return null;
+          };
+          const p1 = fitsSimple(sub), p2 = fitsSimple(other);
+          if (p1 !== null && p2 !== null) out.push(['interleave', p1]);
+        }
+        // differences take turns between two arithmetic sequences, or alternate ×m and +c
+        if (n >= 7) {
+          const d = diff(t), de = d.filter((_, i) => i % 2 === 0), dd = d.filter((_, i) => i % 2 === 1);
+          const ar = (a) => a.length >= 2 && diff(a).every((x) => x === a[1] - a[0]);
+          if (ar(de) && ar(dd) && !(de[1] - de[0] === 0 && dd[1] - dd[0] === 0 && de[0] === dd[0])) {
+            const k = d.length; // the next difference's index
+            const src = k % 2 === 0 ? de : dd;
+            out.push(['diffs-alt', t[n - 1] + src[src.length - 1] + (src[1] - src[0])]);
+          }
+        }
+        if (n >= 6) {
+          for (const first of [0, 1]) {
+            // steps alternate: × m at even steps (if first = 0) and + c at the others
+            const muls = [], adds = [];
+            for (let i = 1; i < n; i++) ((i - 1) % 2 === first ? muls : adds).push([t[i - 1], t[i]]);
+            if (!muls.length || !adds.length || muls.some(([a]) => a === 0)) continue;
+            const m = muls[0][1] / muls[0][0], c = adds[0][1] - adds[0][0];
+            if (m !== 1 && isInt(m) && muls.every(([a, b]) => b === a * m) && adds.every(([a, b]) => b - a === c)) {
+              const nextMul = (n - 1) % 2 === first;
+              out.push(['alt-ops', nextMul ? t[n - 1] * m : t[n - 1] + c]);
+            }
+          }
+        }
+        // signs alternate and the sizes follow a polynomial
+        if (n >= 5 && t.every((x, i) => i === 0 || Math.sign(x) === -Math.sign(t[i - 1]))) {
+          const a = t.map(Math.abs), inner = seqPredictors(a).find(([k]) => k.startsWith('poly'));
+          if (inner) out.push(['alt-sign', -Math.sign(t[n - 1]) * inner[1]]);
+        }
+        // special sequences, recognised directly
+        const isPrime = (x) => { if (x < 2) return false; for (let k = 2; k * k <= x; k++) if (x % k === 0) return false; return true; };
+        const nextPrime = (x) => { let y = x + 1; while (!isPrime(y)) y++; return y; };
+        if (n >= 5 && t.every(isPrime) && t.every((x, i) => i === 0 || x === nextPrime(t[i - 1]))) out.push(['primes', nextPrime(t[n - 1])]);
+        {
+          const d = diff(t);
+          if (d.length >= 4 && d.every(isPrime) && d.every((x, i) => i === 0 || x === nextPrime(d[i - 1]))) out.push(['prime-diffs', t[n - 1] + nextPrime(d[d.length - 1])]);
+        }
+        {
+          const root = (x, p) => { const r = Math.round(Math.sign(x) * Math.abs(x) ** (1 / p)); return r ** p === x ? r : null; };
+          if (n >= 7) {
+            const sq = t.filter((_, i) => i % 2 === 0).map((x) => root(x, 2)), cu = t.filter((_, i) => i % 2 === 1).map((x) => root(x, 3));
+            const cons = (a) => a.every((x, i) => x !== null && (i === 0 || x === a[i - 1] + 1));
+            if (cons(sq) && cons(cu)) out.push(['sq-cube', n % 2 === 0 ? (sq[sq.length - 1] + 1) ** 2 : (cu[cu.length - 1] + 1) ** 3]);
+          }
+        }
+        {
+          // t_k − k! (k = 1, 2, …) a multiple of k with a constant multiplier
+          const f = (k) => (k <= 1 ? 1 : k * f(k - 1)), c = t[0] - 1;
+          if (n >= 5 && c !== 0 && t.every((x, i) => x === f(i + 1) + c * (i + 1))) out.push(['nfact', f(n + 1) + c * (n + 1)]);
+        }
+        {
+          // n² ± 1 alternately, for consecutive n
+          for (let s0 = 1; s0 <= 10; s0++) {
+            const g = (k) => (s0 + k) ** 2 + ((s0 + k) % 2 ? 1 : -1);
+            if (n >= 5 && t.every((x, i) => x === g(i))) out.push(['sq-pm', g(n)]);
+          }
+        }
+        {
+          const ds = (x) => String(Math.abs(x)).split('').reduce((a, b) => a + +b, 0);
+          if (n >= 5 && t[0] >= 10 && t.every((x, i) => i === 0 || x === t[i - 1] + ds(t[i - 1]))) out.push(['digitsum', t[n - 1] + ds(t[n - 1])]);
+        }
+        return out;
+      }
+      for (const f of QT.seq.FAMILIES) {
+        for (let k = 0; k < 300; k++) {
+          const q = QT.seq.make(f);
+          if (q.letter) {
+            const pos = [...q.t, q.a].map((x) => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(x));
+            const d = pos.slice(1).map((x, i) => x - pos[i]);
+            const ok = pos.every((x) => x >= 0) && (f.id === 'letters' ? d.every((x) => x === d[0]) : d.every((x, i) => i === 0 || x === d[i - 1] + 1));
+            if (!ok) { fail(`seq ${f.id}: bad letters ${q.q} → ${q.a}`); break; }
+            continue;
+          }
+          if (![...q.t, q.a].every(Number.isInteger) || Math.abs(q.a) > 1e5 || q.t.length < 5) { fail(`seq ${f.id}: bad terms ${q.q} → ${q.a}`); break; }
+          const ps = seqPredictors(q.t), other = ps.filter(([, v]) => v !== q.a);
+          if (!ps.some(([, v]) => v === q.a)) { fail(`seq ${f.id}: no independent solver gives ${q.a} for ${q.q}`); break; }
+          if (other.length) { fail(`seq ${f.id}: ambiguous ${q.q}: app says ${q.a}, ${other.map(([n, v]) => `${n} says ${v}`).join(', ')}`); break; }
+          if (!QT.seq.check(q, String(q.a)) || QT.seq.check(q, String(q.a + 1))) { fail(`seq ${f.id}: answer checking`); break; }
+        }
+      }
+    }
+
+    // Cognitive games: the target puzzles are solvable and the answer parser is exact.
+    if (QT.games) {
+      const G = QT.games;
+      for (let k = 0; k < 150; k++) {
+        const p = G.targetPuzzle(), r = G.parseTarget(p.sol);
+        if (!r || r.v[0] !== p.target || r.v[1] !== 1 || !G.sameNums(r.used, p.nums)) { fail(`games: target solution ${p.sol} for ${p.nums} → ${p.target}`); break; }
+      }
+      const pt = (s) => { const r = G.parseTarget(s); return r ? `${r.v[0]}/${r.v[1]}:${r.used.join(',')}` : null; };
+      if (pt('(8-2)*(3+1)') !== '24/1:8,2,3,1' || pt('8 ÷ (3 − 8/3)') !== '24/1:8,3,8,3' || pt('6 × 4') !== '24/1:6,4') fail('games: target parser arithmetic');
+      if (pt('2**3') !== null || pt('alert(1)') !== null || pt('(1+2') !== null || pt('1/0') !== null) fail('games: target parser must reject bad input');
+      if (!G.solveAll([8, 3, 8, 3]).has(24) || G.solveAll([1, 1, 1, 1]).has(24)) fail('games: target solver');
+      for (let k = 0; k < 300; k++) {
+        const c = G.codePair(4 + (k % 7));
+        const diffs = [...c.a].filter((ch, i) => ch !== c.b[i]).length;
+        if (c.same !== (c.a === c.b) || c.a.length !== c.b.length || (!c.same && diffs > 2)) { fail(`games: code pair ${c.a} / ${c.b}`); break; }
+      }
+      for (const N of [8, 16, 32]) {
+        let bestK = 0;
+        for (let k = 0; k <= N; k++) if (G.evPumps(N, k) > G.evPumps(N, bestK)) bestK = k;
+        if (G.evPumps(N, G.bestPumps(N)) !== G.evPumps(N, bestK)) fail(`games: best pumps for N=${N}`);
+        // the value of pumping k times, by summing over the burst point
+        let ev = 0;
+        for (let b = 1; b <= N; b++) ev += (b > 4 ? 4 : 0) / N;
+        if (Math.abs(ev - G.evPumps(N, 4)) > 1e-12) fail(`games: pump value for N=${N}`);
+      }
+    }
+
     // Think aloud: pace and filler counting.
     if (QT.talk) {
       const st = QT.talk.speechStats('Um so I think uh the answer is like 5', 60);
@@ -1108,7 +1269,7 @@
     if (files.pkg && JSON.parse(files.pkg).version !== QT.VERSION) fail(`version mismatch: package.json vs core.js ${QT.VERSION}`);
 
     const fails = out.length;
-    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated) · ${(QT.estimateFacts || []).length} estimation facts · ${(QT.tricks || []).length} speed tricks · ${QT.code ? `${QT.code.PROBLEMS.length} coding problems · ${QT.codeQuiz.QS.length} quiz questions · ` : ''}Figgie, Kelly, daily, quote, online-test and chart checks`);
+    out.push(`\n${QT.topics.length} topics · ${gens} generators · ${sims} simulation checks · ${QT.cases.length} case studies · ${QT.bank.length} interview questions (${bankSims} simulated) · ${(QT.estimateFacts || []).length} estimation facts · ${(QT.tricks || []).length} speed tricks · ${QT.code ? `${QT.code.PROBLEMS.length} coding problems · ${QT.codeQuiz.QS.length} quiz questions · ` : ''}Figgie, Kelly, daily, quote, online-test, sequence, game and chart checks`);
     out.push(fails ? `${fails} FAILURE(S)` : 'ALL CHECKS PASSED');
     return { lines: out, fails };
   }

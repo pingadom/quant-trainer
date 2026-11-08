@@ -1,14 +1,17 @@
 // Online-assessment practice. Many trading firms screen with timed online tests before any
-// interview: number sequences, plus short memory and attention tasks. These are practice
-// versions of those kinds of task, not copies of any firm's test.
+// interview: number sequences (seq.js), short cognitive games (games.js) and memory tasks (here).
+// Our own versions of those kinds of task, not copies of any firm's test.
 (function () {
-  const R = QT.rand, store = QT.store, f = QT.fmtNum;
+  const store = QT.store;
 
+  // Everything with a personal best on this page. Sequence tests and games add their own entries
+  // below (keys must also be listed in core.js OA_KEYS so saved results survive a reload).
   const TESTS = {
-    seq: { name: 'Number sequences', unit: 'correct', desc: 'Find the next term. 15 questions in 7½ minutes, typed answers, skip any you are stuck on.' },
     span: { name: 'Digit span', unit: 'digits', desc: 'Digits flash one at a time; type them back in order. Each success adds a digit; two misses end the test. Most people manage about 7.' },
     total: { name: 'Running total', unit: 'of 5', desc: 'Numbers flash one at a time, faster each round. Keep a running total in your head and type it at the end. 5 rounds.' },
   };
+  for (const [k, m] of Object.entries(QT.seq.MODES)) TESTS[k] = { name: `Sequences: ${m.name}`, unit: `of ${m.n}`, desc: m.desc };
+  for (const [k, g] of Object.entries(QT.games.GAMES)) TESTS[k] = { name: g.name, unit: g.unit, desc: g.desc };
 
   // Digit span: a random string of digits with no immediate repeats (repeats are hard to see).
   function spanDigits(n, rnd = Math.random) {
@@ -44,26 +47,104 @@
     return prev === null || score > prev;
   }
 
-  function render(el) {
-    const oa = store.get().oa;
-    el.innerHTML = `
-      <h1>Online tests</h1>
-      <p class="lede">Before any interview, many trading firms screen with timed online tests: arithmetic, number sequences, and short memory or attention games. Few candidates practise the last two. These are practice versions of those kinds of task, not copies of any firm's test.</p>
-      <div class="grid">
-        ${Object.entries(TESTS).map(([k, t]) => `
-        <div class="card">
-          <h3>${t.name}</h3>
-          <p class="small">${t.desc}</p>
-          <p class="small">Best: <b>${oa[k]?.best ?? '–'}</b> ${t.unit}${oa[k]?.runs?.length ? ` · ${oa[k].runs.length} runs` : ''}</p>
-          <button data-test="${k}">Start</button>
-        </div>`).join('')}
-      </div>
-      <p class="small">Arithmetic screens: see <a href="#/mental">Mental maths</a> (80 in 8), <a href="#/mental/60in6">60 in 6</a> (the Flow Traders format) and the <a href="#/tricks">speed tricks</a>.</p>`;
-    el.querySelectorAll('[data-test]').forEach((b) => b.addEventListener('click', () => ({ seq: sequences, span, total })[b.dataset.test](el)));
+  // Results of the current "all games" run, in order.
+  let battery = null;
+
+  function render(el, a, b, c) {
+    if (a === 'seq') {
+      if (b === 'practice') return QT.seq.practice(el, c || 'all');
+      if (b === 'fam') return QT.seq.practice(el, 'all', c);
+      if (b === 'test') {
+        const key = QT.seq.MODES[c] ? c : 'seq';
+        const run = () => QT.seq.test(el, key, (e, k, score, extra) => finishCard(e, k, score, extra, run));
+        return run();
+      }
+      return QT.seq.hub(el);
+    }
+    if (a === 'game' && QT.games.GAMES[b]) return playGame(el, b, null);
+    if (a === 'battery') {
+      const i = Math.max(0, Math.floor(+b || 0));
+      if (i === 0) battery = [];
+      if (!battery) { location.hash = '#/oa/battery/0'; return; }
+      if (i >= QT.games.ORDER.length) return batteryDone(el);
+      return playGame(el, QT.games.ORDER[i], i);
+    }
+    if (a === 'span') return span(el);
+    if (a === 'total') return total(el);
+    hub(el);
   }
 
-  const finishCard = (el, key, score, extra) => {
+  function playGame(el, key, idx) {
+    const g = QT.games.GAMES[key];
+    // A short intro first, so the clock never starts before you've read the rules.
+    el.innerHTML = `
+      <p class="small"><a href="#/oa">← Online tests</a>${idx !== null ? ` · Game ${idx + 1} of ${QT.games.ORDER.length}` : ''}</p>
+      <h1>${g.name}</h1>
+      <p class="eyebrow">${g.skill} · about ${g.mins} min</p>
+      <p class="lede">${g.desc}</p>
+      <div class="row"><button id="g-go">Start</button>${idx !== null ? `<a class="btn ghost" href="#/oa/battery/${idx + 1}">Skip this game</a>` : ''}</div>`;
+    const go = () => g.play(el, (e, k, score, extra) => {
+      if (idx !== null && battery) battery[idx] = { key: k, score };
+      finishCard(e, k, score, extra, () => playGame(el, key, idx), idx);
+    });
+    el.querySelector('#g-go').addEventListener('click', go);
+  }
+
+  function batteryDone(el) {
+    const rows = QT.games.ORDER.map((k, i) => {
+      const g = QT.games.GAMES[k], r = battery[i], best = store.get().oa[k]?.best;
+      return `<tr><td>${g.name}</td><td>${g.skill}</td><td>${r ? r.score : 'skipped'}</td><td>${best ?? '–'}</td></tr>`;
+    }).join('');
+    el.innerHTML = `
+      <h1>All games: done</h1>
+      <p class="lede">One full run of the games, as in a game-based assessment. Compare each score with your best: the weakest one is the skill to practise.</p>
+      <div class="table-wrap"><table><thead><tr><th>Game</th><th>Skill</th><th>This run</th><th>Your best</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="row" style="margin-top:18px"><a class="btn" href="#/oa/battery/0">Run them all again</a><a class="btn ghost" href="#/oa">Back</a></div>`;
+    battery = null;
+  }
+
+  function hub(el) {
+    const oa = store.get().oa, G = QT.games.GAMES;
+    const best = (k) => (oa[k]?.best ?? '–');
+    const seqBest = Object.keys(QT.seq.MODES).filter((k) => oa[k]?.best != null).map((k) => `${oa[k].best} of ${QT.seq.MODES[k].n}`);
+    const totalMins = Math.round(QT.games.ORDER.reduce((s, k) => s + G[k].mins, 0));
+    el.innerHTML = `
+      <h1>Online tests</h1>
+      <p class="lede">Before any interview, many trading firms screen with timed online tests: arithmetic, number sequences, and short games that measure memory, attention, timing and risk-taking. Few candidates practise the games. These are our own versions of those kinds of task, not copies of any firm's test.</p>
+      <h2>Number sequences</h2>
+      <div class="card">
+        <p>${QT.seq.FAMILIES.length} kinds of pattern in three levels: practice that explains every answer, and timed tests of 15, 24 and 26 questions. It tracks which patterns you miss.</p>
+        <p class="small">${seqBest.length ? `Best: ${seqBest.join(' · ')}` : 'No tests yet.'}</p>
+        <div class="row"><a class="btn" href="#/oa/seq">Open sequences</a><a class="btn ghost" href="#/oa/seq/test/seq">Quick test: 15 in 7½ min</a></div>
+      </div>
+      <h2>Cognitive games</h2>
+      <p class="small">Game-based assessments (Optiver's Zap-N, IMC's games and others) run a set of short games, each testing one skill. These seven cover the same skills with our own games. Each takes a minute or two.</p>
+      <div class="grid">${QT.games.ORDER.map((k) => `
+        <div class="card">
+          <h3>${G[k].name}</h3>
+          <p class="eyebrow">${G[k].skill}</p>
+          <p class="small">${G[k].desc}</p>
+          <p class="small">Best: <b>${best(k)}</b> ${G[k].unit}${oa[k]?.runs?.length ? ` · ${oa[k].runs.length} runs` : ''}</p>
+          <a class="btn" href="#/oa/game/${k}">Play</a>
+        </div>`).join('')}</div>
+      <div class="row" style="margin-top:12px"><a class="btn" href="#/oa/battery/0">Play all seven in a row (about ${totalMins} min)</a></div>
+      <h2>Memory tests</h2>
+      <div class="grid">${['span', 'total'].map((k) => `
+        <div class="card">
+          <h3>${TESTS[k].name}</h3>
+          <p class="small">${TESTS[k].desc}</p>
+          <p class="small">Best: <b>${best(k)}</b> ${TESTS[k].unit}${oa[k]?.runs?.length ? ` · ${oa[k].runs.length} runs` : ''}</p>
+          <a class="btn" href="#/oa/${k}">Start</a>
+        </div>`).join('')}</div>
+      <p class="small">Arithmetic screens: see <a href="#/mental">Mental maths</a> (80 in 8), <a href="#/mental/60in6">60 in 6</a> (the Flow Traders format) and the <a href="#/tricks">speed tricks</a>.</p>`;
+  }
+
+  function finishCard(el, key, score, extra, again, idx = null) {
     const isBest = record(key, score), t = TESTS[key];
+    const nextBtn = idx !== null
+      ? `<a class="btn" href="#/oa/battery/${idx + 1}">${idx + 1 < QT.games.ORDER.length ? `Next: ${QT.games.GAMES[QT.games.ORDER[idx + 1]].name}` : 'See all results'}</a>`
+      : '';
+    const back = Object.prototype.hasOwnProperty.call(QT.seq.MODES, key) ? '#/oa/seq' : '#/oa';
     el.innerHTML = `
       <div class="title-row"><h1>${t.name}: done</h1>${isBest ? QT.flair.milestone('New best') : ''}</div>
       <div class="tiles">
@@ -71,66 +152,12 @@
         <div class="tile"><div class="v">${store.get().oa[key].best}</div><div class="k">personal best</div></div>
       </div>
       ${extra || ''}
-      <div class="row" style="margin-top:18px"><button id="again">Go again</button><a class="btn ghost" href="#/oa">Back</a></div>`;
-    el.querySelector('#again').addEventListener('click', () => ({ seq: sequences, span, total })[key](el));
-  };
-
-  // ---- number sequences ----
-  function sequences(el) {
-    const N = 15, SECS = 450, end = Date.now() + SECS * 1000, log = [];
-    let i = 0, cur = null, done = false;
-    el.innerHTML = `
-      <h1>Number sequences</h1>
-      <div class="session"><span id="sq-n"></span><span class="mono" id="sq-time"></span></div>
-      <div class="card">
-        <div class="question" id="sq-q"></div>
-        <form class="answer-row" id="sq-form"><input type="text" inputmode="decimal" autocomplete="off" id="sq-in" aria-label="Next term" placeholder="Next term"><button>Enter</button></form>
-        <div class="q-actions"><span class="small" id="sq-hint">Differences, ratios, alternate terms.</span><button type="button" class="link" id="sq-skip">Skip</button></div>
-      </div>`;
-    const $ = (s) => el.querySelector(s), $in = $('#sq-in');
-    const timer = setInterval(() => tick(), 250);
-    QT.cleanup = () => clearInterval(timer);
-    function tick() {
-      const left = Math.max(0, end - Date.now());
-      $('#sq-time').textContent = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`;
-      if (!left) finish();
-    }
-    function next() {
-      if (i >= N) return finish();
-      cur = R.pick(QT.gens.sequences)();
-      $('#sq-n').textContent = `Question ${i + 1} of ${N}`;
-      $('#sq-q').innerHTML = cur.q;
-      $in.value = '';
-      if (!QT.keypad.enabled()) $in.focus();
-    }
-    const answer = (v, shown) => {
-      log.push({ p: cur, ok: Number.isFinite(v) && QT.isCorrect(v, cur.a, cur.tol), you: shown });
-      i++;
-      next();
-    };
-    const form = $('#sq-form');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (done || !$in.value.trim()) return;
-      const v = QT.parseAnswer($in.value);
-      if (Number.isNaN(v)) return ($('#sq-hint').textContent = "Couldn't read that number.");
-      answer(v, $in.value.trim());
-    });
-    $('#sq-skip').addEventListener('click', () => answer(NaN, 'skipped'));
-    QT.keypad.attach(form, [$in], () => form.requestSubmit(), { keys: '.-/' });
-    function finish() {
-      if (done) return;
-      done = true;
-      clearInterval(timer);
+      <div class="row" style="margin-top:18px">${nextBtn}<button id="again"${nextBtn ? ' class="ghost"' : ''}>Go again</button><a class="btn ghost" href="${back}">Back</a></div>`;
+    el.querySelector('#again').addEventListener('click', () => {
+      if (QT.cleanup) QT.cleanup();
       QT.cleanup = null;
-      const score = log.filter((x) => x.ok).length;
-      const wrong = log.filter((x) => !x.ok);
-      finishCard(el, 'seq', score, `
-        <p>${log.length} of ${N} answered${log.length < N ? ' before time ran out' : ''}.</p>
-        ${wrong.length ? `<h2>Review</h2>${wrong.map((x) => `<div class="card"><div class="question">${x.p.q}</div><p class="small">You: ${QT.escapeHtml(x.you)} · answer <b>${f(x.p.a)}</b></p><div class="solution">${x.p.sol}</div></div>`).join('')}` : ''}`);
-    }
-    tick();
-    next();
+      again();
+    });
   }
 
   // Shows a sequence of items one at a time in `box`, then calls done(). Returns a cancel function.
@@ -191,7 +218,7 @@
       } else misses++;
       $('#ds-flash').textContent = ok ? '✓' : `✗ ${digits.join('')}`;
       if (misses >= 2) {
-        const h = setTimeout(() => finishCard(el, 'span', best, `<p class="small">Tip: say the digits to yourself in groups of three as they appear (“4 7 1 · 9 2 5”); chunking is how memory champions extend span.</p>`), 900);
+        const h = setTimeout(() => finishCard(el, 'span', best, `<p class="small">Tip: say the digits to yourself in groups of three as they appear (“4 7 1 · 9 2 5”); chunking is how memory champions extend span.</p>`, () => span(el)), 900);
         cancel = () => clearTimeout(h); // leaving within the pause must not draw over the next screen
         return;
       }
@@ -238,7 +265,7 @@
       form.hidden = true;
       $('#rt-flash').textContent = ok ? '✓' : `✗ ${cur.sum}`;
       if (++r >= TOTAL_ROUNDS.length) {
-        const h = setTimeout(() => finishCard(el, 'total', right, '<p class="small">Tip: say the running total to yourself after every number rather than trying to remember the numbers.</p>'), 900);
+        const h = setTimeout(() => finishCard(el, 'total', right, '<p class="small">Tip: say the running total to yourself after every number rather than trying to remember the numbers.</p>', () => total(el)), 900);
         cancel = () => clearTimeout(h);
         return;
       }

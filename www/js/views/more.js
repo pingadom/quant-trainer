@@ -25,7 +25,7 @@
       { route: 'mistakes', href: '#/mistakes', name: 'Mistakes to review', desc: 'Wrong answers coming back on a schedule' },
       { route: 'weak', href: '#/weak', name: 'Weak-spot training', desc: 'Your accuracy in each interview skill area, with a session for the weakest' },
       { route: 'mental', href: '#/mental', name: 'Mental maths', desc: 'Zetamac, 80 in 8, 60 in 6 (Flow Traders), flow training and speed reps' },
-      { route: 'oa', href: '#/oa', name: 'Online tests', desc: 'Number sequences, digit span and running totals, timed' },
+      { route: 'oa', href: '#/oa', name: 'Online tests', desc: 'Number sequences, Zap-N-style cognitive games, memory tests' },
       { route: 'code', href: '#/code', name: 'Coding (SWE)', desc: 'Optiver software engineering problems and a CS knowledge quiz' },
     ] },
     { id: 'interviews', name: 'Interview prep', items: [

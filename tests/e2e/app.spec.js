@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -379,11 +379,27 @@ test('daily challenge: same questions after a reload, one attempt, shareable', a
 test('online tests: sequences, digit span and running total', async ({ page }) => {
   await page.clock.install();
   await page.goto('./#/oa');
-  await page.locator('[data-test="seq"]').click();
+  await page.getByRole('link', { name: /Quick test/ }).click();
   for (let i = 0; i < 15; i++) await page.getByRole('button', { name: 'Skip' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Number sequences: done');
-  await page.getByRole('link', { name: 'Back' }).click(); // same URL as the test: must still go back
-  await page.locator('[data-test="span"]').click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sequences: 15 in 7½ minutes: done');
+  await expect(page.locator('.pl-plot')).toBeVisible(); // pacing chart
+  await page.getByRole('link', { name: 'Back' }).click();
+  await expect(page).toHaveURL(/#\/oa\/seq$/);
+  // Practice explains each answer and counts it in the pattern table.
+  await page.getByRole('link', { name: 'Level 1', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Next term' })).toBeVisible();
+  if (await page.locator('.keypad').count()) { // phones type on the on-screen keypad
+    for (const k of '-99999') await page.locator(`.keypad [data-k="${k}"]`).click();
+    await page.locator('.keypad [data-k="enter"]').click();
+  } else {
+    await page.getByRole('textbox', { name: 'Next term' }).fill('-99999');
+    await page.getByRole('textbox', { name: 'Next term' }).press('Enter');
+  }
+  await expect(page.locator('.fb.bad')).toContainText('The next term is');
+  await expect(page.getByRole('button', { name: 'Show the answer' })).toBeHidden();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.locator('.fb')).toHaveCount(0);
+  await page.goto('./#/oa/span');
   for (let miss = 0; miss < 2; miss++) {
     await page.clock.runFor(15_000); // digits flash, then the answer box appears
     await page.getByRole('textbox', { name: 'The digits in order' }).fill('0');
@@ -392,11 +408,92 @@ test('online tests: sequences, digit span and running total', async ({ page }) =
   await page.clock.runFor(2_000);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Digit span: done');
   // Leaving mid-test must stop its timers drawing over the next screen.
-  await page.getByRole('link', { name: 'Back' }).click();
-  await page.locator('[data-test="total"]').click();
+  await page.goto('./#/oa/total');
   await page.goto('./#/progress');
   await page.clock.runFor(20_000);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Progress');
+});
+
+// The games run to their results under a fake clock (90 s of animation frames takes a while).
+const gameHelpers = (page) => ({
+  done: (name) => expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name}: done`),
+  start: async (id) => {
+    await page.goto(`./#/oa/game/${id}`);
+    await page.getByRole('button', { name: 'Start' }).click();
+  },
+});
+
+test('cognitive games: switch, match, grid and target run to their results', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  const { done, start } = gameHelpers(page);
+  await start('switch');
+  for (let i = 0; i < 6; i++) { await page.keyboard.press('f'); await page.clock.runFor(600); }
+  await page.clock.runFor(91_000);
+  await done('Rule switch');
+  await expect(page.getByText('switch cost', { exact: false })).toBeVisible();
+
+  await start('match');
+  for (let i = 0; i < 6; i++) await page.keyboard.press('j');
+  await page.clock.runFor(61_000);
+  await done('Match or not');
+
+  await start('grid');
+  for (let miss = 0; miss < 2; miss++) {
+    await page.clock.runFor(4_000); // the squares light up, then become clickable
+    // click a square that isn't first in the sequence: read it from the lit order isn't possible, so
+    // click every square until one is marked wrong
+    for (let i = 0; i < 16; i++) {
+      const cell = page.locator(`.gm-cell[data-i="${i}"]`);
+      await cell.click();
+      if (await page.locator('.gm-cell.bad').count()) break;
+    }
+    await page.clock.runFor(2_000);
+  }
+  await done('Grid memory');
+
+  await start('target');
+  await page.getByRole('button', { name: 'Skip' }).click();
+  await expect(page.getByText(/^One way: /)).toBeVisible();
+  await page.getByRole('textbox', { name: 'Your expression' }).fill('1+1+1+1+1');
+  await page.getByRole('textbox', { name: 'Your expression' }).press('Enter');
+  await expect(page.getByText(/Use exactly these numbers/)).toBeVisible();
+  await page.clock.runFor(181_000);
+  await done('Make the target');
+});
+
+test('cognitive games: dial, queue, pump and the full run', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.clock.install();
+  const { done, start } = gameHelpers(page);
+  await start('dial');
+  await page.clock.runFor(1_000);
+  await page.keyboard.press(' ');
+  await expect(page.getByText(/points\.$/)).toBeVisible();
+  for (let i = 0; i < 30; i++) await page.clock.runFor(5_000); // the rest time out
+  await done('Stop the dial');
+
+  await start('queue');
+  await page.clock.runFor(3_000);
+  await page.keyboard.press('1');
+  await page.clock.runFor(91_000);
+  await done('Order queue');
+
+  await start('pump');
+  for (let i = 0; i < 24; i++) {
+    await page.keyboard.press(' ');
+    await page.keyboard.press('b');
+    await page.clock.runFor(1_000);
+  }
+  await done('Pump or bank');
+  await expect(page.getByText('k = N/2')).toBeVisible();
+
+  // All seven in a row: skip through to the summary.
+  await page.goto('./#/oa/battery/0');
+  for (let i = 0; i < 7; i++) await page.getByRole('link', { name: 'Skip this game' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('All games: done');
+  await page.goto('./#/oa');
+  await expect(page.locator('.card', { hasText: 'Pump or bank' }).getByText(/Best: \d+/)).toBeVisible();
 });
 
 test('think aloud: talk, review, score yourself', async ({ page }) => {
@@ -420,7 +517,7 @@ test('progress page charts the demo profile', async ({ page }) => {
 // Overlapping boxes, sideways scrolling and clipped button text, on every screen, in every theme.
 // (A CSS class-name clash once made wrapped filter chips spill over the box below them.)
 test('layout: nothing overlaps, overflows or clips on any screen', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000); // ~170 screens × 4 themes
   await page.addInitScript(() => localStorage.setItem('qt-talk-prefs', JSON.stringify({ rec: false, live: false })));
   await page.goto('./?demo#/');
   await expect(page.locator('main h1').first()).toBeVisible();

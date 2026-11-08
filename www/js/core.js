@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.49.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.50.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -181,10 +181,12 @@
   // ---- Progress storage (localStorage, per browser) ----
   // The app's old name (Quant Trainer) stays in this key: renaming it would lose everyone's progress.
   const KEY = 'quant-trainer:v1';
+  // Online tests with a personal best (oa.js, seq.js, games.js).
+  const OA_KEYS = ['seq', 'seq24', 'seq26', 'span', 'total', 'switch', 'match', 'grid', 'target', 'dial', 'queue', 'pump'];
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] } });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] }, seqfam: {} });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -358,7 +360,9 @@
     const dayOk = (k) => /^\d{4}-\d\d-\d\d$/.test(k);
     const recentDays = Object.fromEntries(Object.entries(obj(r.daily)).filter(([k]) => dayOk(k)).sort(([a], [b]) => (a < b ? -1 : 1)).slice(-400));
     s.daily = mapKeys(recentDays, (d) => ({ r: bits(obj(d).r, 5), ms: num(obj(d).ms), start: num(obj(d).start), done: !!obj(d).done }));
-    s.oa = mapKeys(r.oa, (o) => ({ best: obj(o).best == null ? null : num(obj(o).best), runs: arr(obj(o).runs, 50).map((x) => ({ ...when(x), score: num(obj(x).score) })) }), (k) => ['seq', 'span', 'total'].includes(k));
+    s.oa = mapKeys(r.oa, (o) => ({ best: obj(o).best == null ? null : num(obj(o).best), runs: arr(obj(o).runs, 50).map((x) => ({ ...when(x), score: num(obj(x).score) })) }), (k) => OA_KEYS.includes(k));
+    // Number sequences: tries, right answers and the last 10 answer times per kind of pattern (seq.js).
+    s.seqfam = mapKeys(r.seqfam, (x) => ({ n: num(obj(x).n), c: num(obj(x).c), ms: arr(obj(x).ms, 10).map((v) => Math.max(0, num(v))) }), (k) => /^[a-z0-9-]{1,20}$/.test(k));
     const tk = obj(r.talk);
     s.talk = { sessions: num(tk.sessions), history: arr(tk.history, 100).map((x) => ({ ...when(x), id: text(obj(x).id, 80), secs: num(obj(x).secs), score: num(obj(x).score), of: num(obj(x).of, 6) })) };
     // Mental-maths timings by question type (mental-tips.js KINDS): the last 30 answers of each.
@@ -427,7 +431,7 @@
 
   // True when nothing has been recorded yet (used to decide whether to restore a native backup).
   const isEmpty = () => !state.days.length && !state.log.length && !state.plan && !state.market.games
-    && ['topics', 'bank', 'cases', 'mental', 'flash', 'speed', 'speedReview', 'daily', 'oa', 'tricks', 'roadmap', 'handbook', 'stories'].every((k) => !Object.keys(state[k] || {}).length)
+    && ['topics', 'bank', 'cases', 'mental', 'flash', 'speed', 'speedReview', 'daily', 'oa', 'tricks', 'roadmap', 'handbook', 'stories', 'seqfam'].every((k) => !Object.keys(state[k] || {}).length)
     && !state.mistakes.length && !state.talk.sessions && !state.figgie.games && !state.kelly.games && !state.quote.rounds && !state.estimate.rounds && !state.screen.runs.length && !state.adapt.sessions
     && !Object.keys(state.code.p).length && !state.code.quiz.runs.length && !state.flow.log.length && !state.sse.attempts.length;
   const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

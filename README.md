@@ -63,7 +63,7 @@
 | **Formula cards** | 43 results to know cold as flip cards on a spaced schedule. |
 | **Firm guides** | A free, searchable page per firm: its process and every question with a worked solution. |
 | **Speed tricks** | 22 short guides to faster arithmetic (decimal places, fraction arithmetic, near-100 multiplication, squaring, fractions, last-digit checks, guessing strategy under negative marking…), each with a drill that walks through the trick. |
-| **Online tests** | Timed number sequences, digit span and running-total tasks, the kinds of screen many firms use before interviews. |
+| **Online tests** | The kinds of screen many firms use before interviews. A number sequences trainer: 30 kinds of pattern in three levels, practice that explains every answer, timed tests of 15, 24 and 26 questions, and accuracy and speed per pattern. Seven short cognitive games covering the skills game-based assessments such as Optiver's Zap-N measure (rule switching, checking detail, working memory, making a target number, timing, multitasking and risk), playable one at a time or all in a row. Digit span and running totals. |
 | **Figgie** | Jane Street's card trading game against three bots (Bayesian, flow-following and noise), with the Bayesian maths from your hand on request. |
 | **Make me a market** | The live interview format: quote a two-sided price, the interviewer trades against you, you re-quote. Scored on width, P&L and moving with the flow. |
 | **Bet sizing** | 20 bets with known odds; you choose the stake. Compared with Kelly and half-Kelly, scored by expected log-growth so luck doesn't count. |

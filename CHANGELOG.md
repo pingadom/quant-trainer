@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.50.0
+
+- **Number sequences trainer** (Online tests → Number sequences).
+  - 30 kinds of pattern in three levels, from adding a constant to cubics, sums of the previous three terms, digit sums, squares and cubes interleaved, and letter sequences.
+  - Practice mode, by level, by single pattern or aimed at your weak spots, explains the rule and the differences after every answer.
+  - Timed tests in the formats candidates report: 15 in 7½ minutes, 24 in 18 and 26 in 25, getting harder as they go, with the pacing chart and a review of what you missed.
+  - Accuracy and average time for every kind of pattern.
+  - Every pattern is checked against independent next-term solvers, which also make sure no question has a second sensible answer.
+- **Cognitive games**, covering the skills game-based assessments (Optiver's Zap-N, IMC's games and others) measure. Our own games, not copies:
+  - **Rule switch:** odd or even, or higher or lower than 5, depending on where the digit appears. Measures your switch cost.
+  - **Match or not:** are two codes identical? They get longer as you go.
+  - **Grid memory:** repeat a sequence of squares.
+  - **Make the target:** reach a number with four numbers and + − × ÷.
+  - **Stop the dial:** stop a sweeping hand on a mark; tells you if you're consistently early or late.
+  - **Order queue:** ship orders from up to four lanes in their ready windows.
+  - **Pump or bank:** balloons in three colours with different burst ranges, and the maths of when to stop.
+  - Play one at a time or all seven in a row, with personal bests and progress charts.
+
 ## 0.49.0
 
 - **Question library: the last two collections**, bringing the bank to 732 questions.
