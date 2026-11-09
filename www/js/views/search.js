@@ -73,7 +73,7 @@
         text: [b.q, b.cat, firmName(b.firm), b.role, ...(b.parts || []).map((p) => p.q), ...(b.followups || [])].map(plain).join(' '),
       })),
       ...QT.topics.map((t) => ({ type: 'topic', href: `#/topic/${t.id}`, title: t.name, meta: plain(t.blurb), text: plain(`${t.blurb} ${t.notes || ''}`) })),
-      ...QT.flashcards.CARDS.map(([, topic, front, back]) => ({ type: 'card', href: '#/flashcards', title: plain(front), meta: topic, back, text: plain(`${back} ${topic}`) })),
+      ...QT.flashcards.CARDS.map(([, topic, front, back]) => ({ type: 'card', href: topic === 'Python internals' ? '#/flashcards/python' : '#/flashcards', title: plain(front), meta: topic, back, text: plain(`${back} ${topic}`) })),
       ...QT.tricks.map((t) => ({ type: 'trick', href: `#/tricks/${t.id}`, title: t.title, meta: plain(t.tagline), text: plain(`${t.tagline} ${t.body} ${t.group || ''}`) })),
       ...QT.cases.map((c) => ({ type: 'case', href: `#/case/${c.id}`, title: c.title, meta: `${c.year} · ${plain(c.summary)}`, text: plain(`${c.summary} ${(c.tags || []).join(' ')} ${c.year} ${c.lesson || ''}`) })),
     ];

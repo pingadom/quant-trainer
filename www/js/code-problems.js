@@ -2522,6 +2522,39 @@
     },
   ];
 
+  // Follow-up questions an interviewer asks once the code works, with what a good answer covers.
+  // Shown after the problem is solved.
+  const FOLLOWUPS = {
+    'opt-order-book': [
+      ['Cancelling from the middle of a price level is O(n) in a deque. How do you fix it?', 'Lazy cancel: mark the order dead in the id map and skip dead orders when matching reaches them. Or a doubly linked list per level, with each order\'s node stored in the id map, for an O(1) unlink.'],
+      ['Why not a sorted map like Java\'s TreeMap?', 'Python\'s standard library has none. A heap with lazy deletion gives O(log L) new levels and O(1) best price; a sorted list with bisect is O(L) per new level but simple when levels are few; sortedcontainers is third-party.'],
+      ['How would you support modifying an order?', 'A size decrease keeps its place in the queue; a price change or size increase loses priority, so treat it as cancel then add (the usual exchange rule; ask).'],
+      ['Make it thread-safe.', 'Let one thread own the book and have others send it messages through a queue; shard by instrument to scale. A lock around everything works but serialises it anyway.'],
+      ['We need 100 times the throughput.', 'Measure first. In Python: __slots__ on orders, reuse objects instead of allocating. In C++: levels in an array indexed by tick around the best price, for cache locality.'],
+      ['How do you know it is correct?', 'Property tests: random operations against a slow brute-force book that re-sorts everything, comparing fills and the top of book; plus the invariant that the book is never crossed after matching.'],
+    ],
+    'opt-lru': [
+      ['Make it thread-safe.', 'One lock around get and put (get also changes the order, so it is a write). If contended, shard into N caches by hash(key) % N, each with its own lock.'],
+      ['Entries should expire after a time to live.', 'Store an expiry time per entry; on get, treat an expired entry as a miss and remove it; add a periodic sweep so expired entries don\'t hold memory. Use a monotonic clock.'],
+      ['Cap it by total bytes instead of entry count.', 'Track the total size and evict from the least recently used end until the new entry fits; refuse entries larger than the whole cache.'],
+      ['Why is OrderedDict O(1) for this?', 'It keeps a doubly linked list of entries beside the hash table, and the table maps each key to its link, so move_to_end and popitem(last=False) never search.'],
+    ],
+    'opt-ring-deque': [
+      ['Why a ring buffer rather than a Python list for a queue?', 'No shifting on removal from the front (a list\'s pop(0) is O(n)), and fixed memory with no resizing pauses.'],
+      ['How would one producer thread and one consumer thread share it without locks?', 'Each index has exactly one writer: the producer only moves the tail, the consumer only the head. Each side publishes its index with release ordering and reads the other\'s with acquire.'],
+      ['Why do implementations often make the capacity a power of two?', 'The wrap-around becomes a bit-mask, i & (capacity − 1), instead of a modulo, which is cheaper.'],
+    ],
+    'opt-peak-live': [
+      ['Events now arrive one at a time, in time order. What changes?', 'No sorting: keep a running count of live orders, add on create, subtract on end, and track the maximum. O(1) per event.'],
+      ['What if events can arrive slightly out of order?', 'Buffer events within a bounded time window (say, the maximum delay), release them in order once they are older than the window, and process those as before.'],
+    ],
+    'opt-debug-matcher': [
+      ['How would you have caught these bugs before production?', 'Property tests against a brute-force matcher on random order sequences, and invariants checked after every operation: the book is never crossed, and level totals equal the sum of their orders.'],
+      ['How would you find the performance problem without reading all the code?', 'Profile under a realistic load (cProfile in Python) to find the hot function, then check its complexity: a scan or re-sort on every call is the usual culprit.'],
+    ],
+  };
+  for (const P of PROBLEMS) P.followups = FOLLOWUPS[P.id] || [];
+
   // The matching problems on LeetCode, shown once you've solved ours, so you can submit there too.
   // [number, title, slug, difficulty, 'same' | 'similar', how it differs, premium?]. Checked
   // against LeetCode's own data (number, title, difficulty, whether it needs Premium) in Nov 2026.

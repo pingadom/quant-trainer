@@ -14,7 +14,7 @@
     { id: 'learn', name: 'Learn', items: [
       { route: 'handbook', href: '#/handbook', name: 'Handbook', desc: 'A full course from the basics up, with homework and exams' },
       { route: 'practice', href: '#/practice', name: 'Practise by topic', desc: `Formula sheets and endless questions in ${QT.topics.length} topics` },
-      { route: 'flashcards', href: '#/flashcards', name: 'Formula cards', desc: `${QT.flashcards.CARDS.length} formulas to know cold, on a spaced schedule` },
+      { route: 'flashcards', href: '#/flashcards', name: 'Formula cards', desc: `${QT.flashcards.CARDS.filter(QT.flashcards.DECKS.formula.has).length} formulas, plus ${QT.flashcards.CARDS.filter(QT.flashcards.DECKS.python.has).length} Python internals cards, on a spaced schedule` },
       { route: 'tricks', href: '#/tricks', name: 'Speed tricks', desc: `${QT.tricks.length} guides to faster arithmetic, each with a drill` },
       { route: 'cases', href: '#/cases', name: 'Case studies', desc: 'Real market events as statistics lessons' },
       { route: 'lab', href: '#/lab', name: 'Stats lab', desc: 'CLT and volatility-drag simulations' },

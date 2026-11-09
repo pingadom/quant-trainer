@@ -1221,3 +1221,32 @@ select { font-family: var(--body); }
 .c-orange { background: #e08a2e; }
 .gm-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
 @media (prefers-reduced-motion: reduce) { .gm-balloon, .gm-balloon.popped { transition: none; } }
+
+/* flashcards: deck switcher and the "why it matters" line on Python internals cards */
+.seg-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+.seg-links a { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); text-decoration: none; font-size: 0.9rem; }
+.seg-links a[aria-current='page'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.fc-why { margin: 10px 0 0; font-size: 0.9em; color: var(--muted); }
+
+/* design discussions (design.js) */
+.dz-prompt p { font-size: 1.08rem; margin: 6px 0 0; }
+.dz-tools { margin: 8px 0; }
+#dz-q { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 4px 0 8px; }
+.dz-clar { list-style: none; padding: 0; display: grid; gap: 10px; }
+.dz-clar li { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.dz-hints { margin: 0 0 8px; }
+.dz-good { margin: 10px 0 0; padding: 10px 14px 10px 30px; border-left: 3px solid var(--ok); background: var(--panel-2); border-radius: 0 8px 8px 0; }
+.dz-pushback p { margin: 0 0 8px; }
+.dz-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+.dz-box { display: grid; gap: 2px; padding: 10px 12px; border: 2px solid var(--accent); border-radius: 8px; background: var(--panel); max-width: 260px; }
+.dz-box span { font-size: 0.85rem; color: var(--muted); }
+.dz-arrow { font-size: 1.3rem; color: var(--accent); }
+.dz-table { margin: 10px 0; }
+.dz-table td, .dz-table th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.dz-code { overflow-x: auto; font-family: var(--mono); font-size: 0.85rem; background: var(--panel-2); padding: 12px; border-radius: 8px; }
+.dz-score { border: 0; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.dz-score legend { font-weight: 600; margin-bottom: 4px; padding: 0; }
+.fu { margin: 8px 0; }
+.fu > summary { cursor: pointer; font-weight: 600; }
+.fu p { margin: 6px 0 0 16px; }
+@media (max-width: 640px) { .dz-arrow { transform: rotate(90deg); } .dz-flow { flex-direction: column; align-items: stretch; } .dz-box { max-width: none; } }

@@ -27,6 +27,7 @@
 
   function render(el, a, b) {
     if (a === 'quiz') return quiz(el, b);
+    if (a === 'design') return QT.designView(el, b);
     const P = a && C.byId(a);
     if (P) return problem(el, P);
     list(el);
@@ -46,7 +47,8 @@
         <ul>${PROCESS.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: <a href="${GD_INTERN}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer intern</a> · <a href="${GD_INTERNSHIP}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer internship</a> · <a href="https://leetcode.com/discuss/topic/optiver/" target="_blank" rel="noopener">LeetCode Discuss: Optiver</a></p>
       </details>
-      <div class="row" style="margin:14px 0"><a class="btn" href="#/code/quiz">Knowledge quiz: ${QZ.N} questions, ${QZ.MINUTES} minutes</a><a class="btn ghost" href="#/bank/optiver">System design and fundamentals questions</a></div>
+      <div class="row" style="margin:14px 0"><a class="btn" href="#/code/quiz">Knowledge quiz: ${QZ.N} questions, ${QZ.MINUTES} minutes</a><a class="btn" href="#/code/design">Design discussions (${QT.design.PROBLEMS.length})</a><a class="btn ghost" href="#/flashcards/python">Python internals cards</a><a class="btn ghost" href="#/bank/optiver">System design and fundamentals questions</a></div>
+      ${techPlan()}
       ${C.GROUPS.map(([g, title, about]) => `
         <h2>${title}</h2>
         <p class="small">${about}</p>
@@ -56,6 +58,70 @@
           return `<a class="card" href="#/code/${P.id}"><b>${esc(P.title)}</b><span class="small">${P.diff} · ${P.tags.join(', ')}</span><span class="small">${status}</span></a>`;
         }).join('')}</div>`).join('')}
       <p class="small" style="margin-top:16px">Python runs in your browser using Pyodide, downloaded once (about 13 MB) from the jsDelivr network the first time you run Python. JavaScript needs no download and works offline. Your code stays on this device.</p>`;
+    wireTechPlan(el);
+  }
+
+  // ---------------------------------------------------------------- technical interview countdown
+  // You set the date (kept on this device). Each day: Python internals cards, the knowledge quiz
+  // every other day, one design discussion (order book and feed handler first), and one
+  // data-structure problem. Tasks the app can see you did tick themselves.
+  const DAY = 864e5;
+  const DESIGN_ORDER = ['d-order-book', 'd-feed-handler', 'd-lru', 'd-rate-limiter', 'd-risk-check', 'd-best-venue'];
+  function techTasks(day, idx) {
+    const s = store.get(), sameDay = (iso) => typeof iso === 'string' && QT.dayKey(new Date(iso)) === day;
+    const pyCards = QT.flashcards.CARDS.filter(QT.flashcards.DECKS.python.has).map((c) => c[0]);
+    // A graded card's due time is its grading time plus its gap.
+    const GAPS = [1, 3, 7, 21, 60];
+    const cardsToday = pyCards.some((id) => { const c = s.flash[id]; return c && QT.dayKey(new Date(c.due - GAPS[c.box] * DAY)) === day; });
+    const d = QT.design.byId(DESIGN_ORDER[idx % DESIGN_ORDER.length]);
+    const techs = C.PROBLEMS.filter((P) => P.group === 'tech' || P.group === 'debug');
+    const t = techs[idx % techs.length];
+    const out = [
+      { id: 'cards', label: 'Python internals cards', href: '#/flashcards/python', auto: cardsToday },
+      { id: `design-${d.id}`, label: `Design discussion: ${d.title}`, href: `#/code/design/${d.id}`, auto: (s.code.design[d.id] || []).some((r) => sameDay(r.date)) },
+      { id: `code-${t.id}`, label: `Problem: ${t.title}, then its follow-ups`, href: `#/code/${t.id}` },
+    ];
+    if (idx % 2 === 0) out.splice(1, 0, { id: 'quiz', label: 'Knowledge quiz', href: '#/code/quiz', auto: s.code.quiz.runs.some((r) => sameDay(r.date)) });
+    return out;
+  }
+  function techPlan() {
+    const T = state().tech, today = QT.dayKey(new Date());
+    if (!T.date) {
+      return `<form class="card" id="tech-form"><h2 style="margin-top:0">Technical interview coming up?</h2>
+        <p class="small">Set the date for a daily checklist: Python internals cards, the knowledge quiz, one design discussion and one problem. The date stays on this device.</p>
+        <div class="row"><label class="small" for="tech-date">Interview date</label><input type="date" id="tech-date" min="${today}" required><button>Make my checklist</button></div></form>`;
+    }
+    const left = Math.round((Date.parse(`${T.date}T12:00:00`) - Date.parse(`${today}T12:00:00`)) / DAY);
+    if (left < 0) return `<div class="card"><p style="margin:0">Your technical interview date (${T.date}) has passed. <button type="button" class="link" id="tech-clear">Set a new one</button></p></div>`;
+    const idx = Math.max(0, Math.round((Date.parse(`${today}T12:00:00`) - Date.parse(`${T.start || today}T12:00:00`)) / DAY));
+    const done = T.done[today] || [];
+    const tasks = left === 0
+      ? [{ id: 'light', label: 'Light review only: flip through the Python internals cards and reread one design model answer.', href: '#/flashcards/python' }]
+      : techTasks(today, idx);
+    return `<div class="card" id="tech-plan"><h2 style="margin-top:0">Technical interview: ${left === 0 ? 'today' : `${left} day${left > 1 ? 's' : ''} to go`}</h2>
+      <ul class="plan-tasks">${tasks.map((k) => { const ok = k.auto || done.includes(k.id); return `<li><label><input type="checkbox" data-task="${k.id}"${ok ? ' checked' : ''}${k.auto ? ' disabled' : ''}> <a href="${k.href}">${esc(k.label)}</a></label>${k.auto ? ' <span class="small">(done)</span>' : ''}</li>`; }).join('')}</ul>
+      <p class="small">${T.date} · <button type="button" class="link" id="tech-clear">Change the date</button></p></div>`;
+  }
+  function wireTechPlan(el) {
+    const T = state().tech;
+    el.querySelector('#tech-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = el.querySelector('#tech-date').value;
+      if (!/^\d{4}-\d\d-\d\d$/.test(v)) return;
+      T.date = v;
+      T.start = QT.dayKey(new Date());
+      T.done = {};
+      store.save();
+      list(el);
+    });
+    el.querySelector('#tech-clear')?.addEventListener('click', () => { T.date = ''; store.save(); list(el); });
+    el.querySelectorAll('[data-task]').forEach((b) => b.addEventListener('change', () => {
+      const day = QT.dayKey(new Date()), d = (T.done[day] ||= []);
+      if (b.checked && !d.includes(b.dataset.task)) d.push(b.dataset.task);
+      if (!b.checked) T.done[day] = d.filter((x) => x !== b.dataset.task);
+      store.touchDay();
+      store.save();
+    }));
   }
 
   // ---------------------------------------------------------------- one problem
@@ -113,7 +179,10 @@
         <p><b>Trap.</b> ${P.sol.trap}</p>
         <h3 id="ref-title"></h3>
         <pre tabindex="0" class="code-view" id="ref"></pre>
-      </details>`;
+      </details>
+      ${P.followups.length ? `<details class="card" id="followups"${r0?.solved ? '' : ' hidden'}><summary><b>Follow-up questions</b> (what an interviewer asks once it works)</summary>
+        <p class="small">Answer each out loud before opening it.</p>
+        ${P.followups.map(([q, a]) => `<details class="fu"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</details>` : ''}`;
     const $ = (s) => el.querySelector(s);
     const ed = $('#editor'), status = $('#status'), results = $('#results');
     const ind = () => (lang === 'py' ? 4 : 2);
@@ -255,6 +324,7 @@
           store.save();
           if (r.solved) {
             $('#solved-tag').innerHTML = '<span class="status-tag done">Solved</span>';
+            if ($('#followups')) $('#followups').hidden = false;
             showLeetCode();
           }
         }

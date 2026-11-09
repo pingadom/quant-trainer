@@ -634,6 +634,31 @@
       }
     }
 
+    // Design discussions and the Python internals deck: complete and well formed.
+    if (QT.design) {
+      const ids = new Set();
+      for (const P of QT.design.PROBLEMS) {
+        if (ids.has(P.id) || !/^d-[a-z0-9-]+$/.test(P.id)) fail(`design ${P.id}: duplicate or bad id`);
+        ids.add(P.id);
+        const keys = P.clarify.filter((c) => c[2]).length;
+        if (!P.prompt || P.clarify.length < 3 || keys < 2 || P.clarify.some((c) => c.length !== 3 || !c[0] || !c[1])) fail(`design ${P.id}: clarifying questions`);
+        if (!P.stages.length || P.stages.some((S) => !S.ask || !S.hints.length || !S.good.length)) fail(`design ${P.id}: stages`);
+        if (P.pushbacks.length < 3 || P.pushbacks.some((B) => !B.says || !B.good.length)) fail(`design ${P.id}: pushbacks`);
+        if (P.diagram.length < 2 || !P.model.structures.length || !P.model.costs.length || !P.model.sketch.includes('def ')) fail(`design ${P.id}: diagram or model answer`);
+        if (P.codeLink && QT.code && !QT.code.byId(P.codeLink)) fail(`design ${P.id}: links to a missing problem ${P.codeLink}`);
+        if (/undefined|NaN|\[object/.test(JSON.stringify(P))) fail(`design ${P.id}: junk in the text`);
+      }
+      if (QT.design.RUBRIC.length !== 6) fail('design: the rubric should have six items');
+    }
+    if (QT.pyCards && QT.flashcards) {
+      const py = QT.flashcards.CARDS.filter(QT.flashcards.DECKS.python.has);
+      if (py.length !== QT.pyCards.length || py.length < 25) fail(`flashcards: Python deck has ${py.length} cards`);
+      if (QT.pyCards.some((c) => !c.front || !c.back || !c.why || (!c.check && !c.note) || (c.check && !/^py_[a-z0-9_]+$/.test(c.check)))) fail('flashcards: a Python card lacks a why, or a check or a note');
+      if (QT.flashcards.CARDS.filter(QT.flashcards.DECKS.formula.has).some((c) => c[1] === 'Python internals')) fail('flashcards: Python cards leaked into the formula deck');
+    }
+    if (QT.code) for (const P of QT.code.PROBLEMS) if (!Array.isArray(P.followups) || P.followups.some((f) => f.length !== 2 || !f[0] || !f[1])) fail(`code ${P.id}: malformed follow-ups`);
+    if (QT.code && ['opt-order-book', 'opt-lru', 'opt-ring-deque', 'opt-peak-live', 'opt-debug-matcher'].some((id) => !QT.code.byId(id).followups.length)) fail('code: a technical problem lost its follow-ups');
+
     // Think aloud: pace and filler counting.
     if (QT.talk) {
       const st = QT.talk.speechStats('Um so I think uh the answer is like 5', 60);

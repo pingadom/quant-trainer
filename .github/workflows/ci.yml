@@ -48,6 +48,8 @@ jobs:
         run: |
           node tests/export-sse.js > sse.json
           python research/verify_sse.py sse.json
+      - name: Check every testable claim about Python behaviour on the internals cards and quiz
+        run: python research/verify_internals.py
       - name: Learner-model study (quick run)
         run: python research/learner_models.py --quick
 

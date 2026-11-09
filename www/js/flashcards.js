@@ -6,7 +6,7 @@
   const GAPS = [1, 3, 7, 21, 60], SESSION = 20, NEW_PER_SESSION = 8;
 
   // [id, topic, front, back]
-  const CARDS = [
+  const FORMULAS = [
     ['p-atleast', 'Probability', 'P(at least one)', '1 − P(none). For n independent tries at probability p: 1 − (1 − p)<sup>n</sup>.'],
     ['p-bayes', 'Probability', "Bayes' rule in odds form", 'Posterior odds = prior odds × likelihood ratio.'],
     ['p-linear', 'Probability', 'Linearity of expectation', 'E[X + Y] = E[X] + E[Y], even when X and Y are dependent. Write counts as sums of indicators.'],
@@ -51,11 +51,20 @@
     ['m-consts', 'Mental maths', '√2, √3, ln 2, e', '1.414, 1.732, 0.693, 2.718.'],
     ['m-twos', 'Mental maths', '2<sup>10</sup> and 2<sup>20</sup>', '1,024 (≈ 10³) and 1,048,576 (≈ 10⁶).'],
   ];
+  // Python internals (cards-python.js) join as their own deck, with a line on why each matters.
+  const PY = 'Python internals';
+  const pyBack = (c) => `${c.back}<p class="fc-why"><b>Why it matters:</b> ${c.why}</p>`;
+  const CARDS = [...FORMULAS, ...(QT.pyCards || []).map((c) => [c.id, PY, c.front, pyBack(c)])];
   const byId = Object.fromEntries(CARDS.map((c) => [c[0], c]));
+  const DECKS = {
+    formula: { title: 'Formula cards', lede: 'The results interviewers expect you to know cold. Say the answer out loud, flip, and be honest: cards you know come back less and less often.', has: (c) => c[1] !== PY },
+    python: { title: 'Python internals', lede: 'How Python\'s data structures work inside and what they cost, for software engineering interviews. Say the answer out loud, flip, and be honest. Every claim that can be tested is checked against CPython in research/verify_internals.py.', has: (c) => c[1] === PY },
+  };
 
   const deck = () => store.get().flash;
-  const dueIds = (now = Date.now()) => CARDS.filter((c) => deck()[c[0]] && deck()[c[0]].due <= now).map((c) => c[0]);
-  const newIds = () => CARDS.filter((c) => !deck()[c[0]]).map((c) => c[0]);
+  const inDeck = (d) => (d && DECKS[d] ? CARDS.filter(DECKS[d].has) : CARDS);
+  const dueIds = (now = Date.now(), d) => inDeck(d).filter((c) => deck()[c[0]] && deck()[c[0]].due <= now).map((c) => c[0]);
+  const newIds = (d) => inDeck(d).filter((c) => !deck()[c[0]]).map((c) => c[0]);
 
   // Right: next gap; wrong: back to the start, due tomorrow (and again later this session).
   function grade(id, ok, now = Date.now()) {
@@ -66,17 +75,20 @@
     return c;
   }
 
-  function render(el) {
-    const due = dueIds(), fresh = newIds(), learned = CARDS.length - fresh.length;
-    const mastered = CARDS.filter((c) => (deck()[c[0]]?.box ?? -1) >= 3).length;
+  function render(el, which) {
+    const key = DECKS[which] ? which : 'formula', D = DECKS[key], cards = inDeck(key), other = key === 'python' ? 'formula' : 'python';
+    const due = dueIds(Date.now(), key), fresh = newIds(key), learned = cards.length - fresh.length;
+    const mastered = cards.filter((c) => (deck()[c[0]]?.box ?? -1) >= 3).length;
     const n = Math.min(SESSION, due.length + Math.min(NEW_PER_SESSION, fresh.length));
-    const topics = [...new Set(CARDS.map((c) => c[1]))];
+    const topics = [...new Set(cards.map((c) => c[1]))];
+    const otherDue = dueIds(Date.now(), other).length;
     el.innerHTML = `
-      <h1>Formula cards</h1>
-      <p class="lede">The results interviewers expect you to know cold. Say the answer out loud, flip, and be honest: cards you know come back less and less often.</p>
+      <h1>${D.title}</h1>
+      <p class="lede">${D.lede}</p>
+      <div class="seg-links" role="navigation" aria-label="Decks">${Object.entries(DECKS).map(([k, v]) => `<a href="#/flashcards${k === 'formula' ? '' : `/${k}`}"${k === key ? ' aria-current="page"' : ''}>${v.title}${k !== key && otherDue ? ` (${otherDue} due)` : ''}</a>`).join('')}</div>
       <div class="tiles">
         <div class="tile"><div class="v">${due.length}</div><div class="k">due now</div></div>
-        <div class="tile"><div class="v">${learned}/${CARDS.length}</div><div class="k">started</div></div>
+        <div class="tile"><div class="v">${learned}/${cards.length}</div><div class="k">started</div></div>
         <div class="tile"><div class="v">${mastered}</div><div class="k">well known (21+ day gap)</div></div>
       </div>
       <div class="card">
@@ -84,13 +96,14 @@
           : '<p style="margin:0">All caught up. Come back tomorrow.</p>'}
       </div>
       <h2>All cards</h2>
-      ${topics.map((t) => `<details class="card"><summary><b>${t}</b> <span class="small">${CARDS.filter((c) => c[1] === t).length} cards</span></summary>
-        <dl class="fc-list">${CARDS.filter((c) => c[1] === t).map((c) => `<dt>${c[2]}</dt><dd>${c[3]}</dd>`).join('')}</dl></details>`).join('')}`;
+      ${topics.map((t) => `<details class="card"><summary><b>${t}</b> <span class="small">${cards.filter((c) => c[1] === t).length} cards</span></summary>
+        <dl class="fc-list">${cards.filter((c) => c[1] === t).map((c) => `<dt>${c[2]}</dt><dd>${c[3]}</dd>`).join('')}</dl></details>`).join('')}`;
     const go = el.querySelector('#fc-go');
-    if (go) go.addEventListener('click', () => session(el, [...due.slice(0, SESSION), ...fresh.slice(0, Math.max(0, n - Math.min(due.length, SESSION)))]));
+    if (go) go.addEventListener('click', () => session(el, [...due.slice(0, SESSION), ...fresh.slice(0, Math.max(0, n - Math.min(due.length, SESSION)))], key));
   }
 
-  function session(el, ids) {
+  function session(el, ids, key = 'formula') {
+    const home = key === 'formula' ? '#/flashcards' : `#/flashcards/${key}`;
     const queue = [...ids], total = ids.length;
     let flipped = false, right = 0, seen = 0, onKey = null;
     QT.cleanup = () => document.removeEventListener('keydown', onKey);
@@ -99,7 +112,7 @@
       flipped = false;
       const [, topic, front] = byId[queue[0]];
       el.innerHTML = `
-        <a class="back" href="#/flashcards">← Formula cards</a>
+        <a class="back" href="${home}">← ${DECKS[key].title}</a>
         <div class="session"><span>${topic}</span><span class="mono">${Math.min(seen + 1, total)} / ${total}</span></div>
         <div class="card fc-card" id="fc-card">
           <div class="fc-front">${front}</div>
@@ -144,11 +157,11 @@
         <div class="title-row"><h1>Cards done</h1>${right === seen && seen ? QT.flair.stamp('Clean sweep') : ''}</div>
         <div class="card"><p style="margin-top:0">${total} card${total > 1 ? 's' : ''} reviewed; you marked “Got it” ${right} time${right === 1 ? '' : 's'} out of ${seen}.</p>
           <p class="small">Cards you knew come back in ${GAPS[0]}–${GAPS[GAPS.length - 1]} days depending on how well you know them; the rest come back tomorrow.</p>
-          <div class="row"><a class="btn" href="#/flashcards">Back to the deck</a><a class="btn ghost" href="#/">Home</a></div></div>`;
+          <div class="row"><a class="btn" href="${home}">Back to the deck</a><a class="btn ghost" href="#/">Home</a></div></div>`;
     }
     show();
   }
 
-  QT.flashcards = { CARDS, grade, dueIds, newIds };
+  QT.flashcards = { CARDS, DECKS, grade, dueIds, newIds };
   QT.views = Object.assign(QT.views || {}, { flashcards: render });
 })();

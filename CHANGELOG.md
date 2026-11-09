@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.51.0
+
+Practice for software engineering technical interviews, following Optiver's own advice for its SWE interviews: they test how you think, the data structures you choose and what they cost, how those work in memory, CS fundamentals, and how you explain and revise a design.
+
+- **Design discussions** (Coding → Design discussions): six problems run like the interview: an order book, a market data feed handler, an LRU cache and its extensions, an order rate limiter, a pre-trade risk check and best price across venues. Write your clarifying questions before anything is shown, then work through stages with hints that build up, face the interviewer's pushbacks one at a time, sketch a diagram against a one-minute timer, and compare with a model answer (structures, costs, a Python sketch). Score yourself on a six-point rubric; record yourself talking it through if you like (kept on your device).
+- **Python internals cards:** a new deck of 30 cards on how lists, dicts, sets, deques, heaps and sorting work inside and what they cost, plus the GIL, threads, memory and clocks, each with why it matters.
+- **30 more knowledge-quiz questions** (75 in all): cache and memory layout, NUMA, huge pages, market data over multicast, sequence gaps, A/B feeds, kernel bypass, deadlock, compare-and-swap, ABA, lock-free ring buffers, memory visibility, more Python, and a new Memory topic.
+- **Follow-up questions** on the order book, LRU cache, ring buffer, peak live orders and debug-the-matcher problems, shown once you've solved them.
+- **Technical interview countdown** on the Coding page: set your date (kept on this device) for a daily checklist of cards, quiz, one design discussion and one problem. Tasks the app sees you do tick themselves.
+- New CI check, research/verify_internals.py: every testable claim about Python behaviour on the cards and quiz, and every design problem's Python sketch, is run against CPython.
+
 ## 0.50.0
 
 - **Number sequences trainer** (Online tests → Number sequences).
