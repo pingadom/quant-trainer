@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.53.0
+
+- **Handbook, Part 2 (Interview probability) rewritten in depth**, as Part 1 was in 0.52.0: fuller explanations of why each method works, more worked examples, and a worked solution for every homework problem.
+  - **Distributions:** the normal approximation with the continuity correction, where the Poisson comes from, racing exponential clocks (which happens first, and when), and the normal quantiles behind confidence intervals and value at risk.
+  - **Symmetry:** relabelling, reflection and ordering symmetries, why the equal gaps really are equal, records (1 + ½ + … + 1/n), and the broken stick by symmetry.
+  - **First-step analysis:** waits v probabilities, boundary conditions, and recursion on the size of a problem (the running total of die rolls, staircases).
+  - **Markov chains:** n-step probabilities as matrix powers, how fast a chain forgets its start, why random walks on graphs spend time in proportion to degree, and absorption probabilities.
+  - **Random walks:** ruin against an unlimited opponent, why Wald's identity holds, how far a walk wanders (√n), and the ballot theorem.
+  - **Optimal stopping:** the Bellman equation, why options have value, the red-and-black card game, and the secretary rule explained.
+  - **Continuous probability:** the CDF method for transformed variables, the tail integral, order statistics in general, and Buffon's needle.
+  - 12 new checks, each re-derived independently in Python. Saved progress is unaffected.
+
 ## 0.52.0
 
 - **Handbook, Part 1 (Foundations) rewritten in depth.** The chapters were short for the time they claimed, and most homework solutions gave little more than the answer.

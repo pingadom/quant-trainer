@@ -195,6 +195,36 @@ def solve(m, b):
 FIT = np.polyfit([0, 1, 2], [1, 2, 4], 1)
 full_deck = [(r, s) for r in range(13) for s in range(4)]
 
+def ruin_far(i, p=0.6, top=300):
+    """P(hit 0) from i for a +1 (p) / -1 walk, by solving the first-step equations on 0..top."""
+    A = np.zeros((top + 1, top + 1))
+    rhs = np.zeros(top + 1)
+    A[0, 0], rhs[0] = 1, 1
+    A[top, top] = 1  # far enough up that ruin from there is negligible
+    for k in range(1, top):
+        A[k, k], A[k, k + 1], A[k, k - 1] = 1, -p, -(1 - p)
+    return np.linalg.solve(A, rhs)[i]
+
+
+def red_black_value(r, b):
+    """Red-and-black card game value by brute force over every order of the deck and every
+    "stop when the running score reaches k" rule, which contains the optimal rule for small decks."""
+    deck = "R" * r + "B" * b
+    orders = set(itertools.permutations(deck))
+    best = Fr(0)
+    for k in range(0, r + 1):
+        total = Fr(0)
+        for o in orders:
+            score = 0
+            for card in o:
+                if score >= k and k > 0:
+                    break
+                score += 1 if card == "R" else -1
+            total += score
+        best = max(best, total / len(orders))
+    return best
+
+
 ANSWERS = {
     "arith": {
         # added with the deeper chapter
@@ -253,27 +283,45 @@ ANSWERS = {
         "h0": 0.3 * 0.7, "h1": 0.02 * 5, "h2": 3 / (2 * 3), "h3": 4 * 4 + 9 - 2 * 2 * 3, "h4": 1, "h5": Fr(2, 3), "h6": 0.01 / 0.05,
     },
     "distributions": {
+        # added with the deeper chapter
+        "x1": 2 ** 2 * exp(-2) / 2,
+        "x2": Fr(2, 5),
+        "x3": 2.326,  # the quoted quantile; checked against scipy just below
         "h0": comb(5, 2) * Fr(1, 6) ** 2 * Fr(5, 6) ** 3, "h1": 4 * exp(-3), "h2": 0.8 ** 3, "h3": exp(-2), "h4": 0.9545, "h5": exp(-5), "h6": 5,
     },
     "symmetry": {
+        # added with the deeper chapter
+        "x2": sum(Fr(1, i) for i in range(1, 11)),
         "a1": Fr(4 * 53, 5),
         "h0": prob(lambda p: p[0] > p[1], TWO), "h1": Fr(1, 2), "h2": 5 * 0.8 ** 20, "h3": Fr(9, 2), "h4": 51 * Fr(25, 51), "h5": 4 * Fr(13, 52), "h6": 1,
     },
     "recursion": {
+        # added with the deeper chapter
+        "x1": prob(lambda r: 3 in itertools.accumulate(r), itertools.product(DIE, repeat=3)),
         "h0": wait_for("HH"), "h1": 3, "h2": Fr(1, 2) / (1 - Fr(1, 4)), "h3": 0.36 / (0.36 + 0.16), "h4": 6 * 7, "h5": 1 + 6, "h6": race("HHT", "HTH"),
     },
     "markov": {
+        # added with the deeper chapter
+        "x1": float((np.linalg.matrix_power(np.array([[0.8, 0.2], [0.4, 0.6]]), 2))[0, 1]),
         "h0": 0.1 / 0.4, "h1": 4, "h2": Fr(1, 2), "h3": 1 / 0.1, "h4": knight_return(), "h5": hit_reflecting(4), "h6": 2,
     },
     "walks": {
+        # added with the deeper chapter
+        "x1": round(float(ruin_far(2)), 9),
+        "x2": Fr(sum(all(sum(1 if i in c else -1 for i in range(k + 1)) > 0 for k in range(10)) for c in map(set, itertools.combinations(range(10), 6))), comb(10, 6)),
         "a1": walk_touch(4, 2),
         "h0": ruin(5, 20, 0.5), "h1": 75, "h2": ruin(5, 10, 0.55), "h3": 20 / 0.1, "h4": ruin(50, 100, 0.49), "h5": walk_touch(6, 2), "h6": 2 * 0.15866,
     },
     "stopping": {
+        # added with the deeper chapter
+        "x1": red_black_value(2, 2),
         "h0": reroll(3), "h1": sum(max(Fr(sum(p)), Fr(7)) for p in TWO) / 36, "h2": max(Fr(13 - k, 2) - Fr(1, 2) * (Fr(6, k) - 1) for k in range(1, 7)),
         "h3": reroll(2) - reroll(1), "h4": uniform_game(2), "h5": 20 / math.e,
     },
     "continuous": {
+        # added with the deeper chapter
+        "x1": quad(lambda x: sqrt(x), 0, 1)[0],
+        "x2": quad(lambda th: 0.25 * math.sin(th), 0, pi / 2)[0] / (0.5 * pi / 2),
         "h0": 0.125, "h1": 0.25, "h2": 0.2, "h3": 0.75, "h4": Fr(1, 3), "h5": pi / 4, "h6": quad(lambda x: x * x * 2 * x, 0, 1)[0],
     },
     "linalg": {
@@ -354,6 +402,12 @@ ANSWERS = {
         "h0": 0.75 * 0.08 + 0.25 * -0.3, "h1": 20 - 50 * 0.1, "h2": 16 * sqrt(1 / 4), "h3": 252 / 5, "h4": sqrt(2 * log(1000)) / sqrt(4), "h5": (40 - 200 * 0.05) / 20, "h6": 2 ** (5 - 3),
     },
 }
+
+# Records: the harmonic-sum answer agrees with brute force over all orderings of 7.
+assert Fr(sum(sum(1 for i in range(7) if p[i] == max(p[: i + 1])) for p in itertools.permutations(range(7))), math.factorial(7)) == sum(Fr(1, i) for i in range(1, 8))
+
+# The 99% normal quantile quoted in the distributions chapter.
+assert abs(norm.ppf(0.99) - ANSWERS["distributions"]["x3"]) < 0.001
 
 # The rounded Black-Scholes answers must still be close to the exact risk-neutral prices.
 assert abs(ANSWERS["stochastic"][8] - risk_neutral_call(100, 100, 0.2, 1)) < 0.01
