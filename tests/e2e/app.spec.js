@@ -642,12 +642,12 @@ test('reset keeps a backup that can be restored', async ({ page }) => {
 
 test('handbook: a check answered right counts towards the chapter', async ({ page }) => {
   await page.goto('./#/handbook/counting');
-  await expect(page.locator('#hb-progress')).toContainText('0 of 10');
+  await expect(page.locator('#hb-progress')).toContainText('0 of 12');
   const first = page.locator('.hb-check').first();
   await first.locator('input').fill('17576');
   await first.getByRole('button', { name: 'Check' }).click();
   await expect(first.locator('.hb-fb')).toContainText('Correct');
-  await expect(page.locator('#hb-progress')).toContainText('1 of 10');
+  await expect(page.locator('#hb-progress')).toContainText('1 of 12');
   await page.goto('./#/handbook');
   await expect(page.locator('.hb-chapter.started')).toHaveCount(1);
 });

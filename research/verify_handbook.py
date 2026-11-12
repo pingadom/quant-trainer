@@ -197,14 +197,23 @@ full_deck = [(r, s) for r in range(13) for s in range(4)]
 
 ANSWERS = {
     "arith": {
+        # added with the deeper chapter
+        "x1": sqrt(50),
+        "x2": max(Fr(7, 9), Fr(11, 14)),
         "a1": Fr(16 * 25, 100), "a2": 85 ** 2,
         "h0": 73 * 67, "h1": 99 * 87, "h2": Fr(5, 8), "h3": 35 ** 2, "h4": Fr(25, 75), "h5": len(str(3 ** 20)), "h6": 25_000_000 * 8 / 10_000, "h7": 1.02 ** 35,
     },
     "toolkit": {
+        # added with the deeper chapter
+        "x1": exp(-1),
+        "x2": quad(lambda x: x * exp(-2 * x), 0, np.inf)[0],
         0: 7, 1: log(1.1 * 0.9), 2: sum(range(101)), 3: Fr(3, 2), 5: 3, 6: 2, 7: quad(lambda x: 3 * x * x, 0, 2)[0], 8: 0.5 * 0.04 + 0.5 * 0.02, 9: 4 + 1 + 1 + 9,
         "h0": log(1.3), "h1": sum(range(2, 201, 2)), "h2": 1 / (1 - 0.9), "h3": 1 / math.e, "h4": quad(lambda x: x + x * x, 0, 1)[0], "h5": 0.25 * 0.04 + 0.25 * 0.09 + 2 * 0.25 * 0.01,
     },
     "counting": {
+        # added with the deeper chapter
+        "x2": len(set(itertools.permutations("RRRRRUUUUU"))),
+        "x3": sum(all(p[i] != i for i in range(5)) for p in itertools.permutations(range(5))),
         "a1": comb(52, 5), "a2": comb(9, 2), "a3": comb(13, 2) * 6 * 6 * 44,
         "h0": math.factorial(5), "h1": math.factorial(4), "h2": len(set(itertools.permutations("TOOT"))), "h3": comb(13, 3) * comb(39, 2), "h4": comb(9, 3),
         "h5": sum(len(set(t)) == 3 for t in itertools.product(DIE, repeat=3)), "h6": 4 * comb(13, 5),
@@ -213,18 +222,33 @@ ANSWERS = {
         "h0": prob(lambda p: sum(p) >= 10, TWO), "h1": prob(lambda p: 6 in p, TWO),
         "h2": prob(lambda c: c[1] < 2 or c[0] >= 10, full_deck),
         "h3": Fr(2, 2 ** 10), "h4": Fr(39, 51) * Fr(26, 50), "h5": 1 - Fr(11 * 10 * 9 * 8, 12 ** 4),
+        # added with the deeper chapter: by enumeration where it is small enough
+        "x1": 1 - Fr(49, 50) ** 50,
+        "x2": prob(lambda c: c[1] == 0 or c[0] >= 10 or c[0] == 0, full_deck),
+        "x4": Fr(sum(1 for p in itertools.permutations("RRRRRBBB") if p[2] == "B"), math.factorial(8)),
     },
     "conditional": {
+        # added with the deeper chapter
+        "x1": Fr(comb(13, 3), comb(52, 3)),
+        "x2": (Fr(1, 2) * Fr(1, 2) ** 4 + Fr(1, 2)) / (Fr(1, 2) * Fr(1, 2) ** 3 + Fr(1, 2)),
         "a1": Fr(9, 13),
         "h0": prob(lambda p: sum(p) >= 9, [p for p in TWO if p[0] >= 4]), "h1": Fr(2, 3), "h2": Fr(6, 10) * Fr(1, 100) + Fr(4, 10) * Fr(3, 100),
         "h3": (Fr(4, 10) * Fr(3, 100)) / (Fr(6, 10) * Fr(1, 100) + Fr(4, 10) * Fr(3, 100)),
         "h4": Fr(1, 100) / (Fr(1, 100) + Fr(99, 100) * Fr(1, 128)), "h5": 0.2 * 0.9 / (0.2 * 0.9 + 0.8 * 0.5),
     },
     "expectation": {
+        # added with the deeper chapter
+        "x1": 1 + Fr(19, 2),
+        "x2": 1 / Fr(2, 6),
+        "x3": Fr(35, 37) - Fr(36, 37),
         "a1": sum(Fr(6, 6 - k) for k in range(6)),
         "h0": max_two(), "h1": Fr(19, 4), "h2": Fr(5, 13), "h3": Fr(7, 2) - 4, "h4": 5 * Fr(3, 4) ** 4, "h5": Fr(53, 5),
     },
     "variance": {
+        # added with the deeper chapter
+        "x1": Fr(1, 9),
+        "x2": sqrt(400 * 0.5 * 0.5),
+        "x3": float(min(np.linspace(0, 2, 200001), key=lambda w: (w * 0.1) ** 2 + ((1 - w) * 0.2) ** 2 + 2 * w * (1 - w) * 0.5 * 0.1 * 0.2)),  # numerical minimum
         "a1": 0.3 / 5,
         "h0": 0.3 * 0.7, "h1": 0.02 * 5, "h2": 3 / (2 * 3), "h3": 4 * 4 + 9 - 2 * 2 * 3, "h4": 1, "h5": Fr(2, 3), "h6": 0.01 / 0.05,
     },

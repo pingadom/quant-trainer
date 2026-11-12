@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.52.0
+
+- **Handbook, Part 1 (Foundations) rewritten in depth.** The chapters were short for the time they claimed, and most homework solutions gave little more than the answer.
+  - **Teaching:** every chapter explains why each rule works, not just what it is, with roughly twice to three times the text and three to five worked examples instead of one.
+  - **New material:** inclusion–exclusion and derangements, pairwise v full independence, the "any position in a shuffled deck" symmetry, the chain rule, conditional independence (learning a coin's bias), the law of total expectation, the tail-sum formula, Chebyshev's inequality, the variance of dependent counts, the minimum-variance portfolio, lattice paths, the hypergeometric distribution, Taylor approximations and (1 + x/n)ⁿ → eˣ, integration by parts, division and square-root tricks, and casting out nines.
+  - **Homework:** every solution is now a worked answer: the approach, the steps, the answer, and a check or the point of the question.
+  - **Checks:** solutions show their working, and 20 new checks are added (each answer re-derived independently in Python, as before). Your saved progress is unaffected.
+
 ## 0.51.0
 
 Practice for software engineering technical interviews, following Optiver's own advice for its SWE interviews: they test how you think, the data structures you choose and what they cost, how those work in memory, CS fundamentals, and how you explain and revise a design.
