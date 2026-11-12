@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.54.0
+
+- **Handbook, Part 3 (Statistics) rewritten in depth**, as Parts 1 and 2 were: fuller explanations, more worked examples, and a worked solution for every homework problem.
+  - **The CLT:** counts v proportions in the law of large numbers, how big n needs to be, why casinos are safe, the standard error of a difference, and effective sample size for correlated data.
+  - **Estimation:** why MSE splits into bias and variance, standard errors of MLEs, the delta method, t multipliers, the rule of three for rare events, and how much to shrink.
+  - **Testing:** one- v two-sided tests, tests and intervals as two views of one thing, two-sample and paired tests, power and the sample-size formula, and Benjamini–Hochberg.
+  - **Regression:** the matrix form, what the standard errors assume (and robust errors), omitted-variable bias and errors-in-variables in numbers, and overfitting with adjusted R².
+  - **Correlation matrices:** risk contributions, factor models and shrinkage for large matrices.
+  - **Time series:** the variance ratio, estimating φ and its bias, unit-root tests, GARCH(1, 1) and its long-run level, and correlation v cointegration.
+  - 11 new checks, each re-derived independently in Python (several by simulation). Saved progress is unaffected.
+
 ## 0.53.0
 
 - **Handbook, Part 2 (Interview probability) rewritten in depth**, as Part 1 was in 0.52.0: fuller explanations of why each method works, more worked examples, and a worked solution for every homework problem.

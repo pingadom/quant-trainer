@@ -225,6 +225,31 @@ def red_black_value(r, b):
     return best
 
 
+def ols_slope_omitted(n=400_000, seed=3):
+    """Slope of y on x1 alone when y = x1 + 2 x2 and x2 = 0.5 x1 + noise, by simulation (rounded)."""
+    rng = np.random.default_rng(seed)
+    x1 = rng.standard_normal(n)
+    x2 = 0.5 * x1 + rng.standard_normal(n)
+    y = x1 + 2 * x2 + rng.standard_normal(n)
+    return round(np.polyfit(x1, y, 1)[0], 1)
+
+
+def ols_slope_noisy(n=400_000, seed=4):
+    """Slope of y on a noisy reading of x (signal and noise variance 1), true slope 2 (rounded)."""
+    rng = np.random.default_rng(seed)
+    x = rng.standard_normal(n)
+    y = 2 * x + rng.standard_normal(n)
+    return round(np.polyfit(x + rng.standard_normal(n), y, 1)[0], 1)
+
+
+def garch_long_run(omega, alpha, beta, steps=20_000):
+    """Long-run variance of a GARCH(1, 1), by iterating the expected-variance recursion from zero."""
+    v = 0.0
+    for _ in range(steps):
+        v = omega + (alpha + beta) * v
+    return v
+
+
 ANSWERS = {
     "arith": {
         # added with the deeper chapter
@@ -350,26 +375,43 @@ ANSWERS = {
         "h3": 100 * (2 * round(norm.cdf(0.075), 5) - 1), "h4": log(2) / 0.1, "h5": 0.25 * sqrt(4), "h6": quad(lambda z: exp(2 * (-0.02 + 0.2 * z)) * norm.pdf(z), -12, 12)[0],
     },
     "clt": {
+        # added with the deeper chapter
+        "x1": float(np.std(np.array([35] * 1 + [-1] * 36))),  # population sd over the 37 equally likely pockets
+        "x2": sqrt(1 ** 2 / 100 + 1 ** 2 / 100),  # in percent: sd 1% over 100 days each
         0: round(norm.sf(1), 5), 1: 2 / sqrt(400), 2: 2 * sqrt(10000 / 4), 3: (2 * 0.5 / 0.01) ** 2,
         "h0": sqrt(36 * 35 / 12), "h1": round(norm.sf(2), 4), "h2": 10 / 5, "h3": 100 * 4, "h4": (2 / 0.01) ** 2, "h5": 0.05 * sqrt(252),
     },
     "estimation": {
+        # added with the deeper chapter
+        "x1": 0.04 * (((0.6 + 1e-6) / (0.4 - 1e-6)) - ((0.6 - 1e-6) / (0.4 + 1e-6))) / 2e-6,  # numerical derivative of the odds
+        "x2": Fr(3, 600),
+        "x3": 0.10 * 0.02 ** 2 / (0.02 ** 2 + 0.04 ** 2),
         0: 0.1 ** 2 + 0.02, 1: Fr(4, 5), 2: Fr(7, 10), 3: Fr(2 + 4 + 3 + 3, 4), 4: 100 * 1.25 - 1, 5: 1.96 * 20 / 10, 6: beta(9, 3).mean(),
         "h0": 3 / (2 + 3 + 7), "h1": sqrt(0.55 * 0.45 / 400), "h2": 0.55 - 1.96 * sqrt(0.55 * 0.45 / 400), "h3": 0.9, "h4": beta(5, 15).mean(), "h5": (1.96 * 0.5 / 0.02) ** 2,
     },
     "testing": {
+        # added with the deeper chapter
+        "x1": (0.12 - 0.05) / sqrt(0.025 ** 2 + 0.025 ** 2),
+        "x2": (2.8 / 0.05) ** 2,  # the rounded 2.8 the chapter teaches (checked against exact quantiles below)
         0: (60 - 50) / sqrt(100 / 4), 1: round(2 * norm.sf(2), 4), 2: 1.5 * sqrt(4), 3: (2 / 0.4) ** 2, 4: 1 - 0.95 ** 100, 5: 0.05 / 50, 6: 0.05 * 900 / (0.05 * 900 + 0.8 * 100),
         "h0": 30 / sqrt(1000 / 4), "h1": 0.1 / (2 / sqrt(400)), "h2": round(norm.sf(-0.04), 3), "h3": (2 / 2) ** 2, "h4": 1 - (1 - 0.0062) ** 20, "h5": 0.01 * 0.5 / (0.01 * 0.5 + 0.99 * 0.01),
     },
     "regression": {
+        # added with the deeper chapter
+        "x1": float(ols_slope_omitted()),
+        "x2": float(ols_slope_noisy()),
         0: 0.5 * 30 / 10, 1: 2 + 1.5 * 4, 2: 0.6 ** 2, 3: (1 - 0.36) * 25, 4: 0.6 / 0.2, 5: 0.5 * 2,
         "h0": float(FIT[0]), "h1": float(FIT[1]), "h2": 0.7 * 30 / 15, "h3": 2 / (1 * sqrt(100)), "h4": 2 * 2 / (1 * sqrt(100)), "h5": 0.02 ** 2, "h6": 4 / 5,
     },
     "matrix": {
+        # added with the deeper chapter
+        "x1": int(np.triu(np.ones((100, 100))).sum()),
         0: float(np.array([0.6, 0.4]) @ np.array([[0.04, 0.01], [0.01, 0.01]]) @ np.array([0.6, 0.4])), 1: 0.3 / sqrt(3), 2: min_equal_corr(4), 3: min_third_corr(0.8), 4: float(np.linalg.eigvalsh(np.array([[1, 0.6], [0.6, 1]]))[-1]), 5: top_share(10, 0.3),
         "h0": min_third_corr(0.6), "h1": sqrt(0.16) * 0.25, "h2": (0.04 - 0.01) / (0.01 + 0.04 - 2 * 0.01), "h3": 3, "h4": 0.09 / (0.01 + 0.09), "h5": top_share(500, 0.2), "h6": min_third_corr(0.9),
     },
     "timeseries": {
+        # added with the deeper chapter
+        "x1": 100 * sqrt(garch_long_run(0.000002, 0.08, 0.90)),
         0: 1 + 0.2, 1: 3 / (1 - 0.25), 2: log(0.5) / log(0.9), 3: 0.8 ** 2 * 10, 4: 0.94 * 1 + 0.06 * 4,
         "h0": log(0.5) / log(0.5), "h1": 1 / (1 - 0.81), "h2": sqrt(2 * 1 * (1 - 0.5)), "h3": 2 * 0.95 ** 14, "h4": log(0.5) / log(0.94), "h5": 2 * 100,
     },
@@ -405,6 +447,9 @@ ANSWERS = {
 
 # Records: the harmonic-sum answer agrees with brute force over all orderings of 7.
 assert Fr(sum(sum(1 for i in range(7) if p[i] == max(p[: i + 1])) for p in itertools.permutations(range(7))), math.factorial(7)) == sum(Fr(1, i) for i in range(1, 8))
+
+# The 2.8 in the testing chapter's sample-size rule: z for 97.5% plus z for 80%.
+assert abs(norm.ppf(0.975) + norm.ppf(0.8) - 2.8) < 0.01
 
 # The 99% normal quantile quoted in the distributions chapter.
 assert abs(norm.ppf(0.99) - ANSWERS["distributions"]["x3"]) < 0.001
