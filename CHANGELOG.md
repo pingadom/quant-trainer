@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.56.0
+
+- **Handbook, Part 6 (Quant equities): every homework solution worked through** for factors and backtesting: survivorship bias in numbers, turnover and costs, the square-root impact law and why orders are split, the best of many noise backtests (and the deflated Sharpe), capacity, the fundamental law of active management, and why correlated residuals cap a portfolio's information ratio. That completes the in-depth rewrite of the whole course.
+
 ## 0.55.0
 
 - **Handbook, Parts 4 and 5 (Stochastic processes and Trading) rewritten in depth**: fuller explanations, more worked examples, and a worked solution for every homework problem.
