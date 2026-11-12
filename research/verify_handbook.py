@@ -362,11 +362,15 @@ ANSWERS = {
         "h7": float(np.linalg.cholesky(np.array([[1, -0.5], [-0.5, 1]]))[1, 1]),
     },
     "brownian": {
+        # added with the deeper chapter
+        "x1": 2 / 0.5,  # Wald; confirmed by simulation just below
         0: 4, 1: round(norm.sf(1), 5), 2: min(2, 5), 3: 0.5, 4: 3, 5: 100 * sqrt(2 / pi) * sqrt(1 / 100), 6: 2 * round(norm.sf(1), 5),
         7: quad(lambda m: 2 * norm.sf(m / 2), 0, 50)[0], 8: sqrt(100), 9: 3 / (3 + 1), 10: 1 * 3, 11: 1 / (1 + exp(-2 * 0.5 / 1 ** 2 * 1)),
         "h0": 3 - 1, "h1": round(norm.sf(2 / sqrt(4)), 5), "h2": min(1, 3), "h3": 2, "h4": 2 * round(norm.sf(2), 5), "h5": 2 * 1, "h6": 2 * round(norm.sf(0.03 / (0.01 * sqrt(9))), 5),
     },
     "stochastic": {
+        # added with the deeper chapter
+        "x1": -0.5 * 0.2 ** 2 * 100 ** 2 * 0.02,
         0: 1 + 0.1 * 0.01 + 0.2 * sqrt(0.01) * 1, 1: float(norm.moment(4, scale=sqrt(2))), 2: (2 ** 2 - 1) / 2, 3: 0.1 - 0.2 ** 2 / 2,
         4: 100 * exp(0.1 - 0.2 ** 2 / 2), 5: quad(lambda z: 100 * exp(0.08 + 0.2 * z) * norm.pdf(z), -12, 12)[0], 6: round(norm.cdf(0.08 / 0.2), 5),
         7: (log(100 / 100) + 0.5 * 0.2 ** 2) / 0.2, 8: 100 * (2 * round(norm.cdf(0.1), 5) - 1), 9: 1 - round(norm.cdf(0.1), 5),
@@ -416,18 +420,26 @@ ANSWERS = {
         "h0": log(0.5) / log(0.5), "h1": 1 / (1 - 0.81), "h2": sqrt(2 * 1 * (1 - 0.5)), "h3": 2 * 0.95 ** 14, "h4": log(0.5) / log(0.94), "h5": 2 * 100,
     },
     "betting": {
+        # added with the deeper chapter
+        "x1": float(max(np.linspace(0, 5, 500001), key=lambda f: 0.5 * log(1 + 0.2 * f) + 0.5 * log(1 - 0.1 * f) if f < 10 else -1)),
         0: 1.5 * 0.6, 1: Fr(1 * 6 - 4, 10), 2: (2 * 0.5 - 0.5) / 2, 3: 0.6 * log(1.2) + 0.4 * log(0.8), 4: 0.1 / 0.2 ** 2, 5: 0.5 ** 2 / 2, 6: Fr(1, 2) ** 3,
         "h0": 2 * 0.55 - 1, "h1": (3 * 0.4 - 0.6) / 3, "h2": 0.55 * log(1.1) + 0.45 * log(0.9), "h3": 0.08 / 0.16 ** 2, "h4": 100000 * 0.25, "h5": 0.5, "h6": 2 * (0.5 - 0.125),
     },
     "market-making": {
+        # added with the deeper chapter
+        "x1": 90 + 20 * (Fr(1, 2) * Fr(6, 10) ** 2) / (Fr(1, 2) * Fr(6, 10) ** 2 + Fr(1, 2) * Fr(4, 10) ** 2),
         0: 100.01 - 99.99, 1: (100.01 + 99.99) / 2, 2: (100 * 100.01 + 200 * 100.02) / 300, 3: 3 * 3.5, 4: (52 - 50) * 5, 5: 0.2 * 10, 6: 0.6 * 110 + 0.4 * 90, 7: 5 + 3.5,
         "h0": 10 * (101 - 99), "h1": sqrt(10 / 4), "h2": 0.3 * 10, "h3": (300 * 99.99 + 100 * 99.98) / 400, "h4": 3 * sum(range(1, 14)) / 13, "h5": 13 + 2 * sum(range(1, 13)) / 12, "h6": 100 - 0.05 - 0.02 * 3,
     },
     "options": {
+        # added with the deeper chapter
+        "x1": max(100 - 90, 0),
         0: max(115 - 100, 0), 1: max(100 - 115, 0), 2: 15 - 6, 3: 8 - 100 + 100, 4: 10 - 105 + 100, 5: one_step(100, 120, 80, 90), 6: 0.4 * 100 * 0.25, 7: 0.4 * 100 * 0.2 * 0.5, 8: 100 * 0.5, 9: 0.5 * 0.05 * 4, 10: 2 * 0.4 * 100 * 0.2,
         "h0": 10 - 100 + 100 * exp(-0.05), "h1": one_step(100, 110, 90, 100), "h2": (10 - 0) / (110 - 90), "h3": 0.25 * max(120 - 100, 0), "h4": 0.8 * 50 * 0.4 * 0.5, "h5": 10 - 9.52, "h6": 48 / 16,
     },
     "fermi": {
+        # added with the deeper chapter
+        "x1": sqrt(20 * 500),
         0: sqrt(100 * 10000), 1: 3e4 * 2e3, 2: 2 ** sqrt(4), 3: 10 * 0.1,
         "h0": sqrt(2 * 200), "h1": 365.25 * 86400, "h2": 70 * 60 * 24 * 365.25 * 80,
     },
@@ -450,6 +462,28 @@ assert Fr(sum(sum(1 for i in range(7) if p[i] == max(p[: i + 1])) for p in itert
 
 # The 2.8 in the testing chapter's sample-size rule: z for 97.5% plus z for 80%.
 assert abs(norm.ppf(0.975) + norm.ppf(0.8) - 2.8) < 0.01
+
+# Brownian chapter: the expected time for 0.5t + W(t) to reach 2 is 4 (Wald), by simulation.
+_rng = np.random.default_rng(7)
+_x = np.zeros(20_000)
+_t = np.full(20_000, np.nan)
+for _k in range(1, 6001):  # steps of 0.01 up to t = 60
+    _x += 0.5 * 0.01 + 0.1 * _rng.standard_normal(20_000)
+    _hit = np.isnan(_t) & (_x >= 2)
+    _t[_hit] = _k * 0.01
+assert abs(np.nanmean(_t) - ANSWERS["brownian"]["x1"]) < 0.15, np.nanmean(_t)
+
+# Stochastic chapter: theta + half sigma^2 S^2 gamma = 0 for a Black-Scholes call with r = 0,
+# checked by finite differences on the closed-form price.
+def _bs_call(S, K, sig, T):
+    d1 = (log(S / K) + 0.5 * sig * sig * T) / (sig * sqrt(T))
+    return S * norm.cdf(d1) - K * norm.cdf(d1 - sig * sqrt(T))
+
+
+_h, _dt = 0.01, 1e-5
+_gamma = (_bs_call(100 + _h, 105, 0.2, 0.5) - 2 * _bs_call(100, 105, 0.2, 0.5) + _bs_call(100 - _h, 105, 0.2, 0.5)) / _h ** 2
+_theta = -(_bs_call(100, 105, 0.2, 0.5) - _bs_call(100, 105, 0.2, 0.5 - _dt)) / _dt  # value falls as expiry nears
+assert abs(_theta + 0.5 * 0.2 ** 2 * 100 ** 2 * _gamma) < 1e-3, (_theta, _gamma)
 
 # The 99% normal quantile quoted in the distributions chapter.
 assert abs(norm.ppf(0.99) - ANSWERS["distributions"]["x3"]) < 0.001

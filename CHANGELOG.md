@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.55.0
+
+- **Handbook, Parts 4 and 5 (Stochastic processes and Trading) rewritten in depth**: fuller explanations, more worked examples, and a worked solution for every homework problem.
+  - **Brownian motion:** waiting for a single level (certain, but with an infinite expected wait without drift), and the bias from simulating paths in discrete steps.
+  - **Stochastic calculus:** "gamma pays for theta": what the Black–Scholes equation says about a hedged option, and why it's a bet on realised against implied volatility.
+  - **Betting:** Kelly for trades that lose only part of the stake (the opening +50%/−40% game made profitable), where the continuous formula comes from, and sizing when the edge itself is uncertain.
+  - **Market making:** updating fair value trade by trade, how much to skew and why, the economics of the spread, and the full answer script.
+  - **Options:** no-arbitrage bounds (with the arbitrage spelled out), and the volatility skew.
+  - **Estimation:** the six-step method, checking from a second direction, anchor numbers, and turning a 90% range into a median and a spread.
+  - **Game theory:** every homework problem worked through.
+  - 7 new checks, each re-derived independently in Python (with simulation and finite-difference checks on the formulas they use). Saved progress is unaffected.
+
 ## 0.54.0
 
 - **Handbook, Part 3 (Statistics) rewritten in depth**, as Parts 1 and 2 were: fuller explanations, more worked examples, and a worked solution for every homework problem.
