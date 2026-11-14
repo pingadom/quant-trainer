@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.57.0
+
+- **Tech screening practice** (Coding → Tech screening), for Optiver's 45-minute software engineering screening: review a short code snippet for a real business problem, suggest improvements, outline a deployment plan, and discuss CS fundamentals.
+  - **Six code-review exercises** in Python on realistic trading-firm code: an end-of-day P&L job, a price cache used by several threads, a pre-trade order check, a moving average on a trade stream, retrying order sends, and a trade-file loader. Write your review against the clock, then compare with a model review ranked by severity, each issue with its fix and what it would cost the business. Then see an improved version, write a deployment plan and compare it with a strong one, and answer the fundamentals follow-ups.
+  - **Guides** to reviewing code in an interview (what to look at, in what order, and how to explain impact) and to what a deployment plan covers.
+  - **A full 45-minute mock**: first read, review, discussion, deployment plan, fundamentals and your questions, timed, with a self-scored rubric.
+  - Every planted bug is checked by running the code: research/verify_internals.py confirms each one really breaks the original and that the improved version fixes it.
+- The technical-interview countdown now includes a daily code review and a screening mock every few days.
+
 ## 0.56.0
 
 - **Handbook, Part 6 (Quant equities): every homework solution worked through** for factors and backtesting: survivorship bias in numbers, turnover and costs, the square-root impact law and why orders are split, the best of many noise backtests (and the deflated Sharpe), capacity, the fundamental law of active management, and why correlated residuals cap a portfolio's information ratio. That completes the in-depth rewrite of the whole course.

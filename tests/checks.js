@@ -659,6 +659,27 @@
     if (QT.code) for (const P of QT.code.PROBLEMS) if (!Array.isArray(P.followups) || P.followups.some((f) => f.length !== 2 || !f[0] || !f[1])) fail(`code ${P.id}: malformed follow-ups`);
     if (QT.code && ['opt-order-book', 'opt-lru', 'opt-ring-deque', 'opt-peak-live', 'opt-debug-matcher'].some((id) => !QT.code.byId(id).followups.length)) fail('code: a technical problem lost its follow-ups');
 
+    // Tech screening: every exercise has a snippet, issues that point at real lines, a serious issue,
+    // an improved version, a deployment plan and follow-ups.
+    if (QT.screening) {
+      const ids = new Set();
+      for (const E of QT.screening.EXERCISES) {
+        if (ids.has(E.id)) fail(`screening ${E.id}: duplicate id`);
+        ids.add(E.id);
+        const n = E.code.split('\n').length;
+        if (!E.context || !E.code.includes('def ') || !E.improved.includes('def ')) fail(`screening ${E.id}: missing code`);
+        if (E.issues.length < 4 || !E.issues.some((x) => x.sev === 'high') || E.issues.some((x) => !['high', 'med', 'low'].includes(x.sev) || !x.what || !x.fix || !x.impact)) fail(`screening ${E.id}: issues`);
+        for (const x of E.issues) {
+          if (x.lines === 'all') continue;
+          const nums = String(x.lines).split(/[^0-9]+/).filter(Boolean).map(Number);
+          if (!nums.length || nums.some((k) => k < 1 || k > n)) fail(`screening ${E.id}: issue points at line ${x.lines} of ${n}`);
+        }
+        if (E.deploy.good.length < 3 || E.fundamentals.length < 2) fail(`screening ${E.id}: deployment plan or follow-ups`);
+        if (/undefined|NaN|\[object/.test(JSON.stringify(E))) fail(`screening ${E.id}: junk in the text`);
+      }
+      if (QT.screening.EXERCISES.length < 6) fail('screening: fewer than 6 exercises');
+    }
+
     // Think aloud: pace and filler counting.
     if (QT.talk) {
       const st = QT.talk.speechStats('Um so I think uh the answer is like 5', 60);

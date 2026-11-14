@@ -1250,3 +1250,14 @@ select { font-family: var(--body); }
 .fu > summary { cursor: pointer; font-weight: 600; }
 .fu p { margin: 6px 0 0 16px; }
 @media (max-width: 640px) { .dz-arrow { transform: rotate(90deg); } .dz-flow { flex-direction: column; align-items: stretch; } .dz-box { max-width: none; } }
+
+/* tech screening: code review (screening.js) */
+.sc-code { overflow-x: auto; font-family: var(--mono); font-size: 0.85rem; line-height: 1.55; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+.sc-ln { display: inline-block; width: 2.2em; margin-right: 12px; color: var(--muted); text-align: right; user-select: none; }
+#sc-mine, #sc-deploy, #mk-review, #mk-deploy { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 4px 0 8px; }
+.sc-issues { list-style: none; padding: 0; display: grid; gap: 10px; }
+.sc-issue { padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 8px; background: var(--panel); }
+.sc-issue p { margin: 6px 0 0; }
+.sc-issue.sev-high { border-left-color: var(--bad); }
+.sc-issue.sev-med { border-left-color: var(--accent); }
+.sc-promo { display: grid; gap: 4px; margin: 12px 0; border-left: 4px solid var(--accent); text-decoration: none; color: inherit; }

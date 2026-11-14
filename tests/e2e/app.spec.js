@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -728,6 +728,25 @@ test('handbook: an exam runs to a report, and a finished chapter comes back for 
   await expect(page.locator('#hb-run')).toContainText('Review done');
   await page.goto('./#/handbook');
   await expect(page.locator('.hb-due')).toHaveCount(0);
+});
+
+test('tech screening: review a snippet, compare, plan a deployment, and a full mock', async ({ page }) => {
+  await page.goto('./#/code');
+  await page.getByRole('link', { name: /Tech screening: code review and deployment plans/ }).click();
+  await page.getByRole('link', { name: /Pre-trade order check/ }).click();
+  await expect(page.locator('.sc-issues')).toBeHidden(); // nothing shown before you review
+  await page.getByLabel('Your review').fill('Line 10: float modulo rejects valid prices. Line 8: off by one at the maximum.');
+  await page.getByRole('button', { name: 'Compare with a model review' }).click();
+  await page.locator('.sc-issue.sev-high input').first().check();
+  await page.getByRole('button', { name: 'Compare with a strong plan' }).click();
+  await expect(page.locator('#sc-deploy-good')).toBeVisible();
+  await page.getByRole('button', { name: 'Save my result' }).click();
+  await expect(page.locator('#sc-saved')).toContainText('1 of 5 issues, 1 of 1 serious');
+  await page.goto('./#/code/screening/mock');
+  for (let i = 0; i < 6; i++) await page.locator('#mk-next').click();
+  for (const fs of await page.locator('.dz-score').all()) await fs.getByLabel('Partly').check();
+  await page.getByRole('button', { name: 'Save the mock' }).click();
+  await expect(page.locator('#mk-saved')).toContainText('2.0 out of 3');
 });
 
 test('design discussion: clarify first, hints, pushbacks, diagram and a saved score', async ({ page }) => {

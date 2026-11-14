@@ -25,6 +25,7 @@
     ['#/mental/flow', 'Flow training for + and −', 'zetamac addition subtraction automatic flow rhythm pace carry borrow slow thinking mode method drill'],
     ['#/code', 'Coding (SWE)', 'software engineer swe coding leetcode programming optiver hackerrank online assessment python javascript data structures order book lru cache queue'],
     ['#/code/quiz', 'Coding knowledge quiz', 'computer science multiple choice operating systems networking tcp udp c++ python concurrency'],
+    ['#/code/screening', 'Tech screening: code review', 'optiver software engineer tech screening code review deployment plan snippet improvements'],
     ['#/oa', 'Online tests', 'number sequences digit span running totals online assessment cognitive games zap-n zapn imc games'],
     ['#/oa/seq', 'Number sequences', 'sequences next term pattern numberlogic practice timed test'],
     ['#/oa/battery/0', 'All cognitive games', 'zap-n zapn game based assessment battery switch memory balloon timing multitask'],

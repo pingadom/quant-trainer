@@ -24,6 +24,7 @@ import threading
 import time
 import weakref
 from collections import OrderedDict, deque
+from decimal import Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -450,6 +451,168 @@ SKETCHES = {
 }
 
 
+# ---- Tech screening code reviews: each planted bug breaks the original; the improved version fixes it.
+
+def screening_snippets():
+    """(original, improved) Python source for each code-review exercise, by id."""
+    src = (ROOT / "www/js/screening-content.js").read_text(encoding="utf-8")
+    out = {}
+    for m in re.finditer(r"id: '([a-z0-9-]+)', title:.*?code: `(.*?)`,.*?improved: `(.*?)`,", src, re.S):
+        out[m.group(1)] = tuple(x.replace("\\\\", "\\") for x in (m.group(2), m.group(3)))
+    return out
+
+
+class FakeTime:
+    """Stands in for the time module: a clock you move by hand, and a sleep that just advances it."""
+
+    def __init__(self):
+        self.now = 1000.0
+
+    def time(self):
+        return self.now
+
+    monotonic = time
+
+    def sleep(self, s):
+        self.now += s
+
+
+def load(code, **globs):
+    ns = {"__name__": "snippet"}
+    exec(code, ns)
+    ns.update(globs)  # replace modules the snippet imported, e.g. a fake clock
+    return ns
+
+
+def scr_pnl(orig, fixed):
+    fills = [{"trader": "ann", "side": "BUY", "qty": 10, "price": 100.0, "mark": 101.5},
+             {"trader": "bob", "side": "SELL", "qty": 5, "price": 50.0, "mark": 49.0}]
+    f = load(orig)["pnl_by_trader"]
+    first, _ = f(fills)
+    first = dict(first)
+    second, _ = f(fills)
+    assert second["ann"] == 2 * first["ann"], "the mutable default should accumulate across calls"
+    g = load(fixed)["pnl_by_trader"]
+    assert g(fills) == g(fills) == {"ann": Decimal("15.0"), "bob": Decimal("5.0")}
+    try:
+        g([{"trader": "x", "side": "buyy", "qty": 1, "price": 1, "mark": 2}])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("the fixed version should reject an unknown side")
+    assert load(fixed)["format_report"]({"b": Decimal("1.5"), "a": Decimal("-2")}) == "a: -2.00\nb: 1.50\n"
+
+
+def scr_cache(orig, fixed):
+    clock, calls = FakeTime(), []
+
+    def fetch(sym):
+        calls.append(sym)
+        return 100 + len(calls)
+
+    old = load(orig, time=clock)["PriceCache"](fetch, ttl=1.0)
+    old.get("X")
+    clock.now += 5
+    old.get("X")
+    assert len(calls) == 1, "the reversed comparison should never refresh"
+    calls.clear()
+    new = load(fixed)["PriceCache"](fetch, ttl=1.0, clock=clock.time)
+    a = new.get("X")
+    assert new.get("X") == a and len(calls) == 1  # fresh hit
+    clock.now += 5
+    assert new.get("X") != a and len(calls) == 2  # stale: refreshed
+
+
+def scr_order(orig, fixed):
+    ok = {"side": "BUY", "qty": 1000, "price": 1.15}
+    old = load(orig)["check_order"]
+    assert "price not on tick" in old({"side": "BUY", "qty": 5, "price": 1.15}), "float modulo should reject 1.15"
+    assert "bad quantity" in old(ok), "the original should reject exactly the maximum"
+    new = load(fixed)["check_order"]
+    assert new(ok) == []
+    assert new({"side": "BUY", "qty": 5, "price": 1.155}) == ["price not on tick"]
+    assert "bad quantity" in new({"side": "BUY", "qty": True, "price": 1.0})
+    assert "bad quantity" in new({"side": "BUY", "qty": 10.5, "price": 1.0})
+    assert "bad quantity" in new({"side": "BUY", "qty": 1001, "price": 1.0})
+
+
+def scr_moving(orig, fixed):
+    old = load(orig)["MovingAverage"](2)
+    out = [old.on_trade(p) for p in (1, 2, 3)]
+    assert out[-1] == 2.0, "the original keeps n + 1 prices"
+    rng = random.Random(5)
+    for n in (1, 3, 7):
+        new = load(fixed)["MovingAverage"](n)
+        prices = []
+        for _ in range(300):
+            p = rng.uniform(90, 110)
+            prices.append(p)
+            got, want = new.on_trade(p), sum(prices[-n:]) / len(prices[-n:])
+            assert abs(got - want) < 1e-9, (n, got, want)
+
+
+def scr_retry(orig, fixed):
+    class Gateway:
+        def __init__(self, exc):
+            self.exc, self.sent, self.calls = exc, [], 0
+
+        def send(self, order):
+            self.calls += 1
+            self.sent.append(order["client_id"])  # it reaches the exchange…
+            if self.calls == 1:
+                raise self.exc("reply lost")  # …but the reply is lost
+            return "ack"
+
+        def status(self, cid):
+            return "ack" if cid in self.sent else None
+
+    clock = FakeTime()
+    g = Gateway(TimeoutError)
+    load(orig, time=clock)["send_with_retry"](g, {"client_id": "A1"})
+    assert g.sent == ["A1", "A1"], "the original should send the order twice"
+    ns = load(fixed, time=clock)
+    g = Gateway(ns["Transient"])
+    assert ns["send_with_retry"](g, {"client_id": "A1"}) == "ack"
+    assert g.sent == ["A1"], "the fixed version should find the order instead of resending"
+
+    class Down:
+        calls = 0
+
+        def send(self, order):
+            Down.calls += 1
+            raise ns["Transient"]("down")
+
+        def status(self, cid):
+            return None
+
+    try:
+        ns["send_with_retry"](Down(), {"client_id": "B"}, attempts=3)
+    except ns["Transient"]:
+        pass
+    assert Down.calls == 3, "the fixed version should give up after a bounded number of attempts"
+
+
+def scr_loader(orig, fixed):
+    import os
+    import tempfile
+    rows = 'date,account,symbol,qty,price\n2026-11-13,"Smith, J",ACME,100,10.5\n2026-11-13,FUND1,XYZ,50,20.25\n'
+    fd, path = tempfile.mkstemp(suffix=".csv")
+    try:
+        with os.fdopen(fd, "w", newline="") as f:
+            f.write(rows)
+        assert len(load(orig)["load_trades"](path)) == 1, "the comma inside quotes should drop a row"
+        got = load(fixed)["load_trades"](path)
+        assert len(got) == 2 and got[0]["account"] == "Smith, J" and got[1]["price"] == Decimal("20.25")
+    finally:
+        os.remove(path)
+
+
+SCREENING = {
+    "pnl-report": scr_pnl, "price-cache": scr_cache, "order-check": scr_order,
+    "moving-average": scr_moving, "order-retry": scr_retry, "trade-loader": scr_loader,
+}
+
+
 def main():
     cards_src = (ROOT / "www/js/cards-python.js").read_text(encoding="utf-8")
     quiz_src = (ROOT / "www/js/code-quiz.js").read_text(encoding="utf-8")
@@ -487,8 +650,18 @@ def main():
             ran += 1
         except Exception as e:  # a sketch that doesn't even run is a failure too
             problems.append(f"design sketch {pid} failed: {type(e).__name__}: {e}")
+    snippets = screening_snippets()
+    for eid in set(snippets) | set(SCREENING):
+        if eid not in SCREENING or eid not in snippets:
+            problems.append(f"screening {eid}: {'no test here' if eid not in SCREENING else 'not found in screening-content.js'}")
+            continue
+        try:
+            SCREENING[eid](*snippets[eid])
+            ran += 1
+        except Exception as e:
+            problems.append(f"screening {eid} failed: {type(e).__name__}: {e}")
     unchecked = len(cards) - len(named)
-    print(f"{len(cards)} cards ({len(named)} with checks, {unchecked} explained only), {len(QUIZ)} quiz questions, {len(found)} design sketches; {ran} checks run on {platform.python_implementation()} {platform.python_version()}")
+    print(f"{len(cards)} cards ({len(named)} with checks, {unchecked} explained only), {len(QUIZ)} quiz questions, {len(found)} design sketches, {len(snippets)} code-review snippets; {ran} checks run on {platform.python_implementation()} {platform.python_version()}")
     for p in problems:
         print("FAIL", p)
     if problems:

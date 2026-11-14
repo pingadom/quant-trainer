@@ -28,6 +28,7 @@
   function render(el, a, b) {
     if (a === 'quiz') return quiz(el, b);
     if (a === 'design') return QT.designView(el, b);
+    if (a === 'screening') return QT.screeningView(el, b);
     const P = a && C.byId(a);
     if (P) return problem(el, P);
     list(el);
@@ -47,6 +48,7 @@
         <ul>${PROCESS.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: <a href="${GD_INTERN}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer intern</a> · <a href="${GD_INTERNSHIP}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer internship</a> · <a href="https://leetcode.com/discuss/topic/optiver/" target="_blank" rel="noopener">LeetCode Discuss: Optiver</a></p>
       </details>
+      <a class="card sc-promo" href="#/code/screening"><b>Tech screening: code review and deployment plans</b><span class="small">Optiver's 45-minute screening asks you to review a short snippet, suggest improvements and outline a deployment plan. ${QT.screening.EXERCISES.length} snippets to review, a guide to each part, and a full 45-minute mock.</span></a>
       <div class="row" style="margin:14px 0"><a class="btn" href="#/code/quiz">Knowledge quiz: ${QZ.N} questions, ${QZ.MINUTES} minutes</a><a class="btn" href="#/code/design">Design discussions (${QT.design.PROBLEMS.length})</a><a class="btn ghost" href="#/flashcards/python">Python internals cards</a><a class="btn ghost" href="#/bank/optiver">System design and fundamentals questions</a></div>
       ${techPlan()}
       ${C.GROUPS.map(([g, title, about]) => `
@@ -76,12 +78,15 @@
     const d = QT.design.byId(DESIGN_ORDER[idx % DESIGN_ORDER.length]);
     const techs = C.PROBLEMS.filter((P) => P.group === 'tech' || P.group === 'debug');
     const t = techs[idx % techs.length];
+    const ex = QT.screening.EXERCISES[idx % QT.screening.EXERCISES.length];
     const out = [
+      { id: `review-${ex.id}`, label: `Code review: ${ex.title}, with its deployment plan`, href: `#/code/screening/${ex.id}`, auto: (s.code.review[ex.id] || []).some((r) => sameDay(r.date)) },
       { id: 'cards', label: 'Python internals cards', href: '#/flashcards/python', auto: cardsToday },
       { id: `design-${d.id}`, label: `Design discussion: ${d.title}`, href: `#/code/design/${d.id}`, auto: (s.code.design[d.id] || []).some((r) => sameDay(r.date)) },
       { id: `code-${t.id}`, label: `Problem: ${t.title}, then its follow-ups`, href: `#/code/${t.id}` },
     ];
-    if (idx % 2 === 0) out.splice(1, 0, { id: 'quiz', label: 'Knowledge quiz', href: '#/code/quiz', auto: s.code.quiz.runs.some((r) => sameDay(r.date)) });
+    if (idx % 2 === 0) out.splice(2, 0, { id: 'quiz', label: 'Knowledge quiz', href: '#/code/quiz', auto: s.code.quiz.runs.some((r) => sameDay(r.date)) });
+    if (idx % 3 === 2) out.unshift({ id: 'smock', label: 'Tech screening mock (45 minutes, out loud)', href: '#/code/screening/mock', auto: s.code.smocks.some((r) => sameDay(r.date)) });
     return out;
   }
   function techPlan() {
@@ -96,7 +101,7 @@
     const idx = Math.max(0, Math.round((Date.parse(`${today}T12:00:00`) - Date.parse(`${T.start || today}T12:00:00`)) / DAY));
     const done = T.done[today] || [];
     const tasks = left === 0
-      ? [{ id: 'light', label: 'Light review only: flip through the Python internals cards and reread one design model answer.', href: '#/flashcards/python' }]
+      ? [{ id: 'light', label: 'Light review only: reread the code-review guide and the deployment-plan checklist, and flip through the Python internals cards.', href: '#/code/screening' }]
       : techTasks(today, idx);
     return `<div class="card" id="tech-plan"><h2 style="margin-top:0">Technical interview: ${left === 0 ? 'today' : `${left} day${left > 1 ? 's' : ''} to go`}</h2>
       <ul class="plan-tasks">${tasks.map((k) => { const ok = k.auto || done.includes(k.id); return `<li><label><input type="checkbox" data-task="${k.id}"${ok ? ' checked' : ''}${k.auto ? ' disabled' : ''}> <a href="${k.href}">${esc(k.label)}</a></label>${k.auto ? ' <span class="small">(done)</span>' : ''}</li>`; }).join('')}</ul>
