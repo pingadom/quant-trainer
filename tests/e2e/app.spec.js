@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'handbook/exam/all', 'devbook', 'devbook/dsa-complexity', 'devbook/dsa-window', 'devbook/dsa-dp', 'devbook/dsa-streaming', 'devbook/exam/all', 'devbook/sheet', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -638,6 +638,33 @@ test('reset keeps a backup that can be restored', async ({ page }) => {
   await page.locator('#backup-list [data-restore]').first().click();
   await page.goto('./#/bank/all/done');
   await expect(page.locator('.qrow')).toHaveCount(1);
+});
+
+test('quant dev handbook: its own course page, code listings, checks and a separate final exam', async ({ page }) => {
+  await page.goto('./#/devbook');
+  await expect(page.locator('h1')).toHaveText('Quant dev handbook');
+  await expect(page.locator('.hb-chapter')).toHaveCount(17);
+  await page.goto('./#/devbook/dsa-window');
+  await expect(page.locator('pre.hb-code').first()).toContainText('def max_window_sum');
+  await expect(page.locator('.hb-lc a[href="https://leetcode.com/problems/sliding-window-maximum/"]')).toHaveCount(1);
+  const first = page.locator('.hb-check').first();
+  await first.locator('input').fill('9');
+  await first.getByRole('button', { name: 'Check' }).click();
+  await expect(first.locator('.hb-fb')).toContainText('Correct');
+  // A quant handbook chapter id under #/devbook goes to the right course, and back again.
+  await page.goto('./#/devbook/counting');
+  await expect(page).toHaveURL(/#\/handbook\/counting$/);
+  await page.goto('./#/handbook/dsa-dp');
+  await expect(page).toHaveURL(/#\/devbook\/dsa-dp$/);
+  // Search finds chapters in their own course.
+  await page.goto('./#/search/sliding%20window');
+  await expect(page.locator('a[href="#/devbook/dsa-window"]').first()).toBeVisible();
+  // The two final exams keep separate scores.
+  await page.evaluate(() => { const s = window.QT.store.get(); s.hbExams.all = { best: 0.9, last: 0.9, n: 1, at: Date.now() }; window.QT.store.save(); });
+  await page.goto('./#/handbook');
+  await expect(page.locator('a[href="#/handbook/exam/all"]').first()).toContainText('best 90%');
+  await page.goto('./#/devbook');
+  await expect(page.locator('a[href="#/devbook/exam/all"]').first()).not.toContainText('best');
 });
 
 test('handbook: a check answered right counts towards the chapter', async ({ page }) => {

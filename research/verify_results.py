@@ -898,6 +898,13 @@ for ch_, vals in ANSWERS.items():
     for key_, v in vals.items():
         record(f"hb.{ch_}.{key_}", v, "handbook")
 
+# The quant dev handbook: brute-force derivations in verify_devbook.py.
+from verify_devbook import ANSWERS as DEV_ANSWERS  # noqa: E402
+
+for ch_, vals in DEV_ANSWERS.items():
+    for key_, v in vals.items():
+        record(f"hb.{ch_}.{key_}", v, "quant dev handbook")
+
 
 # The question library (bank-lib-*.js): see verify_library.py.
 from verify_library import ANSWERS as LIBRARY  # noqa: E402

@@ -850,7 +850,15 @@
 
     // Handbook: the course is complete and well formed. Numeric answers are cross-checked in Python.
     if (QT.handbook) {
-      const { PARTS, CHAPTERS, ROUTES, checksOf, homeworkOf } = QT.handbook, listed = PARTS.flatMap((p) => p.chapters);
+      // Both courses (the quant handbook and the quant dev handbook) share the chapter store and the checks.
+      const { CHAPTERS, checksOf, homeworkOf } = QT.handbook, PARTS = [...QT.handbook.PARTS, ...(QT.devbook?.PARTS || [])], ROUTES = [...QT.handbook.ROUTES, ...(QT.devbook?.ROUTES || [])], listed = PARTS.flatMap((p) => p.chapters);
+      if (!QT.devbook || QT.devbook.PARTS.flatMap((p) => p.chapters).some((id) => !id.startsWith('dsa-'))) fail('devbook: chapters missing or misnamed');
+      for (const id of QT.devbook?.PARTS.flatMap((p) => p.chapters) || []) {
+        const lc = QT.devbook.LEETCODE?.[id] || [];
+        if (lc.length < 2 || new Set(lc.map((x) => x[2])).size !== lc.length) fail(`devbook: ${id} needs at least 2 distinct LeetCode problems`);
+        for (const [n, t, slug, d] of lc) if (!(Number.isInteger(n) && n > 0 && t && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && ['Easy', 'Medium', 'Hard'].includes(d))) fail(`devbook: ${id} LeetCode entry ${n} ${slug}`);
+      }
+      if (Object.keys(QT.devbook?.LEETCODE || {}).some((id) => !CHAPTERS[id])) fail('devbook: LeetCode list for a missing chapter');
       const TOOLS = ['counting', 'dice', 'bayes', 'lln', 'sqrtn', 'dist', 'pattern', 'markov', 'walk', 'reroll', 'area', ...Object.keys(QT.hbWidgets || {})];
       const junk = (t) => /undefined|NaN/.test(t);
       if (new Set(listed).size !== listed.length) fail('handbook: a chapter is listed twice');
@@ -893,6 +901,7 @@
           }
           if (b.widget && !TOOLS.includes(b.widget)) fail(`handbook: ${id} uses an unknown tool ${b.widget}`);
           if (b.worked && !(b.q && b.steps?.length > 1)) fail(`handbook: ${id} worked example incomplete`);
+          if (b.code !== undefined && !(typeof b.code === 'string' && b.code.trim() && /^[a-z_0-9]+$/.test(b.test || ''))) fail(`handbook: ${id} code listing needs a test name`);
           if (typeof b === 'string' && /undefined|NaN/.test(b)) fail(`handbook: ${id} text shows junk`);
         }
       });
@@ -903,13 +912,13 @@
       if (figs < 60) fail(`handbook: only ${figs} figures`);
       const saved = QT.store.exportJson(), snap = JSON.parse(saved);
       snap.handbook = { arith: { c: { 0: 1, 1: 0, 99: 1, a1: 1, 'BAD KEY': 1 }, h: { h0: 2, h1: 9, 'BAD KEY': 1 }, note: 'x'.repeat(3000), rv: { due: 5, st: 99 }, done: false }, counting: { c: {}, rv: 'junk' }, 'BAD KEY': { c: {}, done: true } };
-      snap.hbExams = { all: { best: 7, last: 0.5, n: 2, at: 1 }, 'BAD KEY': { best: 1 } };
+      snap.hbExams = { all: { best: 7, last: 0.5, n: 2, at: 1 }, 'dsa-all': { best: 0.5 }, 'dsa-foundations': { best: 0.25 }, 'BAD KEY': { best: 1 } };
       QT.store.importJson(JSON.stringify(snap));
       const h = QT.store.get().handbook;
       if (h.arith?.c?.[0] !== 1 || h.arith.c[1] !== 0 || h['BAD KEY'] || h.arith.c[99] !== 1 || h.arith.c.a1 !== 1 || h.arith.c['BAD KEY']) fail(`handbook: progress not sanitised as expected ${JSON.stringify(h)}`);
       if (h.arith.h.h0 !== 2 || h.arith.h.h1 !== 2 || h.arith.h['BAD KEY'] || h.arith.note.length !== 2000 || h.arith.rv.st !== 3 || h.counting.rv) fail(`handbook: homework and reviews not sanitised as expected ${JSON.stringify(h.arith)}`);
       const ex = QT.store.get().hbExams;
-      if (ex.all?.best !== 1 || ex['BAD KEY']) fail(`handbook: exams not sanitised as expected ${JSON.stringify(ex)}`);
+      if (ex.all?.best !== 1 || ex['dsa-all']?.best !== 0.5 || ex['dsa-foundations']?.best !== 0.25 || ex['BAD KEY']) fail(`handbook: exams not sanitised as expected ${JSON.stringify(ex)}`);
       QT.store.importJson(saved);
     }
 

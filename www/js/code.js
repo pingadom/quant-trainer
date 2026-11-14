@@ -49,6 +49,7 @@
         <p class="small">Sources: <a href="${GD_INTERN}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer intern</a> · <a href="${GD_INTERNSHIP}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer internship</a> · <a href="https://leetcode.com/discuss/topic/optiver/" target="_blank" rel="noopener">LeetCode Discuss: Optiver</a></p>
       </details>
       <a class="card sc-promo" href="#/code/screening"><b>Tech screening: code review and deployment plans</b><span class="small">Optiver's 45-minute screening asks you to review a short snippet, suggest improvements and outline a deployment plan. ${QT.screening.EXERCISES.length} snippets to review, a guide to each part, and a full 45-minute mock.</span></a>
+      <a class="card sc-promo" href="#/devbook"><b>Quant dev handbook: data structures and algorithms</b><span class="small">Learn the methods behind these problems first: two pointers, sliding windows, hashing, heaps, graphs, binary search, dynamic programming and more, in ${QT.devbook ? QT.devbook.PARTS.flatMap((p) => p.chapters).length : 17} chapters with tested Python.</span></a>
       <div class="row" style="margin:14px 0"><a class="btn" href="#/code/quiz">Knowledge quiz: ${QZ.N} questions, ${QZ.MINUTES} minutes</a><a class="btn" href="#/code/design">Design discussions (${QT.design.PROBLEMS.length})</a><a class="btn ghost" href="#/flashcards/python">Python internals cards</a><a class="btn ghost" href="#/bank/optiver">System design and fundamentals questions</a></div>
       ${techPlan()}
       ${C.GROUPS.map(([g, title, about]) => `
@@ -65,8 +66,8 @@
 
   // ---------------------------------------------------------------- technical interview countdown
   // You set the date (kept on this device). Each day: Python internals cards, the knowledge quiz
-  // every other day, one design discussion (order book and feed handler first), and one
-  // data-structure problem. Tasks the app can see you did tick themselves.
+  // every other day, one design discussion (order book and feed handler first), one
+  // data-structure problem, and the next chapter of the quant dev handbook's one-week route. Tasks the app can see you did tick themselves.
   const DAY = 864e5;
   const DESIGN_ORDER = ['d-order-book', 'd-feed-handler', 'd-lru', 'd-rate-limiter', 'd-risk-check', 'd-best-venue'];
   function techTasks(day, idx) {
@@ -85,6 +86,9 @@
       { id: `design-${d.id}`, label: `Design discussion: ${d.title}`, href: `#/code/design/${d.id}`, auto: (s.code.design[d.id] || []).some((r) => sameDay(r.date)) },
       { id: `code-${t.id}`, label: `Problem: ${t.title}, then its follow-ups`, href: `#/code/${t.id}` },
     ];
+    // The next unfinished chapter of the quant dev handbook's one-week route, until it's done.
+    const route = QT.devbook?.ROUTES[0]?.chapters || [], nextCh = route.find((id) => !s.handbook[id]?.done);
+    if (nextCh && QT.hbChapters?.[nextCh]) out.push({ id: `dsa-${nextCh}`, label: `Quant dev handbook: ${QT.hbChapters[nextCh].title}`, href: `#/devbook/${nextCh}`, auto: false });
     if (idx % 2 === 0) out.splice(2, 0, { id: 'quiz', label: 'Knowledge quiz', href: '#/code/quiz', auto: s.code.quiz.runs.some((r) => sameDay(r.date)) });
     if (idx % 3 === 2) out.unshift({ id: 'smock', label: 'Tech screening mock (45 minutes, out loud)', href: '#/code/screening/mock', auto: s.code.smocks.some((r) => sameDay(r.date)) });
     return out;

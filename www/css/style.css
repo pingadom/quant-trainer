@@ -1252,6 +1252,8 @@ select { font-family: var(--body); }
 @media (max-width: 640px) { .dz-arrow { transform: rotate(90deg); } .dz-flow { flex-direction: column; align-items: stretch; } .dz-box { max-width: none; } }
 
 /* tech screening: code review (screening.js) */
+.hb-lc { columns: 2 17rem; column-gap: 24px; padding-left: 1.2em; margin: 6px 0 12px; }
+.hb-lc li { break-inside: avoid; margin: 2px 0; }
 .sc-code { overflow-x: auto; font-family: var(--mono); font-size: 0.85rem; line-height: 1.55; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
 .sc-ln { display: inline-block; width: 2.2em; margin-right: 12px; color: var(--muted); text-align: right; user-select: none; }
 #sc-mine, #sc-deploy, #mk-review, #mk-deploy { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 4px 0 8px; }

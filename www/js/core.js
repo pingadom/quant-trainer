@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.57.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.58.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -382,8 +382,8 @@
       const rv = obj(obj(x).rv);
       return { c: mapKeys(obj(x).c, (v) => (v ? 1 : 0), hbKey), h: mapKeys(obj(x).h, (v) => Math.max(0, Math.min(2, Math.round(num(v)))), hbKey), note: String(obj(x).note ?? '').slice(0, 2000), done: !!obj(x).done, ...(num(rv.due) ? { rv: { due: num(rv.due), st: Math.max(0, Math.min(3, Math.round(num(rv.st)))) } } : {}) };
     }, (k) => /^[a-z0-9-]{1,40}$/.test(k));
-    // Handbook exams: best and latest score, attempts and when, per part (or "all").
-    s.hbExams = mapKeys(r.hbExams, (x) => ({ best: Math.max(0, Math.min(1, num(obj(x).best))), last: Math.max(0, Math.min(1, num(obj(x).last))), n: Math.max(0, Math.round(num(obj(x).n))), at: num(obj(x).at) }), (k) => /^[a-z]{1,20}$/.test(k));
+    // Handbook exams: best and latest score, attempts and when, per part (or "all"; "dsa-all" for the quant dev handbook).
+    s.hbExams = mapKeys(r.hbExams, (x) => ({ best: Math.max(0, Math.min(1, num(obj(x).best))), last: Math.max(0, Math.min(1, num(obj(x).last))), n: Math.max(0, Math.round(num(obj(x).n))), at: num(obj(x).at) }), (k) => /^[a-z][a-z-]{0,23}$/.test(k));
     // Stories: your written answers to behavioural prompts (plain text, escaped when shown).
     s.stories = mapKeys(r.stories, (x) => ({ f: arr(obj(x).f, 8).map((v) => String(v ?? '').slice(0, 4000)), t: num(obj(x).t) }), (k) => /^[a-z-]{1,30}$/.test(k));
     // Phone-screen mock runs: [right, of] for each scored part.

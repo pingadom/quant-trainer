@@ -129,7 +129,7 @@
         { q: `Under the Bachelier (normal) model, the futures price is $10 with a normal volatility of $8 until expiry. What is P(price < 0)? (Φ(1.25) = 0.8944)`, a: 1 - QT.m.normCdf(1.25), tol: TABLE, illus: true,
           sol: `z = (0 − 10)/8 = −1.25, so P = Φ(−1.25) = 1 − 0.8944 ≈ 0.106.` },
       ],
-      sources: [['Miffre et al., Energy Journal summary', 'https://www.iaee.org/ej/ejexec/ej44-1-Miffre-exsum.pdf'], ['Wikipedia: Bachelier model', 'https://en.wikipedia.org/wiki/Bachelier_model']],
+      sources: [['CME Clearing Advisory 20-152: plan for a negative underlying (switch to the Bachelier model)', 'https://www.cmegroup.com/notices/clearing/2020/04/Chadv20-152.html'], ['Wikipedia: Bachelier model', 'https://en.wikipedia.org/wiki/Bachelier_model']],
     },
     {
       id: 'gamestop', year: 2021, title: 'GameStop short squeeze', tags: ['crowding', 'unbounded loss'],

@@ -26,12 +26,12 @@
   // Phone tabs: Home · Coach (my prep) · Practice (learn and practise) · Interviews · More (games, settings).
   const TAB_PARENT = {
     plan: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
-    weak: 'practice', topic: 'practice', handbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
+    weak: 'practice', topic: 'practice', handbook: 'practice', devbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
     iq: 'bank', sse: 'bank', mock: 'bank', talk: 'bank', screen: 'bank', stories: 'bank',
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',
   };
 
-  const WIDE = ['', 'coach', 'practice', 'mental', 'bank', 'more', 'progress', 'cases', 'tricks', 'handbook', 'code', 'sse', 'weak', 'oa', 'roadmap', 'search', 'flashcards', 'screen', 'stories', 'mistakes'];
+  const WIDE = ['', 'coach', 'practice', 'mental', 'bank', 'more', 'progress', 'cases', 'tricks', 'handbook', 'devbook', 'code', 'sse', 'weak', 'oa', 'roadmap', 'search', 'flashcards', 'screen', 'stories', 'mistakes'];
 
   const decode = (s) => {
     try {

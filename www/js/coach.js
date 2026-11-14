@@ -275,11 +275,18 @@
     if (HP) {
       const due = HP.dueReviews();
       if (due.length) recs.push({ pri: 48, kind: 'handbook', voice: `${due.length} handbook chapter${due.length > 1 ? 's are' : ' is'} due for review. A few mixed questions now stop it fading.`, title: 'Handbook review', why: 'Coming back after a gap is what moves a chapter into long-term memory.', href: '#/handbook/review', label: 'Review' });
-      const nextId = HP.nextChapter(), started = Object.keys(st.handbook || {}).length;
+      const nextId = HP.nextChapter(), started = Object.keys(st.handbook || {}).filter((id) => !id.startsWith('dsa-')).length;
       if (nextId && (started || (st.days || []).length < 3)) {
         const ch = QT.handbook.CHAPTERS[nextId];
         recs.push({ pri: started ? 46 : 38, kind: 'handbook', voice: started ? `Next in the handbook: ${ch.title}. About ${ch.minutes} minutes.` : "If you're starting out, build the foundations first.", title: `Handbook: ${ch.title}`, why: started ? 'Pick up where you left off. Each chapter ends with checks that tell you when you have it.' : 'A short course from the basics up, with interactive tools and questions to check yourself.', href: `#/handbook/${nextId}`, label: started ? 'Continue' : 'Start' });
       }
+    }
+
+    // The quant dev handbook: reviews when due, and the next chapter once you've started it.
+    if (HP?.dev) {
+      const due = HP.dev.dueReviews(), nextId = HP.dev.nextChapter(), started = Object.keys(st.handbook || {}).some((id) => id.startsWith('dsa-'));
+      if (due.length) recs.push({ pri: 47, kind: 'devbook', voice: `${due.length} quant dev handbook chapter${due.length > 1 ? 's are' : ' is'} due for review.`, title: 'Quant dev handbook review', why: 'A few mixed questions after a gap keep the patterns ready for a coding interview.', href: '#/devbook/review', label: 'Review' });
+      if (started && nextId && QT.hbChapters?.[nextId]) recs.push({ pri: 44, kind: 'devbook', voice: `Next in the quant dev handbook: ${QT.hbChapters[nextId].title}. About ${QT.hbChapters[nextId].minutes} minutes.`, title: `Quant dev handbook: ${QT.hbChapters[nextId].title}`, why: 'Pick up where you left off. The checks at the end tell you when you have it.', href: `#/devbook/${nextId}`, label: 'Continue' });
     }
 
     // Interview questions flagged unsure (by you, or by a wrong answer).

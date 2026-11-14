@@ -1,4 +1,6 @@
-// The handbook: a work-through course. Routes:
+// The handbooks: work-through courses sharing one engine. The quant handbook (#/handbook, chapters
+// in hb-part*.js) and the quant dev handbook (#/devbook, data structures and algorithms, chapters in
+// dev-part*.js) differ only in their parts, title and route. Routes, for either:
 //   #/handbook                 the course, your progress and what to do next
 //   #/handbook/<chapter>       one chapter: lessons, worked examples, checks, homework
 //   #/handbook/review          spaced review of chapters you have finished
@@ -10,7 +12,15 @@
 // Progress is saved in state.handbook, and exam scores in state.hbExams.
 (function () {
   const store = QT.store, R = QT.rand, f = QT.fmtNum, esc = QT.escapeHtml;
-  const HB = () => QT.handbook;
+  // The course being shown. Both courses share QT.hbChapters and state.handbook (chapter ids are unique).
+  const COURSES = {
+    handbook: { key: 'handbook', title: 'Handbook', get PARTS() { return QT.handbook.PARTS; }, get ROUTES() { return QT.handbook.ROUTES; },
+      lede: 'A complete course, from fractions to factor models, written to be worked through in order. Finish it properly and you will have met, practised and been tested on everything a quant trading interview asks.' },
+    devbook: { key: 'devbook', title: 'Quant dev handbook', get PARTS() { return QT.devbook.PARTS; }, get ROUTES() { return QT.devbook.ROUTES; },
+      lede: 'Data structures and algorithms for quant developer and software engineering interviews: every common coding-interview pattern, why it works, what it costs, where it turns up in trading systems, and Python you can write from memory.' },
+  };
+  let C = COURSES.handbook;
+  const HB = () => ({ ...QT.handbook, PARTS: C.PARTS, ROUTES: C.ROUTES });
   const order = () => HB().PARTS.flatMap((p) => p.chapters);
   const chapter = (id) => HB().CHAPTERS[id];
   const rec = (id) => store.get().handbook?.[id] || { c: {}, h: {}, done: false };
@@ -122,15 +132,16 @@
   function index(el) {
     const all = order(), done = all.filter((id) => progress(id).done).length, next = nextChapter(), due = dueReviews();
     const exams = store.get().hbExams || {};
-    const examRow = (id, label) => { const e = exams[id]; return `<a class="btn ghost" href="#/handbook/exam/${id}">${esc(label)}${e ? ` · best ${Math.round(e.best * 100)}%` : ''}</a>`; };
+    const examRow = (id, label) => { const e = exams[examKey(id)]; return `<a class="btn ghost" href="#/${C.key}/exam/${id}">${esc(label)}${e ? ` · best ${Math.round(e.best * 100)}%` : ''}</a>`; };
     el.innerHTML = `
-      <h1>Handbook</h1>
-      <p class="lede">A complete course, from fractions to factor models, written to be worked through in order. Finish it properly and you will have met, practised and been tested on everything a quant trading interview asks.</p>
+      <h1>${esc(C.title)}</h1>
+      <p class="lede">${C.lede}</p>
+      <p class="small">${C.key === 'handbook' ? 'Also: the <a href="#/devbook">quant dev handbook</a>, data structures and algorithms for coding interviews.' : 'Also: the <a href="#/handbook">quant handbook</a>, probability, statistics and trading.'}</p>
       <div class="card hb-overview">
-        <div class="row" style="justify-content:space-between"><b>${done} of ${all.length} chapters finished</b>${next ? `<a class="btn" href="#/handbook/${next}">${done || rec(next).c && Object.keys(rec(next).c).length ? 'Continue' : 'Start'}: ${esc(chapter(next).title)}</a>` : '<a class="btn" href="#/handbook/exam/all">Sit the final exam</a>'}</div>
+        <div class="row" style="justify-content:space-between"><b>${done} of ${all.length} chapters finished</b>${next ? `<a class="btn" href="#/${C.key}/${next}">${done || rec(next).c && Object.keys(rec(next).c).length ? 'Continue' : 'Start'}: ${esc(chapter(next).title)}</a>` : `<a class="btn" href="#/${C.key}/exam/all">Sit the final exam</a>`}</div>
         <div class="bar stack" role="progressbar" aria-label="Chapters finished" aria-valuenow="${Math.round((100 * done) / all.length)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(100 * done) / all.length}%"></i></div>
       </div>
-      ${due.length ? `<div class="card hb-due"><b>${due.length} chapter${due.length > 1 ? 's' : ''} due for review.</b> <span class="small">A few mixed questions now stop it fading.</span> <a class="btn" href="#/handbook/review">Review now</a></div>` : ''}
+      ${due.length ? `<div class="card hb-due"><b>${due.length} chapter${due.length > 1 ? 's' : ''} due for review.</b> <span class="small">A few mixed questions now stop it fading.</span> <a class="btn" href="#/${C.key}/review">Review now</a></div>` : ''}
       <details class="card hb-how">
         <summary>How to use this handbook</summary>
         <ol>
@@ -143,15 +154,15 @@
           <li><b>Come back.</b> Finished chapters return for review after 3, 7, 21 and 60 days.</li>
           <li><b>Sit the exam.</b> Each part ends with a mixed exam with no hints. ${Math.round(PASS * 100)}% is a pass.</li>
         </ol>
-        <p class="small">The whole course is about ${Math.round(all.reduce((a, id) => a + chapter(id).minutes, 0) / 60)} hours of reading, plus homework. Short on time? Start from a route below. <a href="#/handbook/sheet">Every chapter's summary</a> is on one page.</p>
+        <p class="small">The whole course is about ${Math.round(all.reduce((a, id) => a + chapter(id).minutes, 0) / 60)} hours of reading, plus homework. Short on time? Start from a route below. <a href="#/${C.key}/sheet">Every chapter's summary</a> is on one page.</p>
       </details>
-      ${(HB().ROUTES || []).map((r) => `<details class="card hb-route"><summary>${esc(r.name)}</summary><p class="small">${esc(r.blurb)}</p><ol>${r.chapters.map((id) => `<li><a href="#/handbook/${id}">${esc(chapter(id).title)}</a>${progress(id).done ? ' ✓' : ''}</li>`).join('')}</ol></details>`).join('')}
+      ${(HB().ROUTES || []).map((r) => `<details class="card hb-route"><summary>${esc(r.name)}</summary><p class="small">${esc(r.blurb)}</p><ol>${r.chapters.map((id) => `<li><a href="#/${C.key}/${id}">${esc(chapter(id).title)}</a>${progress(id).done ? ' ✓' : ''}</li>`).join('')}</ol></details>`).join('')}
       ${HB().PARTS.map((part) => `
         <h2>${esc(part.title)}</h2>
         <p class="small">${esc(part.blurb)}</p>
         <div class="hb-chapters">${part.chapters.map((id) => {
           const ch = chapter(id), p = progress(id), started = p.right || p.hwDone;
-          return `<a class="card hb-chapter ${p.done ? 'done' : started ? 'started' : ''}" href="#/handbook/${id}"><div class="hb-num">${p.done ? '✓' : order().indexOf(id) + 1}</div><div><b>${esc(ch.title)}</b><p class="small">${ch.minutes} min · ${p.right} of ${p.n} checks · ${p.hwDone} of ${p.hw} homework${p.done ? ' · finished' : ''}</p></div></a>`;
+          return `<a class="card hb-chapter ${p.done ? 'done' : started ? 'started' : ''}" href="#/${C.key}/${id}"><div class="hb-num">${p.done ? '✓' : order().indexOf(id) + 1}</div><div><b>${esc(ch.title)}</b><p class="small">${ch.minutes} min · ${p.right} of ${p.n} checks · ${p.hwDone} of ${p.hw} homework${p.done ? ' · finished' : ''}</p></div></a>`;
         }).join('')}</div>
         <p class="hb-exam-link">${examRow(part.id, `Exam: ${part.short}`)}</p>`).join('')}
       <h2>Final exam</h2>
@@ -168,13 +179,14 @@
     const r = rec(id), keys = new Map(HB().checksOf(ch).map(({ c, key }) => [c, key]));
     const warm = (ch.prereq || []).filter((x) => chapter(x));
     const hw = HB().homeworkOf(ch), levels = Object.keys(LEVELS).filter((l) => hw.some((h) => h.c.lvl === l));
+    const lc = C.key === 'devbook' ? QT.devbook?.LEETCODE?.[id] || [] : [];
     el.innerHTML = `
-      <a class="back" href="#/handbook">← Handbook</a>
+      <a class="back" href="#/${C.key}">← ${esc(C.title)}</a>
       <div class="eyebrow">${esc(part.title)} · chapter ${at + 1} of ${ids.length} · ${ch.minutes} min</div>
       <h1>${esc(ch.title)}</h1>
       ${ch.why ? `<p class="lede">${ch.why}</p>` : ''}
       <div class="card hb-goals"><b>By the end you'll be able to</b><ul>${ch.goals.map((g) => `<li>${esc(g)}</li>`).join('')}</ul>
-        ${warm.length ? `<p class="small">Builds on: ${warm.map((x) => `<a href="#/handbook/${x}">${esc(chapter(x).title)}</a>`).join(' · ')}</p>` : ''}
+        ${warm.length ? `<p class="small">Builds on: ${warm.map((x) => `<a href="#/${C.key}/${x}">${esc(chapter(x).title)}</a>`).join(' · ')}</p>` : ''}
         <p class="small" id="hb-progress"></p></div>
       ${warm.length ? `<details class="card hb-warm" id="hb-warm"><summary>Warm up: three questions from earlier chapters</summary><div class="hb-warm-body"></div></details>` : ''}
       ${ch.sections.map((s, i) => `
@@ -193,7 +205,10 @@
       ${levels.map((l) => hw.filter((h) => h.c.lvl === l).map((h, i) => homeworkCard(h, l, i, r)).join('')).join('')}
       <h2>Keep practising</h2>
       <p class="hb-practice">${ch.practice.map(([l, h]) => `<a class="btn ghost" href="${h}">${esc(l)}</a>`).join(' ')}</p>
-      <div class="row hb-nav">${prev ? `<a class="btn ghost" href="#/handbook/${prev}">← ${esc(chapter(prev).title)}</a>` : ''}${next ? `<a class="btn" href="#/handbook/${next}">${esc(chapter(next).title)} →</a>` : `<a class="btn" href="#/handbook">Back to the handbook</a>`}</div>`;
+      ${lc.length ? `<h3>Classic problems on these patterns</h3>
+      <p class="small">On LeetCode (free problems; opens in a new tab). Try each before looking anything up, then check the cost of your solution against the constraints.</p>
+      <ul class="hb-lc">${lc.map(([n, t, slug, d]) => `<li><a href="https://leetcode.com/problems/${slug}/" target="_blank" rel="noopener">${n}. ${esc(t)}</a> <span class="small">${d}</span></li>`).join('')}</ul>` : ''}
+      <div class="row hb-nav">${prev ? `<a class="btn ghost" href="#/${C.key}/${prev}">← ${esc(chapter(prev).title)}</a>` : ''}${next ? `<a class="btn" href="#/${C.key}/${next}">${esc(chapter(next).title)} →</a>` : `<a class="btn" href="#/${C.key}">${backLabel()}</a>`}</div>`;
     const drawProgress = () => {
       const p = progress(id), box = el.querySelector('#hb-progress');
       if (!box) return;
@@ -218,9 +233,14 @@
     });
   }
 
+  // Exam scores are stored per part id; the two final exams need different keys.
+  const examKey = (which) => (which === 'all' && C.key === 'devbook' ? 'dsa-all' : which);
+  const backLabel = () => (C.key === 'devbook' ? 'Back to the quant dev handbook' : 'Back to the handbook');
+
   function block(b, keys, r, id) {
     if (typeof b === 'string') return `<div class="hb-text">${b}</div>`;
     if (b.fig) return QT.hbFig(b);
+    if (b.code) return `<pre class="sc-code hb-code" tabindex="0" aria-label="Python code"><code>${esc(b.code)}</code></pre>`;
     if (b.widget) return widgetBlock(b);
     if (b.worked) return workedCard(b);
     if (b.idea) return `<aside class="hb-note idea"><b>Key idea</b> ${b.idea}</aside>`;
@@ -395,10 +415,10 @@
   // ---------------------------------------------------------------- spaced review
   function review(el) {
     const due = dueReviews();
-    el.innerHTML = `<a class="back" href="#/handbook">← Handbook</a><h1>Review</h1>`;
+    el.innerHTML = `<a class="back" href="#/${C.key}">← ${esc(C.title)}</a><h1>Review</h1>`;
     if (!due.length) {
       const soon = order().map((id) => ({ id, v: rec(id).rv })).filter((x) => x.v).sort((a, b) => a.v.due - b.v.due)[0];
-      el.insertAdjacentHTML('beforeend', `<div class="card"><p style="margin-top:0">Nothing is due.${soon ? ` Next up: <b>${esc(chapter(soon.id).title)}</b>, in ${Math.max(1, Math.ceil((soon.v.due - Date.now()) / DAY))} days.` : ' Chapters join the schedule when you finish them.'}</p><a class="btn" href="#/handbook">Back to the handbook</a></div>`);
+      el.insertAdjacentHTML('beforeend', `<div class="card"><p style="margin-top:0">Nothing is due.${soon ? ` Next up: <b>${esc(chapter(soon.id).title)}</b>, in ${Math.max(1, Math.ceil((soon.v.due - Date.now()) / DAY))} days.` : ' Chapters join the schedule when you finish them.'}</p><a class="btn" href="#/${C.key}">${backLabel()}</a></div>`);
       return;
     }
     // Three questions per due chapter, mixed together: switching between topics is the point.
@@ -412,11 +432,11 @@
           const mine = results.filter((x) => x.id === id), right = mine.filter((x) => x.ok).length, kept = right >= Math.ceil(mine.length * (2 / 3));
           const r = entry(id), st = kept ? Math.min(REVIEW_GAPS.length - 1, r.rv.st + 1) : 0;
           r.rv = { due: Date.now() + REVIEW_GAPS[st] * DAY, st };
-          return `<tr><td><a href="#/handbook/${id}">${esc(chapter(id).title)}</a></td><td class="mono">${right} of ${mine.length}</td><td>${kept ? `Back in ${REVIEW_GAPS[st]} days` : `Reread the summary. Back in ${REVIEW_GAPS[st]} days`}</td></tr>`;
+          return `<tr><td><a href="#/${C.key}/${id}">${esc(chapter(id).title)}</a></td><td class="mono">${right} of ${mine.length}</td><td>${kept ? `Back in ${REVIEW_GAPS[st]} days` : `Reread the summary. Back in ${REVIEW_GAPS[st]} days`}</td></tr>`;
         }).join('');
         store.touchDay();
         store.save();
-        box.innerHTML = `<div class="eyebrow">Review done</div><table class="hb-table">${rows}</table><a class="btn" href="#/handbook">Back to the handbook</a>`;
+        box.innerHTML = `<div class="eyebrow">Review done</div><table class="hb-table">${rows}</table><a class="btn" href="#/${C.key}">${backLabel()}</a>`;
       },
     });
   }
@@ -426,8 +446,8 @@
     const part = HB().PARTS.find((p) => p.id === which), final = which === 'all';
     if (!part && !final) return index(el);
     const ids = final ? order() : part.chapters, size = final ? 30 : Math.min(15, Math.max(10, ids.length * 3));
-    const name = final ? 'Final exam' : `Exam: ${part.short}`, best = store.get().hbExams?.[which];
-    el.innerHTML = `<a class="back" href="#/handbook">← Handbook</a><h1>${esc(name)}</h1>
+    const name = final ? 'Final exam' : `Exam: ${part.short}`, best = store.get().hbExams?.[examKey(which)];
+    el.innerHTML = `<a class="back" href="#/${C.key}">← ${esc(C.title)}</a><h1>${esc(name)}</h1>
       <div class="card" id="hb-run"><p style="margin-top:0">${size} questions, mixed across ${ids.length} chapter${ids.length > 1 ? 's' : ''}. No hints and no feedback until the end, as in an interview. Paper and a pen are fine; a calculator isn't. ${Math.round(PASS * 100)}% is a pass.</p>
       ${best ? `<p class="small">Your best so far: ${Math.round(best.best * 100)}%, ${best.n} attempt${best.n > 1 ? 's' : ''}.</p>` : ''}
       <button type="button" id="hb-begin">Begin</button></div>`;
@@ -440,8 +460,8 @@
     });
   }
   function report(box, res, which, name) {
-    const score = res.filter((x) => x.ok).length / res.length, s = store.get(), old = s.hbExams[which];
-    s.hbExams[which] = { best: Math.max(score, old?.best || 0), last: score, n: (old?.n || 0) + 1, at: Date.now() };
+    const score = res.filter((x) => x.ok).length / res.length, s = store.get(), old = s.hbExams[examKey(which)];
+    s.hbExams[examKey(which)] = { best: Math.max(score, old?.best || 0), last: score, n: (old?.n || 0) + 1, at: Date.now() };
     store.touchDay();
     store.save();
     const ids = [...new Set(res.map((x) => x.id))];
@@ -449,17 +469,17 @@
     const missed = res.filter((x) => !x.ok);
     box.innerHTML = `<div class="eyebrow">${esc(name)}</div>
       <p class="hb-score"><b>${res.filter((x) => x.ok).length} of ${res.length}</b> · ${Math.round(score * 100)}% · ${score >= PASS ? 'pass' : `a pass is ${Math.round(PASS * 100)}%`}</p>
-      <table class="hb-table"><tr><th>Chapter</th><th>Score</th></tr>${rows.map((x) => `<tr><td><a href="#/handbook/${x.id}">${esc(chapter(x.id).title)}</a></td><td class="mono">${x.right} of ${x.mine.length}</td></tr>`).join('')}</table>
+      <table class="hb-table"><tr><th>Chapter</th><th>Score</th></tr>${rows.map((x) => `<tr><td><a href="#/${C.key}/${x.id}">${esc(chapter(x.id).title)}</a></td><td class="mono">${x.right} of ${x.mine.length}</td></tr>`).join('')}</table>
       ${missed.length ? `<h2>What you missed</h2>${missed.map((x) => `<div class="hb-missed"><p>${x.c.q}</p><p class="small">You said: ${esc(x.typed)}</p><div class="solution">${x.c.sol}</div></div>`).join('')}` : '<p>Nothing missed.</p>'}
-      <div class="row"><a class="btn ghost" href="#/handbook/exam/${which}">Sit it again</a> <a class="btn" href="#/handbook">Back to the handbook</a></div>`;
+      <div class="row"><a class="btn ghost" href="#/${C.key}/exam/${which}">Sit it again</a> <a class="btn" href="#/${C.key}">${backLabel()}</a></div>`;
     window.scrollTo(0, 0);
   }
 
   // ---------------------------------------------------------------- summaries on one page
   function sheet(el) {
-    el.innerHTML = `<a class="back" href="#/handbook">← Handbook</a><h1>Every chapter's summary</h1>
+    el.innerHTML = `<a class="back" href="#/${C.key}">← ${esc(C.title)}</a><h1>Every chapter's summary</h1>
       <p class="lede">The course on one page: read it the night before. It's a reminder of what you've learned, not a way to learn it.</p>
-      ${HB().PARTS.map((part) => `<h2>${esc(part.title)}</h2>${part.chapters.map((id) => `<details class="card hb-sheet" open><summary><a href="#/handbook/${id}">${esc(chapter(id).title)}</a></summary><ul>${chapter(id).takeaways.map((t) => `<li>${t}</li>`).join('')}</ul></details>`).join('')}`).join('')}`;
+      ${HB().PARTS.map((part) => `<h2>${esc(part.title)}</h2>${part.chapters.map((id) => `<details class="card hb-sheet" open><summary><a href="#/${C.key}/${id}">${esc(chapter(id).title)}</a></summary><ul>${chapter(id).takeaways.map((t) => `<li>${t}</li>`).join('')}</ul></details>`).join('')}`).join('')}`;
   }
 
   // ---------------------------------------------------------------- interactive tools
@@ -661,12 +681,24 @@
     },
   };
 
-  function route(el, id, arg) {
+  const routeFor = (course) => (el, id, arg) => {
+    C = course;
     if (id === 'review') return review(el);
     if (id === 'exam') return exam(el, arg);
     if (id === 'sheet') return sheet(el);
-    return id ? view(el, id) : index(el);
-  }
-  QT.views = Object.assign(QT.views || {}, { handbook: route });
-  QT.handbookProgress = { progress, nextChapter, order, markCheck, markHomework, dueReviews, pool };
+    // A chapter id from the other course: send it to its own course's page.
+    if (id && !order().includes(id)) {
+      const other = Object.values(COURSES).find((k) => k !== course && k.PARTS.some((p) => p.chapters.includes(id)));
+      if (other) { location.replace(`#/${other.key}/${id}`); return undefined; }
+    }
+    return id && chapter(id) ? view(el, id) : index(el);
+  };
+  QT.views = Object.assign(QT.views || {}, { handbook: routeFor(COURSES.handbook), devbook: routeFor(COURSES.devbook) });
+  // For the coach and other pages: the quant handbook (or, under .dev, the quant dev handbook),
+  // whichever course was last shown.
+  const within = (course) => (fn) => (...a) => { const prev = C; C = course; try { return fn(...a); } finally { C = prev; } };
+  const quant = within(COURSES.handbook), dev = within(COURSES.devbook);
+  QT.handbookProgress = { progress, nextChapter: quant(nextChapter), order: quant(order), markCheck, markHomework, dueReviews: quant(dueReviews), pool,
+    dev: { nextChapter: dev(nextChapter), order: dev(order), dueReviews: dev(dueReviews) } };
+  QT.handbookCourseOf = (id) => (QT.devbook?.PARTS.some((p) => p.chapters.includes(id)) ? 'devbook' : 'handbook');
 })();

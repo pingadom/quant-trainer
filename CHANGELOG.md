@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.58.0
+
+- **Quant dev handbook** (Learn → Quant dev handbook): a second work-through course, on data structures and algorithms for quant developer and software engineering interviews. It covers the methods behind most LeetCode-style questions, in 17 chapters and 5 parts:
+  - **Foundations:** complexity and reading the input limits; the Python you need (collections, heapq, bisect, and the traps).
+  - **Arrays, strings and hashing:** two pointers, prefix sums and difference arrays; fixed and variable sliding windows and the monotonic deque; hash maps and sets; stacks, monotonic stacks and queues; linked lists, fast/slow pointers and LRU-style doubly linked lists.
+  - **Trees, heaps and graphs:** traversals, tree recursion and BSTs; heaps, top-k, k-way merge and the running median; BFS, DFS, topological sort, union-find and Dijkstra.
+  - **Techniques:** binary search (including on the answer); sorting, intervals, sweep lines and quickselect; backtracking with pruning; dynamic programming (coin change, knapsack, LCS, edit distance, and the buy-and-sell family as a state machine); greedy algorithms and exchange arguments.
+  - **Quant dev in practice:** rolling VWAP over a time window, rate limiters and token buckets, the best bid with cancels via lazy deletion, LRU caches, feed-handler sequence gaps; and a method for any coding interview, with a table from clues to techniques.
+  - Every chapter has worked examples, checks, homework with worked solutions, spaced review and part exams, as in the quant handbook. Two routes: one week before a coding interview, and trading-systems questions.
+  - **38 Python listings, all tested:** research/verify_devbook.py runs each one against brute force on fixed and random inputs, and derives all 126 numeric answers independently.
+  - **104 classic LeetCode problems**, grouped by the chapter whose pattern they use (free problems only, each checked against LeetCode's own data).
+  - Linked from the Coding page, from search, and from the technical-interview countdown (one chapter a day from the one-week route). The Coach suggests the next chapter and reviews once you've started.
+- **A sweep for shortcomings** across the whole app: every screen reachable by a link (1,627 of them) was opened and checked for errors, dead internal links, junk text and layout overflow, and the content for drafting leftovers and broken markup. Fixes:
+  - Exam scores for parts with hyphenated ids would not have survived a reload; the two courses' final exams now keep separate scores.
+  - The negative-oil case study cited a source that no longer exists; it now cites CME's clearing advisory on switching to the Bachelier model.
+
 ## 0.57.0
 
 - **Tech screening practice** (Coding → Tech screening), for Optiver's 45-minute software engineering screening: review a short code snippet for a real business problem, suggest improvements, outline a deployment plan, and discuss CS fundamentals.
