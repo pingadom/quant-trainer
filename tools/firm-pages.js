@@ -7,7 +7,7 @@
 //   node tools/firm-pages.js            → writes www/firms/*.html, www/topics/*.html and www/sitemap.xml
 // renderAll(QT) is pure and also runs in the browser (tests/check.html checks its output).
 (function (root) {
-  const SITE = 'https://pingadom.github.io/theo/';
+  const SITE = 'https://pingadom.github.io/quant-trainer/';
   const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'";
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const plain = (html) => String(html).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();

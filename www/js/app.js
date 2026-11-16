@@ -121,7 +121,7 @@
     else QT.ui.updateBadges();
   };
 
-  // Shareable link that opens straight into the demo profile: …/theo/?demo
+  // Shareable link that opens straight into the demo profile: …/quant-trainer/?demo
   if (new URLSearchParams(location.search).has('demo')) {
     if (store.isEmpty()) QT.demo.load();
     history.replaceState(null, '', location.pathname + location.hash); // so "Start my own" sticks after a reload

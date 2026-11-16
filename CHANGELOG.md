@@ -7,6 +7,7 @@
   - "Where the time went": time and things completed per area, the last 14 days as bars with your goal line, and how many days running you've met it.
   - Any earlier day opens from the Progress heatmap (or the arrows on the page). Days from before this version show that you practised, without the breakdown.
   - Kept on this device only, like the rest of your progress; two open tabs each count only their own time.
+- **New address: https://pingadom.github.io/quant-trainer/** (the repository is now `pingadom/quant-trainer`, so people searching for a quant trainer can find it; the app is still called Theo). Progress saved in the browser carries over. If you installed the web app from the old /theo/ address, open the new one and install it again.
 
 ## 0.58.0
 
