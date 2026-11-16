@@ -1289,3 +1289,19 @@ select { font-family: var(--body); }
 .act-bar.on .col span { outline: 2px solid var(--ink); outline-offset: 1px; }
 .act-bar i { font-style: normal; font-size: 0.75rem; text-align: center; height: 18px; line-height: 18px; color: var(--muted); }
 .act-goal { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--muted); pointer-events: none; }
+
+/* Learning to spot bugs (#/code/screening/spot) */
+.sp-fams { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.sp-fam h3 { margin: 0 0 6px; }
+.sp-fam p { margin: 4px 0; }
+.sp-code { font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 0; overflow-x: auto; }
+.sp-line { display: flex; width: 100%; min-width: max-content; text-align: left; background: none; border: 0; border-left: 4px solid transparent; border-radius: 0; color: var(--ink); font: inherit; padding: 2px 12px 2px 8px; margin: 0; min-height: 26px; align-items: center; cursor: pointer; box-shadow: none; }
+.sp-line:hover { background: var(--accent-soft); }
+.sp-line .sc-ln { flex: none; width: 2.2em; color: var(--muted); user-select: none; }
+.sp-text { white-space: pre; }
+.sp-line[aria-pressed="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
+.sp-line.is-bad { background: var(--bad-soft); border-left-color: var(--bad); }
+.sp-line.is-miss { text-decoration: line-through; text-decoration-color: var(--muted); }
+.sp-line:disabled { cursor: default; opacity: 1; }
+.sp-reveal.ok { border-left: 4px solid var(--ok); }
+.sp-reveal.no { border-left: 4px solid var(--bad); }

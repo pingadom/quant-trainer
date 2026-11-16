@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.60.0
+
+- **Learning to spot bugs** (Coding → Tech screening → Learning to spot bugs), for the code-review part of Optiver's tech screening: how to *notice* problems, not just a list of them.
+  - **A method for reading code you're reviewing:** say what it's for, list the awkward inputs before reading the body, trace one small input by hand, scan for tells, ask five questions wherever state changes, then rank by business impact.
+  - **12 families of bug, each with its tell** (the thing on the page that should make you slow down) and the question that exposes it: boundaries, empty/None/zero, shared mutable state, changing what you loop over, money and number types, time and time zones, swallowed or half-done errors, unreleased resources, hidden quadratic cost, races, retries that duplicate orders, and conditions that say something other than what was meant.
+  - **36 short snippets to train your eye:** tap the line(s) you'd flag, or say it looks fine (a few are), then see the tell, why it matters to a trading firm, the question to ask next time, and the fix. Mixed drills put snippets you've missed or not seen first; or drill one family.
+  - **"Run it in your head":** 12 predict-the-output questions on the Python behaviours behind those bugs.
+  - **Every planted bug is real:** research/verify_internals.py runs each snippet, and the original must fail a test that the fix passes (the race and the duplicate-order retry included); clean snippets must pass as they are, and every trace's printed output is checked.
+  - The technical-interview countdown now includes a bug-spotting drill every day.
+
 ## 0.59.0
 
 - **Today** (sidebar → Today, and a card on Home): how long you've practised today, in which parts of the app, against a daily goal you set (30 minutes to start; anything from 10 minutes to 2 hours, or none).

@@ -19,6 +19,7 @@
       <h1>Tech screening: code review</h1>
       <p class="lede">Optiver describes its 45-minute software engineering tech screening as a real-world business problem: review a short code snippet, suggest improvements, outline a simple deployment plan, and discuss CS fundamentals along the way. It's about how you think and how you connect technical choices to outcomes. These exercises practise exactly that, with our own snippets.</p>
       <div class="row" style="margin:12px 0"><a class="btn" href="#/code/screening/mock">Full mock: 45 minutes</a>${mocks.length ? `<span class="small">${mocks.length} mock${mocks.length > 1 ? 's' : ''} done, last ${(mocks[mocks.length - 1].s.reduce((a, b) => a + b, 0) / mocks[mocks.length - 1].s.length).toFixed(1)}/3</span>` : ''}</div>
+      <a class="card sc-promo" href="#/code/screening/spot"><b>Learning to spot bugs</b><span class="small">The method behind a good review, ${QT.spotting.FAMILIES.length} families of bug with the tell that gives each away, ${QT.spotting.ITEMS.length} short snippets to train your eye, and ${QT.spotting.TRACES.length} "run it in your head" questions. Start here if you find bugs hard to see.</span></a>
       <h2>Snippets to review</h2>
       <div class="menu">${S.EXERCISES.map((E) => {
         const r = runs(E.id), last = r[r.length - 1];
@@ -177,8 +178,9 @@
     show();
   }
 
-  QT.screeningView = (el, id) => {
+  QT.screeningView = (el, id, sub) => {
     if (id === 'mock') return mock(el);
+    if (id === 'spot') return QT.spottingView(el, sub);
     const E = id && S.byId(id);
     return E ? exercise(el, E) : hub(el);
   };

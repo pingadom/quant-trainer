@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'today', 'today/2026-01-05', 'handbook/exam/all', 'devbook', 'devbook/dsa-complexity', 'devbook/dsa-window', 'devbook/dsa-dp', 'devbook/dsa-streaming', 'devbook/exam/all', 'devbook/sheet', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'today', 'today/2026-01-05', 'handbook/exam/all', 'devbook', 'devbook/dsa-complexity', 'devbook/dsa-window', 'devbook/dsa-dp', 'devbook/dsa-streaming', 'devbook/exam/all', 'devbook/sheet', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/screening/spot', 'code/screening/spot/mix', 'code/screening/spot/time', 'code/screening/spot/trace', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -562,7 +562,8 @@ test('monkey test: random use never errors or shows junk', async ({ page }) => {
       if (el.tagName === 'INPUT') { el.value = inputs[Math.floor(rnd() * inputs.length)]; if (el.form) el.form.requestSubmit(); }
       else if (el.tagName === 'SELECT') { el.selectedIndex = Math.floor(rnd() * el.options.length); el.dispatchEvent(new Event('change')); }
       else if (el.closest('.keypad')) el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-      else el.click();
+      else if (typeof el.click === 'function') el.click();
+      else el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); // SVG links (the heatmap) have no click()
       await wait(2);
       const text = document.querySelector('main').innerText;
       for (const bad of ['undefined', 'NaN', '[object Object]']) if (text.includes(bad)) found.push(`"${bad}" on ${location.hash}`);
@@ -665,6 +666,40 @@ test('quant dev handbook: its own course page, code listings, checks and a separ
   await expect(page.locator('a[href="#/handbook/exam/all"]').first()).toContainText('best 90%');
   await page.goto('./#/devbook');
   await expect(page.locator('a[href="#/devbook/exam/all"]').first()).not.toContainText('best');
+});
+
+test('spotting: tap the bad line, see the tell and the fix; trace questions accept what Python prints', async ({ page }) => {
+  await page.goto('./#/code/screening');
+  await page.locator('a[href="#/code/screening/spot"]').first().click();
+  await expect(page.locator('h1')).toHaveText('Learning to spot bugs');
+  await expect(page.locator('.sp-fam')).toHaveCount(12);
+  await page.goto('./#/code/screening/spot/numbers');
+  // Find which snippet is showing, then answer it right.
+  const ctx = await page.locator('.card p').first().textContent();
+  const item = await page.evaluate((c) => window.QT.spotting.ITEMS.find((x) => x.ctx === c), ctx);
+  for (const n of item.bad) await page.locator(`.sp-line[data-ln="${n}"]`).click();
+  await page.locator('#sp-check').click();
+  await expect(page.locator('.sp-reveal.ok')).toContainText('The tell');
+  await expect(page.locator('.sp-line.is-bad')).toHaveCount(item.bad.length);
+  // A clean snippet: "looks fine" is the right answer.
+  await page.goto('./#/code/screening/spot/logic');
+  for (let i = 0; i < 6; i++) {
+    const c = await page.locator('.card p').first().textContent();
+    const x = await page.evaluate((t) => window.QT.spotting.ITEMS.find((y) => y.ctx === t), c);
+    if (!x.bad.length) { await page.locator('#sp-fine').click(); await expect(page.locator('.sp-reveal.ok')).toContainText('nothing to fix'); break; }
+    await page.locator('#sp-fine').click();
+    await expect(page.locator('.sp-reveal.no')).toBeVisible();
+    await page.locator('#sp-next').click();
+  }
+  // Trace answers are compared loosely: quotes and spacing don't matter.
+  const norm = await page.evaluate(() => [window.QT.spottingView.norm('["b10","b100", "b9"]') === window.QT.spottingView.norm("['b10', 'b100', 'b9']"), window.QT.spottingView.norm('true  false') === window.QT.spottingView.norm('True False')]);
+  expect(norm).toEqual([true, true]);
+  await page.goto('./#/code/screening/spot/trace');
+  const code = await page.locator('pre.sc-code').textContent();
+  const t = await page.evaluate((c) => window.QT.spotting.TRACES.find((x) => c.replace(/\d+/g, '').includes(x.code.split(String.fromCharCode(10)).pop().replace(/\d+/g, ''))), code);
+  await page.locator('#tr-in').fill(t.out);
+  await page.locator('#tr-form button').click();
+  await expect(page.locator('#tr-result')).toContainText('Right.');
 });
 
 test('today: practice time is counted by area, against a daily goal', async ({ page }) => {

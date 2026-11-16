@@ -922,6 +922,30 @@
       QT.store.importJson(saved);
     }
 
+    // Learning to spot bugs: every snippet belongs to a family, flags real lines, and explains itself.
+    if (QT.spotting) {
+      const P = QT.spotting, fams = new Set(P.FAMILIES.map((f) => f[0]));
+      const ids = [...P.ITEMS, ...P.TRACES].map((x) => x.id);
+      if (new Set(ids).size !== ids.length) fail('spotting: duplicate ids');
+      if (P.HABITS.length < 5 || P.FAMILIES.some((f) => f.length !== 4 || f.some((t) => !t))) fail('spotting: habits or families incomplete');
+      for (const f of fams) if (P.byFam(f).filter((x) => x.bad.length).length < 2) fail(`spotting: family ${f} needs at least 2 snippets with a bug`);
+      const clean = P.ITEMS.filter((x) => !x.bad.length);
+      if (clean.length < 3 || clean.length > P.ITEMS.length / 5) fail(`spotting: ${clean.length} clean snippets: some, but not many`);
+      for (const x of P.ITEMS) {
+        const n = x.code.split(String.fromCharCode(10)).length;
+        if (!fams.has(x.fam) || !x.ctx || !x.tell || !x.why || x.bad.some((b) => !(b >= 1 && b <= n)) || (x.bad.length ? !x.fix : x.fix) || /undefined|NaN/.test(x.tell + x.why)) fail(`spotting: ${x.id} incomplete`);
+      }
+      for (const t of P.TRACES) if (!fams.has(t.fam) || !t.out || !t.why || !/print\(/.test(t.code)) fail(`spotting: trace ${t.id} incomplete`);
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      snap.code.spot = { 'mid-floor': [1, 0, 'x', 2], 'BAD KEY': [1] };
+      snap.code.trace = { 't-float': [1], 'mid-floor': [1] };
+      snap.code.spotLog = [{ date: '2026-11-16T10:00:00Z', n: 10.4, right: 7 }];
+      QT.store.importJson(JSON.stringify(snap));
+      const c = QT.store.get().code;
+      if (c.spot['mid-floor']?.join() !== '1,0,1,1' || c.spot['BAD KEY'] || c.trace['t-float']?.join() !== '1' || c.trace['mid-floor'] || c.spotLog[0]?.n !== 10) fail(`spotting: results not sanitised ${JSON.stringify([c.spot, c.trace, c.spotLog])}`);
+      QT.store.importJson(saved);
+    }
+
     // Daily activity: routes map to areas (non-practice pages to none), and stored time is sanitised.
     if (QT.activity) {
       const A = QT.activity;

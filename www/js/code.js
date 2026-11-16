@@ -25,10 +25,10 @@
   const groupName = (g) => C.GROUPS.find(([k]) => k === g)[1];
   const msText = (ms) => (ms === undefined || ms === null ? '' : ms < 1 ? '<1 ms' : ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`);
 
-  function render(el, a, b) {
+  function render(el, a, b, c) {
     if (a === 'quiz') return quiz(el, b);
     if (a === 'design') return QT.designView(el, b);
-    if (a === 'screening') return QT.screeningView(el, b);
+    if (a === 'screening') return QT.screeningView(el, b, c);
     const P = a && C.byId(a);
     if (P) return problem(el, P);
     list(el);
@@ -86,6 +86,7 @@
       { id: `design-${d.id}`, label: `Design discussion: ${d.title}`, href: `#/code/design/${d.id}`, auto: (s.code.design[d.id] || []).some((r) => sameDay(r.date)) },
       { id: `code-${t.id}`, label: `Problem: ${t.title}, then its follow-ups`, href: `#/code/${t.id}` },
     ];
+    out.unshift({ id: 'spot', label: 'Bug-spotting drill: 10 snippets', href: '#/code/screening/spot/mix', auto: s.code.spotLog.some((r) => sameDay(r.date)) });
     // The next unfinished chapter of the quant dev handbook's one-week route, until it's done.
     const route = QT.devbook?.ROUTES[0]?.chapters || [], nextCh = route.find((id) => !s.handbook[id]?.done);
     if (nextCh && QT.hbChapters?.[nextCh]) out.push({ id: `dsa-${nextCh}`, label: `Quant dev handbook: ${QT.hbChapters[nextCh].title}`, href: `#/devbook/${nextCh}`, auto: false });

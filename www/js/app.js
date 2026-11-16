@@ -19,7 +19,7 @@
     screen: (el, a, b) => QT.screen.render(el, a, b),
     stories: (el, id) => QT.stories.render(el, id),
     weak: (el, a, b) => QT.adapt.render(el, a, b),
-    code: (el, a, b) => QT.coding.render(el, a, b),
+    code: (el, a, b, c) => QT.coding.render(el, a, b, c),
     sse: (el, a, b, c) => QT.sse.render(el, a, b, c),
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).

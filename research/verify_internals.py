@@ -613,6 +613,390 @@ SCREENING = {
 }
 
 
+
+# ---------------------------------------------------------------- spotting drills (spotting-content.js)
+# For each snippet with planted lines, SPOT[id](ns) must fail (raise or assert) on the original and
+# pass on the fix; a clean snippet must pass as it is. Each test gets a fresh namespace.
+
+def spotting_items():
+    """{id: (code, bad_lines, fix)} and [(id, code, out)] from spotting-content.js."""
+    src = (ROOT / "www/js/spotting-content.js").read_text(encoding="utf-8")
+    items = {}
+    pat = r"\{ id: '([a-z0-9-]+)', fam: '[a-z]+', ctx: '.*?',\s*code: `(.*?)`,\s*bad: \[([0-9, ]*)\],.*?fix: (?:`(.*?)`|'') \}"
+    for m in re.finditer(pat, src, re.S):
+        bad = [int(x) for x in m.group(3).replace(" ", "").split(",") if x]
+        items[m.group(1)] = (m.group(2), bad, m.group(4) or "")
+    traces = [(m.group(1), m.group(2), m.group(3).replace("\\'", "'"))
+              for m in re.finditer(r"\{ id: '(t-[a-z0-9-]+)', fam: '[a-z]+', code: `(.*?)`, out: ['\"](.*?)['\"], why:", src, re.S)]
+    return items, traces
+
+
+def _race(take_ids, threads=8, per=5000, tries=5):
+    """True if concurrent take() calls ever hand out a duplicate id."""
+    import threading
+    old = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+    try:
+        for _ in range(tries):
+            out, gen = [], take_ids()
+            def work():
+                local = [gen.take("s") for _ in range(per)]
+                out.extend(local)
+            ts = [threading.Thread(target=work) for _ in range(threads)]
+            for t in ts:
+                t.start()
+            for t in ts:
+                t.join()
+            if len(set(out)) < len(out):
+                return True
+        return False
+    finally:
+        sys.setswitchinterval(old)
+
+
+def spot_last_k_average(ns):
+    assert ns["last_k_average"]([1, 2, 3, 4], 2) == 3.5
+
+
+def spot_fillable_qty(ns):
+    assert ns["fillable_qty"]([(100, 5), (101, 3), (102, 9)], 101) == 8
+
+
+def spot_simple_returns(ns):
+    r = ns["returns"]([100, 110, 99])
+    assert len(r) == 2 and abs(r[0] - 0.1) < 1e-12 and abs(r[1] + 0.1) < 1e-12
+
+
+def spot_avg_fill_price(ns):
+    assert ns["avg_price"]([]) is None
+    assert ns["avg_price"]([{"qty": 1, "price": 10}, {"qty": 3, "price": 14}]) == 13
+
+
+def spot_spread(ns):
+    assert ns["spread"]([], [101]) is None and ns["spread"]([99, 100], [101, 102]) == 1
+
+
+def spot_limit_zero(ns):
+    f = ns["within_limit"]
+    assert f(5, 0) is False and f(0, 0) is True and f(5, None) is True and f(5, 10) is True
+
+
+def spot_default_dict(ns):
+    ns["record_fill"]("a", 1)
+    assert ns["record_fill"]("b", 2) == {"b": [2]}
+
+
+def spot_grid_alias(ns):
+    assert ns["positions_grid"]([(0, 0, 5)], 2, 1) == [[5], [0]]
+
+
+def spot_shallow_copy(ns):
+    y = {"X": {"pnl": 7, "pos": 1}}
+    t = ns["start_of_day"](y)
+    assert t["X"]["pnl"] == 0 and y["X"]["pnl"] == 7
+
+
+def spot_remove_while_iterating(ns):
+    orders = [{"status": s} for s in ["live", "cancelled", "cancelled", "live"]]
+    assert [o["status"] for o in ns["drop_cancelled"](orders)] == ["live", "live"]
+
+
+def spot_expire_quotes(ns):
+    q = {"A": {"t": 0}, "B": {"t": 9}, "C": {"t": 1}}
+    ns["expire"](q, 10, 5)
+    assert q == {"B": {"t": 9}}
+
+
+def spot_float_equal(ns):
+    assert ns["notional_matches"]([(1, 0.1), (2, 0.1)], 0.3)
+    assert not ns["notional_matches"]([(1, 0.1)], 0.2)
+
+
+def spot_split_fee(ns):
+    for fee in range(0, 200):
+        for n in range(1, 8):
+            parts = ns["split_fee"](fee, n)
+            assert len(parts) == n and sum(parts) == fee and max(parts) - min(parts) <= 1, (fee, n, parts)
+
+
+def spot_mid_floor(ns):
+    assert ns["mid_ticks"](100, 101) == 100.5
+
+
+def spot_wall_clock_latency(ns):
+    class Clock:  # the wall clock steps back 2 s (an NTP correction) during the send
+        wall, mono = 1000.0, 50.0
+        def time(self):
+            return self.wall
+        def perf_counter(self):
+            return self.mono
+        monotonic = perf_counter
+    c = Clock()
+    ns["time"] = c
+    def send(order):
+        c.wall -= 2.0
+        c.mono += 0.003
+    lat = ns["timed_send"](send, {})
+    assert abs(lat - 0.003) < 1e-9, lat
+
+
+def spot_market_hours_tz(ns):
+    from datetime import datetime, timezone
+    # 07:30 UTC in November is 08:30 in Amsterdam: open. 16:00 UTC is 17:00 there: closed.
+    assert ns["market_open"](datetime(2026, 11, 16, 7, 30, tzinfo=timezone.utc)) is True
+    assert ns["market_open"](datetime(2026, 11, 16, 16, 0, tzinfo=timezone.utc)) is False
+
+
+def spot_string_dates(ns):
+    trades = [{"ts": "10/12/2026 08:00"}, {"ts": "15/11/2026 10:00"}]
+    assert ns["after"](trades, "16/11/2026 09:30") == [trades[0]]
+
+
+def spot_bare_except(ns):
+    import contextlib
+    import io
+    with contextlib.redirect_stdout(io.StringIO()):
+        assert ns["load_prices"]([{"sym": "A", "px": "1.5"}, {"sym": "B", "px": "n/a"}]) == {"A": 1.5}
+    try:
+        ns["load_prices"]([{"sym": "A", "price": "1.5"}])   # the column was renamed
+    except KeyError:
+        return
+    raise AssertionError("a renamed column was silently ignored")
+
+
+def spot_half_done(ns):
+    pos = {"A": 10}
+    try:
+        ns["move_position"](pos, "A", "B", 4)
+    except KeyError:
+        pass
+    assert pos == {"A": 10}, pos
+    pos = {"A": 10, "B": 0}
+    ns["move_position"](pos, "A", "B", 4)
+    assert pos == {"A": 6, "B": 4}
+
+
+def spot_zero_price(ns):
+    assert ns["get_price"]({}, "X") is None and ns["get_price"]({"X": 5}, "X") == 5
+
+
+def spot_open_no_with(ns):
+    closed = []
+    class F:
+        def __init__(self, *a):
+            self.lines = ["a\n", "b\n"]
+        def __iter__(self):
+            return iter(self.lines)
+        def close(self):
+            closed.append(1)
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            self.close()
+    ns["open"] = F
+    assert ns["count_lines"]("x") == 2 and closed == [1]
+
+
+def spot_lock_no_finally(ns):
+    class Bad:
+        def apply(self, order):
+            raise ValueError("bad order")
+    try:
+        ns["update"](Bad(), {})
+    except ValueError:
+        pass
+    assert not ns["lock"].locked(), "the lock was left held"
+
+
+class _Counted:
+    eq = 0
+    def __init__(self, v):
+        self.v = v
+    def __eq__(self, o):
+        _Counted.eq += 1
+        return self.v == o.v
+    def __hash__(self):
+        return hash(self.v)
+
+
+def spot_in_list(ns):
+    seen = [_Counted(i) for i in range(400)]
+    today = [_Counted(i) for i in range(300, 700)]
+    _Counted.eq = 0
+    out = ns["new_ids"](today, seen)
+    assert [x.v for x in out] == list(range(400, 700))
+    assert _Counted.eq < 2000, f"{_Counted.eq} comparisons for 400 x 400 ids"
+
+
+def spot_pop_front(ns):
+    class Queue(list):  # counts removals from the front, each of which shifts the whole list
+        front = 0
+        def pop(self, i=-1):
+            if i == 0 and len(self) > 1:
+                Queue.front += 1
+            return super().pop(i)
+    got = []
+    ns["process"](Queue(range(1000)), got.append)
+    assert got == list(range(1000))
+    assert Queue.front == 0, f"{Queue.front} pops from the front of a list: O(n) each"
+
+
+def spot_sort_in_loop(ns):
+    import time as _t
+    assert ns["running_high"]([3, 1, 4, 1, 5]) == [3, 3, 4, 4, 5]
+    t0 = _t.perf_counter()
+    ns["running_high"](list(range(6000, 0, -1)))
+    took = _t.perf_counter() - t0
+    assert took < 0.05, f"{took:.3f} s for 6,000 ticks"
+
+
+def spot_id_race(ns):
+    assert not _race(ns["OrderIds"]), "duplicate order ids"
+
+
+def spot_cache_race(ns):
+    import threading
+    import time as _t
+    calls = []
+    def load(sym):
+        calls.append(sym)
+        _t.sleep(0.02)
+        return {"sym": sym}
+    ts = [threading.Thread(target=ns["get_instrument"], args=("ASML", load)) for _ in range(8)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    assert calls == ["ASML"], f"loaded {len(calls)} times"
+
+
+def spot_retry_duplicate(ns):
+    received = []
+    def send(order):  # the exchange gets it, but the ack is lost the first time
+        received.append(order["id"])
+        if len(received) == 1:
+            raise TimeoutError
+        return "ack"
+    status = lambda oid: "ack" if oid in received else None
+    f = ns["send_with_retry"]
+    try:
+        f(send, {"id": "c1"}, status)
+    except TypeError:
+        f(send, {"id": "c1"})   # the original takes no status function
+    assert received == ["c1"], f"sent {len(received)} times"
+
+
+def spot_retry_forever(ns):
+    class Stop(Exception):
+        pass
+    slept = []
+    class T:
+        def sleep(self, s):
+            slept.append(s)
+            if len(slept) > 100:
+                raise Stop
+    ns["time"] = T()
+    def down():
+        raise ConnectionError
+    try:
+        ns["connect"](down)
+    except Stop:
+        raise AssertionError("retried more than 100 times")
+    except ConnectionError:
+        pass
+    assert len(slept) <= 10 and slept[-1] > slept[0], slept
+
+
+def spot_sell_sign(ns):
+    assert ns["position_after"]([("BUY", 5), ("SELL", 3)]) == 2
+
+
+def spot_is_equal(ns):
+    assert ns["hit_max_size"](500, int("500")) is True and ns["hit_max_size"](10, 500) is False
+
+
+def spot_late_binding(ns):
+    a = ns["make_alerts"](["ASML", "SHEL"])
+    assert a[0](10) == "ASML at 10" and a[1](11) == "SHEL at 11"
+
+
+def spot_and_or(ns):
+    f = ns["should_quote"]
+    assert f(1, 9, 2, 5) is False and f(1, 1, 2, 5) is True
+
+
+def spot_clean_vwap(ns):
+    assert ns["vwap"]([]) is None and ns["vwap"]([(1, 10), (3, 14)]) == 13
+
+
+def spot_clean_window_max(ns):
+    import random as _r
+    rng = _r.Random(3)
+    for _ in range(200):
+        a = [rng.randint(0, 9) for _ in range(rng.randint(1, 12))]
+        k = rng.randint(1, len(a))
+        assert ns["rolling_max"](a, k) == [max(a[i:i + k]) for i in range(len(a) - k + 1)]
+
+
+def spot_clean_net(ns):
+    assert ns["net_position"]([("BUY", 5), ("SELL", 3), ("SELL", 4)]) == -2
+    try:
+        ns["net_position"]([("SHORT", 1)])
+    except KeyError:
+        return
+    raise AssertionError("an unknown side should raise")
+
+
+SPOT = {name[5:].replace("_", "-"): fn for name, fn in list(globals().items()) if name.startswith("spot_") and callable(fn)}
+
+
+def check_spotting():
+    """Problems found, and the number of checks run."""
+    items, traces = spotting_items()
+    problems, ran = [], 0
+    if len(items) < 30 or len(traces) < 10:
+        problems.append(f"only found {len(items)} spotting snippets and {len(traces)} traces")
+    for sid in set(items) | set(SPOT):
+        if sid not in items or sid not in SPOT:
+            problems.append(f"spotting {sid}: {'no test here' if sid not in SPOT else 'not found in spotting-content.js'}")
+            continue
+        code, bad, fix = items[sid]
+        n = code.count("\n") + 1
+        if any(not 1 <= b <= n for b in bad):
+            problems.append(f"spotting {sid}: flagged line out of range {bad}")
+        if bad and not fix:
+            problems.append(f"spotting {sid}: planted lines but no fix")
+        try:
+            SPOT[sid](load(code))
+            ok = True
+        except Exception:
+            ok = False
+        if bad and ok:
+            problems.append(f"spotting {sid}: the original passes its test, so the planted bug isn't real")
+        if not bad and not ok:
+            problems.append(f"spotting {sid}: the 'clean' snippet fails its test")
+        if bad:
+            try:
+                SPOT[sid](load(fix))
+            except Exception as e:
+                problems.append(f"spotting {sid}: the fix fails: {type(e).__name__}: {e}")
+        ran += 1
+    import contextlib
+    import io
+    for tid, code, out in traces:
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                exec(code, {"__name__": "trace"})
+        except Exception as e:
+            problems.append(f"trace {tid} raised {type(e).__name__}")
+            continue
+        if buf.getvalue().strip() != out:
+            problems.append(f"trace {tid}: prints {buf.getvalue().strip()!r}, the app says {out!r}")
+        ran += 1
+    return problems, ran, len(items), len(traces)
+
+
 def main():
     cards_src = (ROOT / "www/js/cards-python.js").read_text(encoding="utf-8")
     quiz_src = (ROOT / "www/js/code-quiz.js").read_text(encoding="utf-8")
@@ -660,8 +1044,11 @@ def main():
             ran += 1
         except Exception as e:
             problems.append(f"screening {eid} failed: {type(e).__name__}: {e}")
+    sp_problems, sp_ran, n_spot, n_trace = check_spotting()
+    problems += sp_problems
+    ran += sp_ran
     unchecked = len(cards) - len(named)
-    print(f"{len(cards)} cards ({len(named)} with checks, {unchecked} explained only), {len(QUIZ)} quiz questions, {len(found)} design sketches, {len(snippets)} code-review snippets; {ran} checks run on {platform.python_implementation()} {platform.python_version()}")
+    print(f"{len(cards)} cards ({len(named)} with checks, {unchecked} explained only), {len(QUIZ)} quiz questions, {len(found)} design sketches, {len(snippets)} code-review snippets, {n_spot} spotting snippets and {n_trace} traces; {ran} checks run on {platform.python_implementation()} {platform.python_version()}")
     for p in problems:
         print("FAIL", p)
     if problems:
