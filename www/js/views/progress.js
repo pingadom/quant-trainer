@@ -22,10 +22,11 @@
         total++;
         const on = set.has(QT.dayKey(day));
         if (on) n++;
-        cells.push(`<rect x="${w * 12}" y="${d * 12}" width="10" height="10" rx="2" class="${on ? 'hm-on' : 'hm-off'}"><title>${QT.dayKey(day)}${on ? ': practised' : ''}</title></rect>`);
+        const t = QT.activity ? QT.activity.day(QT.dayKey(day)).secs : 0;
+        cells.push(`<a href="#/today/${QT.dayKey(day)}" tabindex="-1"><rect x="${w * 12}" y="${d * 12}" width="10" height="10" rx="2" class="${on ? 'hm-on' : 'hm-off'}"><title>${QT.dayKey(day)}${on ? ': practised' : ''}${t >= 60 ? `, ${Math.floor(t / 60)} min` : ''}</title></rect></a>`);
       }
     }
-    return { n, total, svg: `<svg class="heatmap" viewBox="0 0 ${WEEKS * 12} 84" role="img" aria-label="Practised on ${n} of the last ${total} days">${cells.join('')}</svg>` };
+    return { n, total, svg: `<svg class="heatmap" viewBox="0 0 ${WEEKS * 12} 84" role="group" aria-label="Practised on ${n} of the last ${total} days">${cells.join('')}</svg>` };
   }
 
   function longestStreak(days) {
@@ -158,7 +159,7 @@
       <div class="card">
         <h3>Activity</h3>
         ${hm.svg}
-        <p class="small">Practised on <b>${hm.n}</b> of the last ${hm.total} days · current streak <b>${store.streak()}</b> · longest <b>${longestStreak(s.days)}</b></p>
+        <p class="small"><a href="#/today">Today's activity →</a> Tap a day to open it. Practised on <b>${hm.n}</b> of the last ${hm.total} days · current streak <b>${store.streak()}</b> · longest <b>${longestStreak(s.days)}</b></p>
       </div>
       ${rows.length ? `<div class="card table-wrap"><h3>Speed and accuracy by topic</h3><table>
         <tr><th>Topic</th><th class="num">Recent accuracy</th><th class="num">Median time</th><th class="num">Target</th></tr>

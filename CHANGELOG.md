@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.59.0
+
+- **Today** (sidebar → Today, and a card on Home): how long you've practised today, in which parts of the app, against a daily goal you set (30 minutes to start; anything from 10 minutes to 2 hours, or none).
+  - Time is measured, not estimated: it counts while a practice screen is open and you've clicked, typed or scrolled in the last two minutes, and goes to that area (mental maths, interview questions, coding, the handbooks…). Home, Progress and settings don't count.
+  - "Where the time went": time and things completed per area, the last 14 days as bars with your goal line, and how many days running you've met it.
+  - Any earlier day opens from the Progress heatmap (or the arrows on the page). Days from before this version show that you practised, without the breakdown.
+  - Kept on this device only, like the rest of your progress; two open tabs each count only their own time.
+
 ## 0.58.0
 
 - **Quant dev handbook** (Learn → Quant dev handbook): a second work-through course, on data structures and algorithms for quant developer and software engineering interviews. It covers the methods behind most LeetCode-style questions, in 17 chapters and 5 parts:

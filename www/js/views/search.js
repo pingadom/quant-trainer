@@ -49,6 +49,7 @@
     ['#/estimate', 'Estimation', 'fermi calibration confidence intervals'],
     ['#/lab', 'Stats lab', 'central limit theorem volatility drag simulation'],
     ['#/handbook', 'Handbook', 'course learn basics from scratch lessons chapters foundations'],
+    ['#/today', 'Today', 'daily activity goal minutes time practised today log history'],
     ['#/devbook', 'Quant dev handbook', 'data structures algorithms leetcode coding interview dsa course python'],
     ['#/appearance', 'Appearance', 'theme dark mode night ticker sound motion settings'],
     ['#/more', 'Settings and data', 'export import backup reset keypad install'],

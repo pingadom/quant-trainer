@@ -118,6 +118,7 @@
       </div>
 
       <aside class="home-side" aria-label="Today and your progress">
+      ${QT.activity ? QT.activity.homeCard() : ''}
       ${planCard()}
       <a class="card shortcut${today?.done ? '' : ' primary'} daily-card" href="#/daily"><b>Daily challenge${today?.done ? `: ${today.r.filter(Boolean).length}/5 today ✓` : ''}</b><span>${today?.done ? 'Done for today. Share your result or come back tomorrow.' : `5 questions, the same for everyone today${dstreak ? ` · ${dstreak}-day streak` : ''}`}</span></a>
 

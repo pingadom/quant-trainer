@@ -8,6 +8,7 @@
       { route: 'coach', href: '#/coach', name: 'Coach', desc: 'What to practise next, your skill map and the diagnostic' },
       { route: 'plan', href: '#/plan', name: 'Interview plan', desc: "A daily checklist up to your interview, for the firm you're seeing" },
       { route: 'daily', href: '#/daily', name: 'Daily challenge', desc: 'The same 5 questions for everyone today' },
+      { route: 'today', href: '#/today', name: 'Today', desc: 'Time practised today by area, against a daily goal you set' },
       { route: 'progress', href: '#/progress', name: 'Progress', desc: 'Charts of your accuracy, speed and scores over time' },
       { route: 'roadmap', href: '#/roadmap', name: 'Roadmap', desc: 'Stages, books and milestones' },
     ] },

@@ -13,6 +13,7 @@
     kelly: (el) => QT.kelly.render(el),
     figgie: (el) => QT.figgie.render(el),
     daily: (el) => QT.daily.render(el),
+    today: (el, d) => QT.activity.render(el, d),
     oa: (el, a, b, c) => QT.oa.render(el, a, b, c),
     talk: (el, id) => QT.talk.render(el, id),
     screen: (el, a, b) => QT.screen.render(el, a, b),
@@ -25,7 +26,7 @@
   const NAV_PARENT = { topic: 'practice', case: 'cases', iq: 'bank', drill: 'coach', appearance: 'more', tour: '' };
   // Phone tabs: Home · Coach (my prep) · Practice (learn and practise) · Interviews · More (games, settings).
   const TAB_PARENT = {
-    plan: 'coach', daily: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
+    plan: 'coach', daily: 'coach', today: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
     weak: 'practice', topic: 'practice', handbook: 'practice', devbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
     iq: 'bank', sse: 'bank', mock: 'bank', talk: 'bank', screen: 'bank', stories: 'bank',
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',

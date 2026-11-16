@@ -1263,3 +1263,29 @@ select { font-family: var(--body); }
 .sc-issue.sev-high { border-left-color: var(--bad); }
 .sc-issue.sev-med { border-left-color: var(--accent); }
 .sc-promo { display: grid; gap: 4px; margin: 12px 0; border-left: 4px solid var(--accent); text-decoration: none; color: inherit; }
+
+/* Daily activity (#/today) and the Home card */
+.today-card { display: flex; align-items: center; gap: 12px; }
+.today-card .goal-ring { width: 56px; height: 56px; flex: none; }
+.today-text { display: flex; flex-direction: column; gap: 2px; }
+.goal-ring .goal-track { fill: none; stroke: var(--line); stroke-width: 8; }
+.goal-ring .goal-fill { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; }
+.goal-ring .goal-fill.met { stroke: var(--ok); }
+.goal-ring text { font-size: 17px; font-weight: 600; fill: var(--ink); }
+.act-head { justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.act-summary { display: flex; align-items: center; gap: 16px; }
+.act-summary .goal-ring { width: 84px; height: 84px; flex: none; }
+.act-big { margin: 0 0 4px; font-size: 1.15rem; }
+.act-table { width: 100%; border-collapse: collapse; }
+.act-table th { text-align: left; font-weight: 500; padding: 4px 8px 4px 0; white-space: nowrap; }
+.act-table td { padding: 4px 6px; white-space: nowrap; }
+.act-table .act-bar-cell { width: 100%; min-width: 60px; }
+.act-bar-cell span { display: block; height: 10px; border-radius: 5px; background: var(--accent); }
+.act-bars { position: relative; display: flex; gap: 4px; align-items: flex-end; height: 120px; margin: 8px 0; }
+.act-bar { flex: 1; display: flex; flex-direction: column; align-items: stretch; text-decoration: none; color: inherit; }
+.act-bar .col { height: 96px; display: flex; align-items: flex-end; }
+.act-bar .col span { display: block; width: 100%; min-height: 2px; border-radius: 3px 3px 0 0; background: var(--line); }
+.act-bar.met .col span { background: var(--accent); }
+.act-bar.on .col span { outline: 2px solid var(--ink); outline-offset: 1px; }
+.act-bar i { font-style: normal; font-size: 0.75rem; text-align: center; height: 18px; line-height: 18px; color: var(--muted); }
+.act-goal { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--muted); pointer-events: none; }

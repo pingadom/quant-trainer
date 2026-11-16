@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.58.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.59.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -186,7 +186,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} }, design: {}, tech: { date: '', start: '', done: {} }, review: {}, smocks: [] }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] }, seqfam: {} });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} }, design: {}, tech: { date: '', start: '', done: {} }, review: {}, smocks: [] }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] }, seqfam: {}, activity: {}, goal: 30 });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -423,6 +423,10 @@
     mocks: arr(obj(r.sse).mocks, 20).map((x) => ({ ...when(x), secs: num(obj(x).secs), overall: Math.max(0, Math.min(1, num(obj(x).overall))), segs: arr(obj(x).segs, 8).map((g) => ({ id: text(obj(g).id, 20), score: Math.max(0, Math.min(1, num(obj(g).score))) })), weak: arr(obj(x).weak, 3).map((t) => text(t, 40)) })) };
     s.flash = mapKeys(r.flash, (x) => ({ box: Math.min(4, Math.max(0, Math.floor(num(obj(x).box)))), due: num(obj(x).due) }), (k) => /^[a-z0-9-]{1,30}$/.test(k));
     s.demo = !!r.demo;
+    // Daily activity (today.js): seconds and results per area, per day; the goal in minutes a day.
+    const dateKey = (k) => /^\d{4}-\d\d-\d\d$/.test(k), areaKey = (k) => /^[a-z]{1,16}$/.test(k);
+    s.activity = Object.fromEntries(Object.entries(mapKeys(r.activity, (d) => ({ s: mapKeys(obj(d).s, (v) => Math.max(0, Math.min(86400, Math.round(num(v)))), areaKey), n: mapKeys(obj(d).n, (v) => Math.max(0, Math.min(10000, Math.round(num(v)))), areaKey) }), dateKey)).sort(([a], [b]) => (a < b ? -1 : 1)).slice(-400));
+    s.goal = Math.max(0, Math.min(240, Math.round(num(r.goal, 30))));
     if (r.writer) s.writer = text(r.writer, 20);
     if (r.lastExport) s.lastExport = num(r.lastExport);
     s.tricks = mapKeys(r.tricks, (t) => ({ best: Math.min(10, Math.max(0, num(obj(t).best))), runs: num(obj(t).runs) }), (k) => /^[a-z0-9-]+$/.test(k));
@@ -453,6 +457,7 @@
     touchDay() {
       const t = dayKey(new Date());
       if (!state.days.includes(t)) state.days.push(t);
+      if (QT.activity) QT.activity.count(); // one "thing done" in the area on screen
     },
     recordAttempt(topicId, correct) {
       const t = (state.topics[topicId] ||= { attempts: 0, correct: 0, recent: [] });

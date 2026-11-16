@@ -922,6 +922,28 @@
       QT.store.importJson(saved);
     }
 
+    // Daily activity: routes map to areas (non-practice pages to none), and stored time is sanitised.
+    if (QT.activity) {
+      const A = QT.activity;
+      const want = { '#/topic/dice': 'topic', '#/iq/cl-monty-hall': 'bank', '#/mental/flow': 'mental', '#/devbook/dsa-dp': 'devbook', '#/': null, '#/progress': null, '#/today': null, '#/toString': null, '': null };
+      for (const [h, a] of Object.entries(want)) if (A.areaOf(h) !== a) fail(`activity: ${h} maps to ${A.areaOf(h)}, not ${a}`);
+      if (A.fmt(0) !== '0 min' || A.fmt(30) !== '<1 min' || A.fmt(125) !== '2 min' || A.fmt(3725) !== '1 h 02 min') fail('activity: time format');
+      const saved = QT.store.exportJson(), snap = JSON.parse(saved);
+      snap.activity = { '2026-11-01': { s: { mental: 600.4, code: -5, 'BAD KEY': 9, topic: 1e9 }, n: { mental: 3.6 } }, 'not-a-date': { s: { mental: 1 } } };
+      for (let i = 0; i < 450; i++) snap.activity[QT.dayKey(new Date(2020, 0, 1 + i))] = { s: { topic: 60 }, n: {} };
+      snap.goal = 999;
+      QT.store.importJson(JSON.stringify(snap));
+      const act = QT.store.get().activity, d = act['2026-11-01'];
+      if (!d || d.s.mental !== 600 || d.s.code !== 0 || d.s['BAD KEY'] !== undefined || d.s.topic !== 86400 || d.n.mental !== 4 || act['not-a-date']) fail(`activity: day not sanitised ${JSON.stringify(d)}`);
+      if (Object.keys(act).length > 400 || act['2020-01-01']) fail('activity: should keep only the latest 400 days');
+      if (QT.store.get().goal !== 240) fail('activity: goal should be capped at 240 minutes');
+      if (A.day('2026-11-01').secs !== 86400 + 600 || A.day('2026-11-01').rows[0].id !== 'topic') fail('activity: day totals');
+      delete snap.goal;
+      QT.store.importJson(JSON.stringify(snap));
+      if (QT.store.get().goal !== 30) fail('activity: default goal is 30 minutes');
+      QT.store.importJson(saved);
+    }
+
     // Phone-screen mock: market scenarios have the fair values their explanations quote, quotes
     // are graded on the right numbers, trader arithmetic accepts its own answer (with or without
     // a % sign), and stories and runs survive export and import, sanitised.
