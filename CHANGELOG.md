@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.60.1
+
+- A question that asks for the answer **in millions** (or thousands, billions, trillions) now also accepts the full number: 20,000,000 is right when the answer is 20 million. Answers like "20 million", "20m", "3.5bn" and "40k" are read too.
+
 ## 0.60.0
 
 - **Learning to spot bugs** (Coding → Tech screening → Learning to spot bugs), for the code-review part of Optiver's tech screening: how to *notice* problems, not just a list of them.

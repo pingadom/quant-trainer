@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.60.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.60.1'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -92,6 +92,12 @@
       scale = 0.01;
       s = s.slice(0, -1).trim();
     }
+    // "20 million", "20m", "3.5bn", "40k"
+    const word = s.match(/^(.*\d)\s*(k|thousand|m|mn|mm|million|b|bn|billion|tn|trillion)$/i);
+    if (word && scale === 1) {
+      scale = { k: 1e3, thousand: 1e3, m: 1e6, mn: 1e6, mm: 1e6, million: 1e6, b: 1e9, bn: 1e9, billion: 1e9, tn: 1e12, trillion: 1e12 }[word[2].toLowerCase()];
+      s = word[1].trim();
+    }
     const mixed = s.match(/^([+-]?)(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
     if (mixed) {
       const [, sign, whole, n, d] = mixed;
@@ -113,6 +119,18 @@
     const abs = tol.abs ?? 1e-4;
     const rel = tol.rel ?? 0.01;
     return Math.abs(user - ans) <= Math.max(abs, rel * Math.abs(ans));
+  };
+
+  // A question that says "give the answer in millions" also accepts the full number
+  // (20,000,000 or "20 million" for an answer of 20).
+  const UNIT = { thousands: 1e3, millions: 1e6, billions: 1e9, trillions: 1e12 };
+  QT.unitOf = (q) => {
+    const m = String(q || '').match(/\bin (thousands|millions|billions|trillions)\b/i);
+    return m ? UNIT[m[1].toLowerCase()] : 1;
+  };
+  QT.isCorrectFor = (user, c) => {
+    const tol = c.tol || {}, k = QT.unitOf(c.q);
+    return QT.isCorrect(user, c.a, tol) || (k > 1 && QT.isCorrect(user / k, c.a, tol));
   };
 
   // Arithmetic in a typed answer: numbers, + - * / ^, brackets, %, √, sqrt, ln, exp, abs, pi and e,

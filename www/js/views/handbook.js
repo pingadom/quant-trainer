@@ -120,7 +120,7 @@
           if (!input.value.trim()) return (fb.textContent = 'Type an answer first.');
           const v = readAnswer(input.value);
           if (Number.isNaN(v)) return (fb.textContent = "Couldn't read that. Try 0.25, 1/4, 25% or sqrt(2)/2.");
-          finish(QT.isCorrect(v, c.a, c.tol || {}), input.value);
+          finish(QT.isCorrectFor(v, c), input.value);
         });
         input.focus({ preventScroll: true });
       }
@@ -323,7 +323,7 @@
       const v = readAnswer(input.value);
       if (!input.value.trim()) return (fb.textContent = 'Type an answer first.');
       if (Number.isNaN(v)) return (fb.textContent = "Couldn't read that. Try 0.25, 1/4, 25% or sqrt(2)/2.");
-      const ok = QT.isCorrect(v, c.a, c.tol || {});
+      const ok = QT.isCorrectFor(v, c);
       const finished = markCheck(id, key, ok);
       fb.innerHTML = ok ? `<span class="fb-inline ok">✓ Correct${finished ? ' · chapter finished!' : ''}</span>` : `<span class="fb-inline bad">Not quite. Try again, or use the hint.</span>`;
       if (ok) {
@@ -386,7 +386,7 @@
       const v = readAnswer(input.value);
       if (!input.value.trim()) return (fb.textContent = 'Type an answer first.');
       if (Number.isNaN(v)) return (fb.textContent = "Couldn't read that. Try 0.25, 1/4, 25% or sqrt(2)/2.");
-      const ok = QT.isCorrect(v, c.a, c.tol || {});
+      const ok = QT.isCorrectFor(v, c);
       fb.innerHTML = ok ? '<span class="fb-inline ok">✓ Correct</span>' : '<span class="fb-inline bad">Not quite. Check your working, or use the hint.</span>';
       if (ok) {
         markHomework(id, key, 2);

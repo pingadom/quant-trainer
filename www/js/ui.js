@@ -263,7 +263,7 @@
       if (!$in.value.trim()) return hint('Type an answer first, or tap "Show answer".', true);
       const v = QT.parseAnswer($in.value);
       if (Number.isNaN(v)) return hint("Couldn't read that. Try 0.25, 1/4 or 25%.", true);
-      reveal(item.p.ok ? item.p.ok(v) : QT.isCorrect(v, item.p.a, item.p.tol), v); // `ok`: a custom check (e.g. 8.3 or 8.3%)
+      reveal(item.p.ok ? item.p.ok(v) : QT.isCorrectFor(v, item.p), v); // `ok`: a custom check (e.g. 8.3 or 8.3%)
     });
     $('#p-skip').addEventListener('click', () => reveal(false));
     next();

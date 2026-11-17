@@ -162,9 +162,16 @@
     // Answer parsing.
     const parse = [['5/36', 5 / 36], ['13.9%', 0.139], ['1,250', 1250], ['-0.7', -0.7], ['.5', 0.5],
       ['0,5', 0.5], ['12,5', 12.5], ['1.250,5', 1250.5], ['1,250,000', 1250000], ['1,250.5', 1250.5],
-      ['1 1/2', 1.5], ['-1 1/2', -1.5], ['1½', 1.5], ['½', 0.5], ['−2', -2], ['–0.3', -0.3], ['25 %', 0.25], ['  7 ', 7], ['2e-2', 0.02]];
+      ['1 1/2', 1.5], ['-1 1/2', -1.5], ['1½', 1.5], ['½', 0.5], ['−2', -2], ['–0.3', -0.3], ['25 %', 0.25], ['  7 ', 7], ['2e-2', 0.02],
+      ['20 million', 2e7], ['20m', 2e7], ['3.5bn', 3.5e9], ['40k', 40000], ['1,250 thousand', 1250000]];
     for (const [s, v] of parse) if (Math.abs(QT.parseAnswer(s) - v) > 1e-12) fail(`parse ${JSON.stringify(s)} = ${QT.parseAnswer(s)}, expected ${v}`);
     for (const s of ['abc', '', '5/0', '1/2/3', '--1', '0x10', '%', '.']) if (!Number.isNaN(QT.parseAnswer(s))) fail(`parse ${JSON.stringify(s)} should be unreadable, got ${QT.parseAnswer(s)}`);
+
+    // A question asking for millions also takes the full number.
+    { const c = { q: 'Give the answer in millions.', a: 20, tol: { abs: 1 } };
+      for (const x of [20, 20000000, QT.parseAnswer('20 million'), QT.parseAnswer('20m')]) if (!QT.isCorrectFor(x, c)) fail(`unit answer ${x} rejected`);
+      for (const x of [200, 2000000, 2e8]) if (QT.isCorrectFor(x, c)) fail(`unit answer ${x} accepted`);
+      if (QT.isCorrectFor(2e7, { q: 'How many?', a: 20 })) fail('unit scaling applied without "in millions"'); }
 
     // Speed-trick drills: valid output, and the answer agrees with plainly evaluating the question.
     const evalPlain = (q) => {
