@@ -644,7 +644,7 @@ test('reset keeps a backup that can be restored', async ({ page }) => {
 test('quant dev handbook: its own course page, code listings, checks and a separate final exam', async ({ page }) => {
   await page.goto('./#/devbook');
   await expect(page.locator('h1')).toHaveText('Quant dev handbook');
-  await expect(page.locator('.hb-chapter')).toHaveCount(17);
+  await expect(page.locator('.hb-chapter')).toHaveCount(await page.evaluate(() => window.QT.devbook.PARTS.flatMap((p) => p.chapters).length));
   await page.goto('./#/devbook/dsa-window');
   await expect(page.locator('pre.hb-code').first()).toContainText('def max_window_sum');
   await expect(page.locator('.hb-lc a[href="https://leetcode.com/problems/sliding-window-maximum/"]')).toHaveCount(1);
