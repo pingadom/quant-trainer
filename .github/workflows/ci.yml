@@ -52,6 +52,16 @@ jobs:
         run: python research/verify_internals.py
       - name: Quant dev handbook listings
         run: python research/verify_devbook.py
+      - name: Data drills (model solutions pass, starters and common mistakes fail)
+        run: |
+          node tests/export-data.js > data.json
+          python research/verify_data.py data.json
+      - name: Data drills and data-tools listings on the browser's versions (Pyodide's numpy, pandas, Polars)
+        run: |
+          python -m venv /tmp/browser-py
+          /tmp/browser-py/bin/pip install -q -r research/requirements-browser.txt
+          /tmp/browser-py/bin/python research/verify_data.py data.json
+          /tmp/browser-py/bin/python research/verify_devbook.py
       - name: Learner-model study (quick run)
         run: python research/learner_models.py --quick
 

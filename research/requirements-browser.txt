@@ -1,0 +1,5 @@
+# The versions the browser's Python (Pyodide 0.27.7, js/code-worker.js) provides. The data drills
+# and the data-tools chapters' listings are checked against these as well as the newest releases.
+numpy==2.0.2
+pandas==2.2.3
+polars==1.18.0

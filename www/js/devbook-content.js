@@ -11,15 +11,19 @@
     { id: 'dsa-nonlinear', short: 'Trees, heaps and graphs', title: 'Part 3 · Trees, heaps and graphs', blurb: 'Recursive structures, priority queues and graph search: traversals, BSTs, top-k, BFS, DFS, topological order, union-find and Dijkstra.', chapters: ['dsa-trees', 'dsa-heaps', 'dsa-graphs'] },
     { id: 'dsa-techniques', short: 'Techniques', title: 'Part 4 · Algorithmic techniques', blurb: 'Binary search, sorting and intervals, backtracking, dynamic programming and greedy algorithms.', chapters: ['dsa-binsearch', 'dsa-sorting', 'dsa-backtracking', 'dsa-dp', 'dsa-greedy'] },
     { id: 'dsa-practice', short: 'Quant dev in practice', title: 'Part 5 · Quant dev in practice', blurb: 'Algorithms on live market data, and a method for any coding interview.', chapters: ['dsa-streaming', 'dsa-interview'] },
+    { id: 'dsa-data', short: 'Data tools', title: 'Part 6 · Data tools: NumPy, pandas and Polars', blurb: 'Vectorised arrays, DataFrames and lazy queries, and working with real market data without fooling yourself.', chapters: ['dsa-numpy', 'dsa-pandas', 'dsa-polars', 'dsa-marketdata'] },
   ];
 
   const ROUTES = [
     { name: 'One week before a coding interview', blurb: 'The patterns that come up most, in order. Do the checks and the core homework, then the coding problems linked at the end of each chapter.', chapters: ['dsa-complexity', 'dsa-python', 'dsa-arrays', 'dsa-window', 'dsa-hashing', 'dsa-stacks', 'dsa-heaps', 'dsa-graphs', 'dsa-binsearch', 'dsa-dp', 'dsa-interview'] },
     { name: 'Trading-systems questions', blurb: 'For interviews that ask you to build order books, caches, rate limiters and feed handlers.', chapters: ['dsa-complexity', 'dsa-python', 'dsa-hashing', 'dsa-stacks', 'dsa-linked', 'dsa-heaps', 'dsa-streaming'] },
+    { name: 'Data and research roles', blurb: 'For quant developer and research roles that work with data all day: Python, then NumPy, pandas and Polars, and the habits that keep a backtest honest. Do the data drills linked from each chapter.', chapters: ['dsa-complexity', 'dsa-python', 'dsa-window', 'dsa-hashing', 'dsa-numpy', 'dsa-pandas', 'dsa-polars', 'dsa-marketdata'] },
   ];
 
   // Classic LeetCode problems for each chapter's patterns: [number, title, slug, difficulty]. Every
-  // number, title and slug was checked against LeetCode's own data (free problems only), 14 Nov 2026.
+  // number, title and slug was checked against LeetCode's own data (free problems only), 14 Nov 2026;
+  // the pandas ones (which LeetCode accepts in pandas) on 18 Nov 2026. LeetCode has no NumPy or
+  // Polars problems, so those chapters (NO_LEETCODE) link to the data drills instead.
   const LEETCODE = {
     'dsa-complexity': [[217, 'Contains Duplicate', 'contains-duplicate', 'Easy'], [1, 'Two Sum', 'two-sum', 'Easy']],
     'dsa-python': [[692, 'Top K Frequent Words', 'top-k-frequent-words', 'Medium'], [347, 'Top K Frequent Elements', 'top-k-frequent-elements', 'Medium']],
@@ -37,8 +41,12 @@
     'dsa-dp': [[70, 'Climbing Stairs', 'climbing-stairs', 'Easy'], [198, 'House Robber', 'house-robber', 'Medium'], [322, 'Coin Change', 'coin-change', 'Medium'], [518, 'Coin Change II', 'coin-change-ii', 'Medium'], [62, 'Unique Paths', 'unique-paths', 'Medium'], [300, 'Longest Increasing Subsequence', 'longest-increasing-subsequence', 'Medium'], [1143, 'Longest Common Subsequence', 'longest-common-subsequence', 'Medium'], [72, 'Edit Distance', 'edit-distance', 'Medium'], [121, 'Best Time to Buy and Sell Stock', 'best-time-to-buy-and-sell-stock', 'Easy'], [714, 'Best Time to Buy and Sell Stock with Transaction Fee', 'best-time-to-buy-and-sell-stock-with-transaction-fee', 'Medium'], [188, 'Best Time to Buy and Sell Stock IV', 'best-time-to-buy-and-sell-stock-iv', 'Hard'], [416, 'Partition Equal Subset Sum', 'partition-equal-subset-sum', 'Medium']],
     'dsa-greedy': [[455, 'Assign Cookies', 'assign-cookies', 'Easy'], [55, 'Jump Game', 'jump-game', 'Medium'], [45, 'Jump Game II', 'jump-game-ii', 'Medium'], [134, 'Gas Station', 'gas-station', 'Medium'], [435, 'Non-overlapping Intervals', 'non-overlapping-intervals', 'Medium'], [452, 'Minimum Number of Arrows to Burst Balloons', 'minimum-number-of-arrows-to-burst-balloons', 'Medium'], [621, 'Task Scheduler', 'task-scheduler', 'Medium'], [122, 'Best Time to Buy and Sell Stock II', 'best-time-to-buy-and-sell-stock-ii', 'Medium']],
     'dsa-streaming': [[146, 'LRU Cache', 'lru-cache', 'Medium'], [295, 'Find Median from Data Stream', 'find-median-from-data-stream', 'Hard'], [480, 'Sliding Window Median', 'sliding-window-median', 'Hard'], [981, 'Time Based Key-Value Store', 'time-based-key-value-store', 'Medium'], [2034, 'Stock Price Fluctuation', 'stock-price-fluctuation', 'Medium']],
+    'dsa-pandas': [[2880, 'Select Data', 'select-data', 'Easy'], [2881, 'Create a New Column', 'create-a-new-column', 'Easy'], [2889, 'Reshape Data: Pivot', 'reshape-data-pivot', 'Easy'], [1484, 'Group Sold Products By The Date', 'group-sold-products-by-the-date', 'Easy'], [176, 'Second Highest Salary', 'second-highest-salary', 'Medium'], [184, 'Department Highest Salary', 'department-highest-salary', 'Medium']],
+    'dsa-marketdata': [[2883, 'Drop Missing Data', 'drop-missing-data', 'Easy'], [2887, 'Fill Missing Data', 'fill-missing-data', 'Easy'], [2890, 'Reshape Data: Melt', 'reshape-data-melt', 'Easy'], [2891, 'Method Chaining', 'method-chaining', 'Easy'], [180, 'Consecutive Numbers', 'consecutive-numbers', 'Medium']],
     'dsa-interview': [[1438, 'Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit', 'longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit', 'Medium'], [1, 'Two Sum', 'two-sum', 'Easy'], [3, 'Longest Substring Without Repeating Characters', 'longest-substring-without-repeating-characters', 'Medium']],
   };
 
-  QT.devbook = { PARTS, ROUTES, LEETCODE };
+  const NO_LEETCODE = ['dsa-numpy', 'dsa-polars'];
+
+  QT.devbook = { PARTS, ROUTES, LEETCODE, NO_LEETCODE };
 })();

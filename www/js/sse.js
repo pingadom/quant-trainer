@@ -412,5 +412,6 @@
     card(el.querySelector('#d-box'), q, { nextText: `Back to ${TRACKS[q.track].toLowerCase()}`, done: () => { location.hash = `#/sse/all/${q.track}`; } });
   }
 
+  QT.runPyDrill = runDrill; // also used by the data drills (data.js)
   QT.sse = { render, TRACKS, INTERVIEW, readAnswer, check, attemptScore, ewma, questionMastery, tagMastery, trackStats, readiness, logAttempt, filtered, queue, allTags, card, schedule, dueList, tagTable };
 })();

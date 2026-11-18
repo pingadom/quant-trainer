@@ -9,7 +9,7 @@
 //               { job, type: 'end' } | { job, type: 'error', text }
 (function () {
   self.QT = {};
-  importScripts('code-problems.js', 'sse-py.js');
+  importScripts('code-problems.js', 'sse-py.js', 'data-drills.js');
   const C = self.QT.code;
   const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   // The large test passes within this multiple of the reference solution's time on this device.
@@ -175,15 +175,24 @@ def _run(slot, spec):
     return { head: P.kind === 'cls' ? cut(lines[0][0]) : null, skipped: from - (P.kind === 'fn' ? 0 : 1), lines: shown };
   }
 
-  // A Python drill from the Citadel SSE questions: { job, drill: id, code }.
+  // A Python drill: { job, drill: id, code }. The Citadel SSE drills (sse-py.js) use numpy and
+  // pandas; the data drills (data-drills.js) say which packages they need (Polars is another 14 MB).
+  const loaded = new Set();
   async function drill(m) {
+    const D = QT.ssePy[m.drill] || QT.dataDrills.byId[m.drill];
+    if (!D) throw new Error('Unknown drill ' + m.drill);
+    const pkgs = D.lib ? QT.dataDrills.PKGS[D.lib] : ['numpy', 'pandas'];
     await python();
-    post({ type: 'status', text: 'Loading numpy and pandas (about 12 MB the first time)…' });
-    await py.loadPackage(['numpy', 'pandas'], { messageCallback: () => {} });
+    const need = pkgs.filter((p) => !loaded.has(p));
+    if (need.length) {
+      post({ type: 'status', text: `Loading ${need.join(', ')} (${need.includes('polars') ? (need.length > 1 ? 'about 26 MB' : 'about 14 MB') : 'about 12 MB'} the first time)…` });
+      await py.loadPackage(need, { messageCallback: () => {} });
+      need.forEach((p) => loaded.add(p));
+    }
     post({ type: 'status', text: 'Running the tests…' });
     const r = pyLoad('solution', m.code);
     if (!r.ok) return post({ type: 'error', text: r.err, stdout: r.stdout });
-    post({ type: 'drill', res: JSON.parse(py.globals.get('_drill')(QT.ssePy[m.drill].test)) });
+    post({ type: 'drill', res: JSON.parse(py.globals.get('_drill')(D.test)) });
   }
 
   self.onmessage = async ({ data: m }) => {

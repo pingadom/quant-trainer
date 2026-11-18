@@ -957,6 +957,13 @@ def t_band(ns):
 
 TESTS = {name[2:]: fn for name, fn in globals().items() if name.startswith("t_") and callable(fn)}
 
+# Part 6 (NumPy, pandas, Polars, market data) lives in its own module.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import verify_datatools  # noqa: E402
+
+ANSWERS.update(verify_datatools.ANSWERS)
+TESTS.update(verify_datatools.TESTS)
+
 
 def main():
     problems, ran = [], 0

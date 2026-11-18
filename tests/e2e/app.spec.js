@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'today', 'today/2026-01-05', 'handbook/exam/all', 'devbook', 'devbook/dsa-complexity', 'devbook/dsa-window', 'devbook/dsa-dp', 'devbook/dsa-streaming', 'devbook/exam/all', 'devbook/sheet', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/screening/spot', 'code/screening/spot/mix', 'code/screening/spot/time', 'code/screening/spot/trace', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'today', 'today/2026-01-05', 'handbook/exam/all', 'devbook', 'devbook/dsa-complexity', 'devbook/dsa-window', 'devbook/dsa-dp', 'devbook/dsa-streaming', 'devbook/dsa-numpy', 'devbook/dsa-pandas', 'devbook/dsa-polars', 'devbook/dsa-marketdata', 'devbook/exam/dsa-data', 'devbook/exam/all', 'devbook/sheet', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/screening/spot', 'code/screening/spot/mix', 'code/screening/spot/time', 'code/screening/spot/trace', 'code/data', 'code/data/np-drawdown', 'code/data/pl-bars', 'code/data/md-clean', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -592,7 +592,7 @@ test.describe('accessibility in every theme', () => {
 });
 
 test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
-  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'code', 'code/opt-order-book', 'code/quiz', 'sse', 'sse/all', 'sse/q/q-eq-001']) {
+  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'code', 'code/opt-order-book', 'code/quiz', 'code/data', 'code/data/pd-asof', 'devbook/dsa-pandas', 'sse', 'sse/all', 'sse/q/q-eq-001']) {
     test(`no serious violations on #/${r}`, async ({ page }) => {
       await page.goto(`./?demo#/${r}`); // demo data so the populated screens are checked too
       await expect(page.locator('main h1').first()).toBeVisible();
@@ -700,6 +700,41 @@ test('spotting: tap the bad line, see the tell and the fix; trace questions acce
   await page.locator('#tr-in').fill(t.out);
   await page.locator('#tr-form button').click();
   await expect(page.locator('#tr-result')).toContainText('Right.');
+});
+
+test('data drills: open a drill, keep your code, run the tests and see it marked passed', async ({ page }) => {
+  await page.goto('./#/code');
+  await page.locator('a[href="#/code/data"]').first().click();
+  await expect(page.locator('h1')).toHaveText('Data drills: NumPy, pandas and Polars');
+  const n = await page.evaluate(() => window.QT.dataDrills.ITEMS.length);
+  await expect(page.locator('.menu a.card')).toHaveCount(n);
+  await page.locator('a[href="#/code/data/np-drawdown"]').click();
+  const box = page.locator('#dd-code');
+  await expect(box).toHaveValue(/def max_drawdown/);
+  // Your code is kept on this device.
+  await box.fill('import numpy as np\n\ndef max_drawdown(prices):\n    return 0.0\n');
+  await page.waitForTimeout(600);
+  await page.reload();
+  await expect(page.locator('#dd-code')).toHaveValue(/return 0.0/);
+  // The hint, and the model solution.
+  await page.locator('#dd-hint').click();
+  await expect(page.locator('#dd-hint-text')).toContainText('maximum.accumulate');
+  // Python isn't downloaded in tests: stand in for the runner, failing and then passing.
+  await page.evaluate(() => { window.QT.runPyDrill = async () => ({ cases: [['The example', true, 'ok'], ['A million prices, fast', false, 'took 2.00 s']] }); });
+  await page.locator('#dd-run').click();
+  await expect(page.locator('#dd-tests .code-row.fail')).toContainText('took 2.00 s');
+  await expect(page.locator('#dd-done')).toBeEmpty();
+  await page.evaluate(() => { window.QT.runPyDrill = async () => ({ cases: [['The example', true, 'ok'], ['A million prices, fast', true, 'ok']] }); });
+  await page.locator('#dd-run').click();
+  await expect(page.locator('#dd-tests')).toContainText('All tests pass');
+  await expect(page.locator('#dd-done')).toContainText('Passed');
+  const rec = await page.evaluate(() => window.QT.store.get().code.data['np-drawdown']);
+  expect([rec.ok, rec.n]).toEqual([1, 2]);
+  await page.locator('#dd-reset').click();
+  await expect(page.locator('#dd-code')).toHaveValue(/# The running peak/);
+  // The handbook chapter links to its drills.
+  await page.goto('./#/devbook/dsa-numpy');
+  await expect(page.locator('a[href="#/code/data/np-drawdown"]').first()).toBeVisible();
 });
 
 test('today: practice time is counted by area, against a daily goal', async ({ page }) => {

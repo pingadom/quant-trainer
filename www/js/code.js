@@ -29,6 +29,7 @@
     if (a === 'quiz') return quiz(el, b);
     if (a === 'design') return QT.designView(el, b);
     if (a === 'screening') return QT.screeningView(el, b, c);
+    if (a === 'data') return QT.dataView(el, b);
     const P = a && C.byId(a);
     if (P) return problem(el, P);
     list(el);
@@ -49,6 +50,7 @@
         <p class="small">Sources: <a href="${GD_INTERN}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer intern</a> · <a href="${GD_INTERNSHIP}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer internship</a> · <a href="https://leetcode.com/discuss/topic/optiver/" target="_blank" rel="noopener">LeetCode Discuss: Optiver</a></p>
       </details>
       <a class="card sc-promo" href="#/code/screening"><b>Tech screening: code review and deployment plans</b><span class="small">Optiver's 45-minute screening asks you to review a short snippet, suggest improvements and outline a deployment plan. ${QT.screening.EXERCISES.length} snippets to review, a guide to each part, and a full 45-minute mock.</span></a>
+      <a class="card sc-promo" href="#/code/data"><b>Data drills: NumPy, pandas and Polars</b><span class="small">${QT.dataDrills.ITEMS.length} short exercises on market-style data, run against hidden tests in your browser: drawdowns, rolling windows, groupby, as-of joins, bars, and a backtest without look-ahead. Each one links to the handbook chapter that teaches it.</span></a>
       <a class="card sc-promo" href="#/devbook"><b>Quant dev handbook: data structures and algorithms</b><span class="small">Learn the methods behind these problems first: two pointers, sliding windows, hashing, heaps, graphs, binary search, dynamic programming and more, in ${QT.devbook ? QT.devbook.PARTS.flatMap((p) => p.chapters).length : 17} chapters with tested Python.</span></a>
       <div class="row" style="margin:14px 0"><a class="btn" href="#/code/quiz">Knowledge quiz: ${QZ.N} questions, ${QZ.MINUTES} minutes</a><a class="btn" href="#/code/design">Design discussions (${QT.design.PROBLEMS.length})</a><a class="btn ghost" href="#/flashcards/python">Python internals cards</a><a class="btn ghost" href="#/bank/optiver">System design and fundamentals questions</a></div>
       ${techPlan()}

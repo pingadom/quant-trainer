@@ -25,6 +25,7 @@
     ['#/mental/flow', 'Flow training for + and −', 'zetamac addition subtraction automatic flow rhythm pace carry borrow slow thinking mode method drill'],
     ['#/code', 'Coding (SWE)', 'software engineer swe coding leetcode programming optiver hackerrank online assessment python javascript data structures order book lru cache queue'],
     ['#/code/quiz', 'Coding knowledge quiz', 'computer science multiple choice operating systems networking tcp udp c++ python concurrency'],
+    ['#/code/data', 'Data drills: NumPy, pandas and Polars', 'numpy pandas polars dataframe groupby merge asof resample vectorise broadcasting backtest data science'],
     ['#/code/screening', 'Tech screening: code review', 'optiver software engineer tech screening code review deployment plan snippet improvements'],
     ['#/oa', 'Online tests', 'number sequences digit span running totals online assessment cognitive games zap-n zapn imc games'],
     ['#/oa/seq', 'Number sequences', 'sequences next term pattern numberlogic practice timed test'],
@@ -50,7 +51,7 @@
     ['#/lab', 'Stats lab', 'central limit theorem volatility drag simulation'],
     ['#/handbook', 'Handbook', 'course learn basics from scratch lessons chapters foundations'],
     ['#/today', 'Today', 'daily activity goal minutes time practised today log history'],
-    ['#/devbook', 'Quant dev handbook', 'data structures algorithms leetcode coding interview dsa course python'],
+    ['#/devbook', 'Quant dev handbook', 'data structures algorithms leetcode coding interview dsa course python numpy pandas polars'],
     ['#/appearance', 'Appearance', 'theme dark mode night ticker sound motion settings'],
     ['#/more', 'Settings and data', 'export import backup reset keypad install'],
   ];

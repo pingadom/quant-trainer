@@ -1,4 +1,5 @@
 numpy>=2.0
 pandas>=2.2
+polars>=1.18
 scipy>=1.13
 matplotlib>=3.9

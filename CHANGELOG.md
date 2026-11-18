@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.61.0
+
+- **Data tools: NumPy, pandas and Polars** (Learn → Quant dev handbook → Part 6), four new chapters for quant developer and data-heavy roles:
+  - **NumPy:** why arrays are fast, vectorising with reductions and masks, broadcasting, views versus copies and silent dtype traps, O(n) rolling windows and seeded Monte Carlo.
+  - **pandas:** the index and label alignment, groupby (agg versus transform), merges that multiply rows, merge_asof for trades and quotes, resample, rolling and shift without look-ahead, and chained assignment in pandas 2 and 3.
+  - **Polars:** expressions and contexts, over() and when/then, null versus NaN, lazy queries and pushdown, group_by_dynamic and join_asof, and a pandas-to-Polars translation table.
+  - **Working with market data:** long versus wide data and calendar gaps, cleaning ticks, a backtest with costs and no look-ahead, and memory, dtypes and file formats.
+  - Every listing is tested against slow reference code, and every numeric answer is derived by running the libraries, under both the newest releases and the browser's versions.
+- **Data drills** (Coding → Data drills): 15 exercises run against hidden tests in your browser's Python, including Polars. Each has worked examples, random data, edge cases and, for NumPy, a large input that catches Python loops. CI checks that every model solution passes and that 35 common mistakes (no shift, mean instead of VWAP, the other symbol's quote, forgetting to sort…) are caught.
+- The handbook chapters link to their drills, and pandas chapters to LeetCode's free pandas problems. There is a new "Data and research roles" route.
+
 ## 0.60.1
 
 - A question that asks for the answer **in millions** (or thousands, billions, trillions) now also accepts the full number: 20,000,000 is right when the answer is 20 million. Answers like "20 million", "20m", "3.5bn" and "40k" are read too.

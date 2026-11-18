@@ -862,12 +862,17 @@
       if (!QT.devbook || QT.devbook.PARTS.flatMap((p) => p.chapters).some((id) => !id.startsWith('dsa-'))) fail('devbook: chapters missing or misnamed');
       for (const id of QT.devbook?.PARTS.flatMap((p) => p.chapters) || []) {
         const lc = QT.devbook.LEETCODE?.[id] || [];
+        if (QT.devbook.NO_LEETCODE?.includes(id)) {
+          if (lc.length) fail(`devbook: ${id} is listed as having no LeetCode problems but has some`);
+          continue;
+        }
         if (lc.length < 2 || new Set(lc.map((x) => x[2])).size !== lc.length) fail(`devbook: ${id} needs at least 2 distinct LeetCode problems`);
         for (const [n, t, slug, d] of lc) if (!(Number.isInteger(n) && n > 0 && t && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && ['Easy', 'Medium', 'Hard'].includes(d))) fail(`devbook: ${id} LeetCode entry ${n} ${slug}`);
       }
       if (Object.keys(QT.devbook?.LEETCODE || {}).some((id) => !CHAPTERS[id])) fail('devbook: LeetCode list for a missing chapter');
       const TOOLS = ['counting', 'dice', 'bayes', 'lln', 'sqrtn', 'dist', 'pattern', 'markov', 'walk', 'reroll', 'area', ...Object.keys(QT.hbWidgets || {})];
-      const junk = (t) => /undefined|NaN/.test(t);
+      // A NaN the content means to show is marked up as <code>NaN</code> (the data-tools chapters).
+      const junk = (t) => /undefined|NaN/.test(t.replace(/<code>NaN<\/code>/g, ''));
       if (new Set(listed).size !== listed.length) fail('handbook: a chapter is listed twice');
       let mcqs = 0, longest = 0, shortest = 0, figs = 0;
       listed.forEach((id, at) => {
@@ -909,7 +914,7 @@
           if (b.widget && !TOOLS.includes(b.widget)) fail(`handbook: ${id} uses an unknown tool ${b.widget}`);
           if (b.worked && !(b.q && b.steps?.length > 1)) fail(`handbook: ${id} worked example incomplete`);
           if (b.code !== undefined && !(typeof b.code === 'string' && b.code.trim() && /^[a-z_0-9]+$/.test(b.test || ''))) fail(`handbook: ${id} code listing needs a test name`);
-          if (typeof b === 'string' && /undefined|NaN/.test(b)) fail(`handbook: ${id} text shows junk`);
+          if (typeof b === 'string' && junk(b)) fail(`handbook: ${id} text shows junk`);
         }
       });
       for (const id of Object.keys(CHAPTERS)) if (!listed.includes(id)) fail(`handbook: ${id} is defined but not listed`);
@@ -951,6 +956,33 @@
       const c = QT.store.get().code;
       if (c.spot['mid-floor']?.join() !== '1,0,1,1' || c.spot['BAD KEY'] || c.trace['t-float']?.join() !== '1' || c.trace['mid-floor'] || c.spotLog[0]?.n !== 10) fail(`spotting: results not sanitised ${JSON.stringify([c.spot, c.trace, c.spotLog])}`);
       QT.store.importJson(saved);
+    }
+
+    // Data drills: well formed, linked from the data-tools chapters, and progress is sanitised.
+    {
+      const DD = QT.dataDrills, libs = DD.LIBS.map((L) => L.id), ids = DD.ITEMS.map((d) => d.id);
+      if (ids.length < 12 || new Set(ids).size !== ids.length) fail('data drills: too few, or duplicate ids');
+      for (const d of DD.ITEMS) {
+        if (!/^[a-z]{2}-[a-z0-9-]{1,24}$/.test(d.id) || !libs.includes(d.lib) || !DD.PKGS[d.lib]) fail(`data drill ${d.id}: bad id or library`);
+        if (!QT.hbChapters[d.chapter]) fail(`data drill ${d.id}: links to a missing chapter ${d.chapter}`);
+        if (!d.title || !d.task || !d.hint || !/def run\(\)/.test(d.test) || !d.starter.trim() || !d.sol.trim() || d.starter === d.sol) fail(`data drill ${d.id}: incomplete`);
+        if (/undefined|NaN/.test((d.title + d.task + d.hint).replace(/<code>NaN<\/code>/g, ''))) fail(`data drill ${d.id}: shows junk`);
+        if (DD.byId[d.id] !== d) fail(`data drill ${d.id}: not indexed`);
+      }
+      for (const L of libs) if (!DD.ITEMS.some((d) => d.lib === L)) fail(`data drills: no drills for ${L}`);
+      const linked = QT.devbook.PARTS.find((p) => p.id === 'dsa-data').chapters.flatMap((id) => QT.hbChapters[id].practice.map(([, h]) => h));
+      for (const h of linked) {
+        const m = h.match(/^#\/code\/data\/([a-z0-9-]+)$/);
+        if (m && !DD.byId[m[1]]) fail(`data drills: a chapter links to a missing drill ${m[1]}`);
+      }
+      for (const d of DD.ITEMS) if (!linked.includes(`#/code/data/${d.id}`)) fail(`data drill ${d.id}: no chapter links to it`);
+      const snap = JSON.parse(QT.store.exportJson());
+      snap.code.data = { 'np-drawdown': { code: 'x'.repeat(30000), n: 3.6, ok: 'yes', date: '2026-11-18T10:00:00Z' }, 'BAD KEY': { n: 1 }, 'pd-vwap': 'junk' };
+      QT.store.importJson(JSON.stringify(snap));
+      const got = QT.store.get().code.data;
+      if (got['np-drawdown']?.code.length !== 20000 || got['np-drawdown'].n !== 4 || got['np-drawdown'].ok !== 1 || got['BAD KEY'] || got['pd-vwap']?.n !== 0) fail(`data drills: progress not sanitised ${JSON.stringify(Object.keys(got))}`);
+      snap.code.data = {};
+      QT.store.importJson(JSON.stringify(snap));
     }
 
     // Daily activity: routes map to areas (non-practice pages to none), and stored time is sanitised.
