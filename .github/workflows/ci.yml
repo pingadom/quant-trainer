@@ -52,6 +52,10 @@ jobs:
         run: python research/verify_internals.py
       - name: Quant dev handbook listings
         run: python research/verify_devbook.py
+      - name: Code in the handbooks' model answers compiles, and runs against tests
+        run: |
+          node tests/export-models.js > models.json
+          python research/verify_models.py models.json
       - name: Data drills (model solutions pass, starters and common mistakes fail)
         run: |
           node tests/export-data.js > data.json

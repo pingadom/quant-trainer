@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.62.0
+
+- **Model answers rewritten** across both handbooks: all 66 written answers in the quant dev handbook, and the 17 thinnest in the quant handbook. Each now builds the idea up instead of stating the trick: the idea in plain words, a worked example traced step by step (often as a table), code where it's an algorithm question, an argument for why it's correct, then cost, edge cases and what an interviewer listens for.
+- The Python in model answers is now checked in CI (research/verify_models.py). Every block must compile and fit a phone screen, and every function or class runs against slow, obviously correct code on random inputs: 52 answers tested, on the newest library versions and on the browser's.
+
 ## 0.61.0
 
 - **Data tools: NumPy, pandas and Polars** (Learn → Quant dev handbook → Part 6), four new chapters for quant developer and data-heavy roles:
