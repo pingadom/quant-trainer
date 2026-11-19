@@ -13,14 +13,32 @@
   const runs = (id) => store.get().code.review[id] || [];
 
   function hub(el) {
-    const mocks = store.get().code.smocks;
+    const mocks = store.get().code.smocks, G = S.GUIDE;
     el.innerHTML = `
       <a class="back" href="#/code">← Coding</a>
-      <h1>Tech screening: code review</h1>
-      <p class="lede">Optiver describes its 45-minute software engineering tech screening as a real-world business problem: review a short code snippet, suggest improvements, outline a simple deployment plan, and discuss CS fundamentals along the way. It's about how you think and how you connect technical choices to outcomes. These exercises practise exactly that, with our own snippets.</p>
+      <h1>Optiver tech screening: prep guide</h1>
+      <p class="lede">Everything for the 45-minute software engineering tech screening in one place: what it is, what the interviewer looks for, a plan for the 45 minutes, how to prepare, what to say, and practice for each part.</p>
+      <nav class="card sc-toc" aria-label="On this page"><b>On this page</b> <button type="button" class="link" data-jump="sc-what">What it is</button> · <button type="button" class="link" data-jump="sc-look">What they look for</button> · <button type="button" class="link" data-jump="sc-time">The 45 minutes</button> · <button type="button" class="link" data-jump="sc-plan">How to prepare</button> · <button type="button" class="link" data-jump="sc-say">What to say</button> · <button type="button" class="link" data-jump="sc-snip">Practice snippets</button> · <button type="button" class="link" data-jump="sc-check">Checklists</button> · <button type="button" class="link" data-jump="sc-src">Sources</button></nav>
+      <h2 id="sc-what">What the tech screening is</h2>
+      <div class="card">${G.format}
+        <p class="small" style="margin-bottom:6px"><b>Where it sits in the process:</b></p>
+        <ol class="small" style="margin:0">${G.stages.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol></div>
+      <h2 id="sc-look">What they look for</h2>
+      <div class="sc-look">${G.looking.map(([h, t]) => `<div class="card"><b>${esc(h)}</b><p class="small" style="margin:4px 0 0">${esc(t)}</p></div>`).join('')}</div>
+      <h2 id="sc-time">A plan for the 45 minutes</h2>
+      <p class="small">Our estimate of how the time divides; the interviewer leads, so treat it as a guide to pacing, not a script.</p>
+      <div class="fd-scroll"><table class="hb-table"><tr><th>Time</th><th>What happens</th><th>What to do</th></tr>${G.timing.map(([a, b, c]) => `<tr><td class="mono">${esc(a)}</td><td>${esc(b)}</td><td class="small">${esc(c)}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin:12px 0"><a class="btn" href="#/code/screening/mock">Full mock: 45 minutes</a>${mocks.length ? `<span class="small">${mocks.length} mock${mocks.length > 1 ? 's' : ''} done, last ${(mocks[mocks.length - 1].s.reduce((a, b) => a + b, 0) / mocks[mocks.length - 1].s.length).toFixed(1)}/3</span>` : ''}</div>
+      <h2 id="sc-plan">How to prepare, in order</h2>
+      <ol class="sc-plan">${G.plan.map(([h, t, href]) => `<li><a href="${href}"><b>${esc(h)}</b></a>: ${esc(t)}</li>`).join('')}</ol>
       <a class="card sc-promo" href="#/code/screening/spot"><b>Learning to spot bugs</b><span class="small">The method behind a good review, ${QT.spotting.FAMILIES.length} families of bug with the tell that gives each away, ${QT.spotting.ITEMS.length} short snippets to train your eye, and ${QT.spotting.TRACES.length} "run it in your head" questions. Start here if you find bugs hard to see.</span></a>
-      <h2>Snippets to review</h2>
+      <a class="card sc-promo" href="#/code/screening/fundamentals"><b>Fundamentals: how hardware shapes design</b><span class="small">Computer architecture, memory management, concurrency, networking, and Python from the inside: the physical reality, the constraint it creates, the design it leads to. Latency numbers, the hot path of a trading system, ${QT.fundamentals.TOPICS.reduce((n, t) => n + t.questions.length, 0)} questions with model answers, and a self-check.</span></a>
+      <h3>Related LeetCode problems</h3>
+      <p class="small">LeetCode has no code-review problems, but these free ones are closest to the code you'll be shown: small trading-style systems where the choice of data structure matters. Each fundamentals topic lists more.</p>
+      ${QT.fundamentalsLeetcode(G.leetcode)}
+      <h2 id="sc-say">What to say: useful phrases</h2>
+      <div class="card"><ul style="margin:0">${G.phrases.map(([h, t]) => `<li><b>${esc(h)}:</b> ${esc(t)}</li>`).join('')}</ul></div>
+      <h2 id="sc-snip">Snippets to review</h2>
       <div class="menu">${S.EXERCISES.map((E) => {
         const r = runs(E.id), last = r[r.length - 1];
         const high = E.issues.filter((i) => i.sev === 'high').length;
@@ -33,7 +51,13 @@
       <h2>What a deployment plan covers</h2>
       <div class="card"><ol style="margin-top:0">${S.DEPLOY_PLAN.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
         <p class="small" style="margin-bottom:0">Tie each step to the risk of this particular change. A fix on the order path needs a simulated exchange and a canary; a fix to a report needs a parallel run and a comparison. "Test it, deploy it, monitor it" with nothing specific is the weak answer.</p></div>
-      <p class="small">Format from Optiver's interview process overview for the software engineer internship, which it sends to candidates. The snippets and model answers are ours. Every planted bug is checked by running the code in research/verify_internals.py.</p>`;
+      <h2 id="sc-check">Checklists</h2>
+      <div class="sc-look"><div class="card"><b>The day before</b><ul class="small" style="margin:6px 0 0">${G.before.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
+        <div class="card"><b>In the interview</b><ul class="small" style="margin:6px 0 0">${G.during.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div></div>
+      <h2 id="sc-src">Sources</h2>
+      <ul class="small">${G.sources.map(([t, url, note]) => `<li>${url ? `<a href="${url}" target="_blank" rel="noopener">${esc(t)}</a>` : `<b>${esc(t)}</b>`}: ${esc(note)}</li>`).join('')}</ul>
+      <p class="small">The snippets, model answers and timings are ours. Every planted bug is checked by running the code in research/verify_internals.py.</p>`;
+    el.querySelectorAll('[data-jump]').forEach((b) => b.addEventListener('click', () => el.querySelector(`#${b.dataset.jump}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })));
   }
 
   // One exercise. In the mock, opts.stage limits what is shown and opts.onDone gets the result.
@@ -181,6 +205,7 @@
   QT.screeningView = (el, id, sub) => {
     if (id === 'mock') return mock(el);
     if (id === 'spot') return QT.spottingView(el, sub);
+    if (id === 'fundamentals') return QT.fundamentalsView(el, sub);
     const E = id && S.byId(id);
     return E ? exercise(el, E) : hub(el);
   };

@@ -332,5 +332,87 @@ def load_trades(path):
     ['Communicate', 'Tell the users what changes and when, and leave a runbook for whoever is on call.'],
   ];
 
-  QT.screening = { EXERCISES, REVIEW_ORDER, DEPLOY_PLAN, byId: (id) => EXERCISES.find((e) => e.id === id) };
+
+  // The prep guide at the top of the screening hub. Sources: Optiver's process overview sent to
+  // candidates (no public link), Optiver's "interview tips for software engineers" page (March 2025),
+  // and candidate reports. Timings marked as estimates are ours.
+  const GUIDE = {
+    stages: [
+      ['Online assessment', 'Coding, a CS knowledge test and cognitive games, reported by candidates in varying combinations by year and office.'],
+      ['Behavioural interview', 'About 30 minutes with a recruiter: your background, motivation, and why Optiver.'],
+      ['Tech screening', '45 minutes with an engineer: the stage this guide is for.'],
+      ['Technical interviews 1 and 2', 'Deeper coding and design, discussed like working with a colleague.'],
+      ['Final round', 'The last stage before an offer.'],
+    ],
+    format: `<p>Optiver's overview describes the tech screening as <b>a real-world business challenge</b>. You review a short code snippet, suggest improvements, outline a simple deployment plan, and discuss CS fundamentals along the way. The stated aim is to see how you think and how you connect technical choices to outcomes.</p>
+      <p>Optiver's interview tips add that its technical interviews avoid standard LeetCode puzzles and brainteasers. They feel like solving a problem with a colleague, and assess how you break down complexity, adapt to new information and communicate your reasoning, rather than whether you have every answer.</p>`,
+    timing: [
+      ['0–3 min', 'Introductions; the interviewer explains the snippet\'s context.', 'Listen for what the code is for and how it\'s used; ask one or two clarifying questions.'],
+      ['3–20 min', 'Review the snippet out loud.', 'Say what it does, then raise issues most serious first: what\'s wrong, the fix, the business impact.'],
+      ['20–28 min', 'Improvements.', 'Sketch the fixed version, or the key changes, and say why they\'re better. Mention tests you\'d add.'],
+      ['28–36 min', 'Deployment plan.', 'Tests, review, staging or a simulated exchange, a careful rollout, monitoring, rollback, communication: tied to this change\'s risk.'],
+      ['36–42 min', 'Fundamentals.', 'Usually prompted by the code (why is this slow? what if two threads call it?). Reality → constraint → design → trade-off.'],
+      ['42–45 min', 'Your questions.', 'One or two thoughtful questions about the team or the work.'],
+    ],
+    looking: [
+      ['How you think', 'Breaking a problem down, reasoning out loud, and adapting when you learn something new.'],
+      ['Connecting choices to outcomes', 'Not just "this is a bug" but "this would send duplicate orders and lose money when the exchange is slow".'],
+      ['Language fluency', 'Your language\'s standard library and collections: time and space costs, and how they work inside.'],
+      ['Fundamentals', 'Computer architecture, networking, concurrency and memory management, and how they constrain design.'],
+      ['Communication', 'Clarifying questions at the start (load, latency, edge cases), explaining why you chose something, and engaging with hints.'],
+      ['Collaboration', 'Treating the interviewer as a colleague: building on their points, disagreeing politely, changing your mind when they show you something.'],
+    ],
+    plan: [
+      ['Learn to spot bugs', 'Work through the method and a 10-snippet mixed drill.', '#/code/screening/spot'],
+      ['Review snippets against the clock', 'Do at least three of the snippets below, out loud, writing your review before comparing.', '#/code/screening'],
+      ['Know the deployment checklist', 'Read the checklist below, then write a plan for one snippet in 5 minutes.', '#/code/screening'],
+      ['Fundamentals', 'The five topics, especially Python from the inside and concurrency. Say each answer aloud before opening it.', '#/code/screening/fundamentals'],
+      ['Python internals', 'Flip through the Python internals cards: mutability, references, the GIL, generators.', '#/flashcards/python'],
+      ['Sit a full mock', '45 minutes, out loud, with the timer. Note your two weakest moments and fix those.', '#/code/screening/mock'],
+      ['Prepare your stories and questions', 'Why software engineering, why Optiver, one project you can explain in depth, two STAR stories, two questions to ask.', '#/stories'],
+    ],
+    phrases: [
+      ['Clarifying the context', '"Before I start: how often is this called, and is it on the order path?" "How much data does it see in a day?" "What happens downstream if it gets this wrong?"'],
+      ['Thinking out loud', '"First I\'ll read it end to end and say what I think it\'s for." "The thing I\'d worry about most here is…"'],
+      ['Ranking issues', '"The most serious problem is X, because it could send a duplicate order. Smaller things: Y and Z."'],
+      ['When given a hint', '"Good point: if two threads call this at once, both could read the old position. I\'d fix that by…"'],
+      ['When unsure', '"I\'m not certain how the library behaves here; I\'d check the docs, but my assumption is… and if that\'s wrong I\'d…"'],
+      ['Trade-offs', '"I could make this faster with X, but it adds complexity; given it runs once a minute I\'d keep it simple."'],
+    ],
+    before: [
+      'Do one full mock out loud, then stop: rest beats cramming.',
+      'Reread the review order and the deployment checklist; skim the latency numbers.',
+      'Prepare your two-minute introduction, "why Optiver", and two questions.',
+      'Check your set-up: camera, microphone, a quiet room, the meeting link, and a working Python with an editor you know.',
+      'Have paper and a pen for diagrams, and water.',
+    ],
+    during: [
+      'Read the whole snippet before commenting, and say what it\'s for.',
+      'Ask one or two clarifying questions early: they change which issues matter.',
+      'Lead with the most serious issue; for each, say the impact on the business.',
+      'Keep talking: silence the interviewer can\'t interpret reads as being stuck.',
+      'If you get a hint, take it and build on it; it isn\'t a penalty.',
+      'For fundamentals, go from the physical fact to the design choice.',
+      'Leave time for your questions.',
+    ],
+    // Free LeetCode problems closest to trading-system code, checked against LeetCode's data on 19 Nov 2026.
+    leetcode: [
+      [1801, 'Number of Orders in the Backlog', 'number-of-orders-in-the-backlog', 'Medium', 'A tiny order book: match buys against sells with two heaps'],
+      [2034, 'Stock Price Fluctuation', 'stock-price-fluctuation', 'Medium', 'Corrections to past prices, with the latest, max and min: lazy deletion'],
+      [295, 'Find Median from Data Stream', 'find-median-from-data-stream', 'Hard', 'Running statistics on a stream with two heaps'],
+      [901, 'Online Stock Span', 'online-stock-span', 'Medium', 'A monotonic stack over live prices'],
+      [146, 'LRU Cache', 'lru-cache', 'Medium', 'The cache in front of a slow lookup'],
+      [622, 'Design Circular Queue', 'design-circular-queue', 'Medium', 'The ring buffer between pipeline stages'],
+      [1396, 'Design Underground System', 'design-underground-system', 'Medium', 'Track open events by id and aggregate when they close, like orders'],
+      [1226, 'The Dining Philosophers', 'the-dining-philosophers', 'Medium', 'Deadlock and lock ordering, in Python threads'],
+    ],
+    sources: [
+      ['Optiver: interview tips for software engineers (March 2025)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/', 'Official. What they assess, and how to prepare: programming know-how, fundamentals, explaining design choices, behavioural.'],
+      ['Optiver\'s interview process overview for the software engineer internship', '', 'Official, sent to candidates (no public link). The stages, and what the 45-minute tech screening covers.'],
+      ['Glassdoor: Optiver software engineer internship interviews', 'https://www.glassdoor.com/Interview/Optiver-Software-Engineer-Internship-Interview-Questions-EI_IE243355.0,7_KO8,36.htm', 'Candidate reports, varying by year and office; some mention OS and networking questions.'],
+      ['Taro: Optiver interview experiences', 'https://www.jointaro.com/interviews/companies/optiver/experiences/software-engineer-intern-amsterdam-september-22-2025-no-offer-positive-b09b7af1/', 'Candidate reports, including online-assessment formats.'],
+    ],
+  };
+
+  QT.screening = { EXERCISES, REVIEW_ORDER, DEPLOY_PLAN, GUIDE, byId: (id) => EXERCISES.find((e) => e.id === id) };
 })();

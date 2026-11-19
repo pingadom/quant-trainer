@@ -985,6 +985,38 @@
       QT.store.importJson(JSON.stringify(snap));
     }
 
+    // Tech-screening prep guide and fundamentals: well formed, LeetCode links valid, progress sanitised.
+    {
+      const F = QT.fundamentals, G = QT.screening.GUIDE, ids = new Set();
+      const lcOk = (rows, where) => {
+        if (!rows?.length || new Set(rows.map((r) => r[2])).size !== rows.length) fail(`${where}: LeetCode list empty or repeated`);
+        for (const [n, t, slug, d, why] of rows || []) if (!(Number.isInteger(n) && t && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && ['Easy', 'Medium', 'Hard'].includes(d) && why)) fail(`${where}: LeetCode entry ${n}`);
+      };
+      if (F.TOPICS.length < 5 || F.LATENCY.length < 10 || F.HOTPATH.length < 5) fail('fundamentals: too little content');
+      for (const t of F.TOPICS) {
+        if (!t.reality || !t.constraints || !t.design || t.questions.length < 4 || t.checks.length < 3) fail(`fundamentals ${t.id}: incomplete`);
+        lcOk(t.leetcode, `fundamentals ${t.id}`);
+        for (const [q, a] of t.questions) if (!q || !a || /undefined|NaN/.test(q + a)) fail(`fundamentals ${t.id}: a question is incomplete`);
+        for (const c of t.checks) {
+          if (ids.has(c.id) || !/^[a-z]{2,5}-[0-9]{1,2}$/.test(c.id)) fail(`fundamentals: check id ${c.id}`);
+          ids.add(c.id);
+          if (c.opts ? c.opts.length < 3 || c.opts.slice(1).some((o) => !o[1]) : !Number.isFinite(c.a)) fail(`fundamentals: check ${c.id} malformed`);
+          if (!c.sol || /<|>/.test(c.q)) fail(`fundamentals: check ${c.id} needs a solution and a plain-text question`);
+        }
+      }
+      if (!G || G.timing.length < 5 || G.plan.length < 5 || G.sources.length < 2) fail('screening guide: incomplete');
+      lcOk(G.leetcode, 'screening guide');
+      for (const [, url] of G.sources) if (url && !/^https:\/\//.test(url)) fail(`screening guide: bad source ${url}`);
+      for (const [, , href] of G.plan) if (!/^#\//.test(href)) fail(`screening guide: bad link ${href}`);
+      const snap = JSON.parse(QT.store.exportJson());
+      snap.code.fund = { 'arch-1': 1, 'net-2': 'yes', 'BAD KEY': 1, 'mem-1': 0 };
+      QT.store.importJson(JSON.stringify(snap));
+      const fd = QT.store.get().code.fund;
+      if (fd['arch-1'] !== 1 || fd['net-2'] !== 1 || fd['mem-1'] !== 0 || fd['BAD KEY'] !== undefined) fail(`fundamentals: progress not sanitised ${JSON.stringify(fd)}`);
+      snap.code.fund = {};
+      QT.store.importJson(JSON.stringify(snap));
+    }
+
     // Daily activity: routes map to areas (non-practice pages to none), and stored time is sanitised.
     if (QT.activity) {
       const A = QT.activity;

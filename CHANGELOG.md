@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.63.0
+
+- **Optiver tech screening: prep guide** (Coding → Tech screening), rebuilt from Optiver's process overview, its "interview tips for software engineers" page and candidate reports:
+  - what the 45-minute screening is and where it sits in the process;
+  - what interviewers look for;
+  - a pacing plan for the 45 minutes;
+  - a preparation order linking every practice tool;
+  - phrases for clarifying, ranking issues and taking hints;
+  - day-before and in-interview checklists, and sources.
+- **Fundamentals: how hardware shapes design**: computer architecture, memory management, concurrency, networking, and Python from the inside (how lists, dicts, deques and heaps are stored, with real CPython sizes).
+  - Each topic goes from the physical reality to the constraint it creates and the design it leads to, with 26 questions and model answers, a self-check, and related free LeetCode problems.
+  - Also: a latency-numbers table and a walk through the hot path of a trading system.
+  - Numbers are re-derived in research/verify_fundamentals.py.
+- **Related LeetCode problems**: 28 free problems checked against LeetCode's data, including the order backlog, a ring buffer, LRU cache, and the concurrency set (dining philosophers and others).
+
 ## 0.62.0
 
 - **Model answers rewritten** across both handbooks: all 66 written answers in the quant dev handbook, and the 17 thinnest in the quant handbook. Each now builds the idea up instead of stating the trick: the idea in plain words, a worked example traced step by step (often as a table), code where it's an algorithm question, an argument for why it's correct, then cost, edge cases and what an interviewer listens for.

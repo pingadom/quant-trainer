@@ -26,6 +26,7 @@
     ['#/code', 'Coding (SWE)', 'software engineer swe coding leetcode programming optiver hackerrank online assessment python javascript data structures order book lru cache queue'],
     ['#/code/quiz', 'Coding knowledge quiz', 'computer science multiple choice operating systems networking tcp udp c++ python concurrency'],
     ['#/code/data', 'Data drills: NumPy, pandas and Polars', 'numpy pandas polars dataframe groupby merge asof resample vectorise broadcasting backtest data science'],
+    ['#/code/screening/fundamentals', 'Fundamentals: architecture, memory, concurrency, networking', 'computer architecture cache memory management concurrency threads locks networking tcp udp latency numbers optiver'],
     ['#/code/screening', 'Tech screening: code review', 'optiver software engineer tech screening code review deployment plan snippet improvements'],
     ['#/oa', 'Online tests', 'number sequences digit span running totals online assessment cognitive games zap-n zapn imc games'],
     ['#/oa/seq', 'Number sequences', 'sequences next term pattern numberlogic practice timed test'],

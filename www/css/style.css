@@ -1305,3 +1305,15 @@ select { font-family: var(--body); }
 .sp-line:disabled { cursor: default; opacity: 1; }
 .sp-reveal.ok { border-left: 4px solid var(--ok); }
 .sp-reveal.no { border-left: 4px solid var(--bad); }
+
+/* Tech screening prep guide and fundamentals (#/code/screening, #/code/screening/fundamentals) */
+.sc-toc { display: block; line-height: 1.9; }
+.sc-look { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.sc-look .card { margin: 0; }
+.sc-plan li { margin-bottom: 6px; }
+.fd-scroll { overflow-x: auto; }
+.fd-lat td { vertical-align: top; }
+.fd-path li { margin-bottom: 8px; }
+.fd-q summary { cursor: pointer; }
+.fd-q .solution { margin-top: 10px; }
+.fd-lc li { margin-bottom: 6px; }
