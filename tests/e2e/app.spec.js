@@ -243,6 +243,38 @@ test('the tour walks through every section', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Start the diagnostic' })).toBeVisible();
 });
 
+test('Zetamac input: typing reaches the box after it loses focus, and a tap between keypad keys counts', async ({ page }) => {
+  await page.goto('./#/mental');
+  await page.locator('[data-mode="zetamac"]').click();
+  // Desktop and phone: blur the box, then type the answer; it still goes through.
+  const q = await page.locator('#mm-q').textContent();
+  const a = await page.evaluate((text) => { const [x, op, y] = text.split(' '); return { '+': (p, r) => p + r, '−': (p, r) => p - r, '×': (p, r) => p * r, '÷': (p, r) => p / r }[op](+x, +y); }, q);
+  await page.evaluate(() => { document.activeElement.blur(); });
+  if (await page.locator('.keypad').count()) {
+    for (const ch of String(a)) await page.locator(`.keypad [data-k="${ch}"]`).dispatchEvent('pointerdown');
+  } else {
+    await page.keyboard.type(String(a));
+  }
+  await expect(page.locator('#mm-score')).toHaveText('Score: 1');
+  expect(await page.evaluate(() => window.QT.quiet)).toBe(1); // background saves wait during the game
+  // A tap that lands in the gap between two keypad keys goes to the nearer key.
+  await page.evaluate(() => { localStorage.setItem('qt-keypad', 'on'); });
+  await page.goto('./#/today');
+  expect(await page.evaluate(() => window.QT.quiet)).toBe(0);
+  await page.goto('./#/mental');
+  await page.reload();
+  await page.locator('[data-mode="zetamac"]').click();
+  const got = await page.evaluate(() => {
+    const pad = document.querySelector('.keypad');
+    const r4 = pad.querySelector('[data-k="4"]').getBoundingClientRect(), r5 = pad.querySelector('[data-k="5"]').getBoundingClientRect();
+    const x = r4.right + 2, y = (r4.top + r4.bottom) / 2; // just inside the gap, nearer 4
+    document.elementFromPoint(x, y).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX: x, clientY: y }));
+    return [document.querySelector('#mm-in').value, Math.round(r5.left - r4.right)];
+  });
+  expect(got[0]).toBe('4');
+  expect(got[1]).toBeGreaterThan(0);
+});
+
 test('Zetamac: answers go through without Enter; slow and unfinished questions come back for review', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('qt-keypad', 'off')); // type directly, also on the phone project
   await page.clock.install();

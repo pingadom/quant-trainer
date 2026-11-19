@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.63.1
+
+- **Zetamac input is more reliable and smoother:**
+  - A tap that lands in the gap between two on-screen keypad keys now counts as the nearer key instead of being dropped.
+  - Typing reaches the answer box even after it loses focus (a click on the card, or switching windows and back).
+  - Background saves of practice time wait until the game ends, so they can't stall typing.
+  - The "correct" flash no longer forces a layout on every keystroke.
+  - Autocorrect and predictive text are off in the answer box, and composing phone keyboards are handled.
+  - The keypad fixes apply to every timed drill that uses it.
+
 ## 0.63.0
 
 - **Optiver tech screening: prep guide** (Coding → Tech screening), rebuilt from Optiver's process overview, its "interview tips for software engineers" page and candidate reports:

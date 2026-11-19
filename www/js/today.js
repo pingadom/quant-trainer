@@ -64,7 +64,9 @@
   function tick() {
     const a = area();
     if (a && document.visibilityState === 'visible' && Date.now() - lastInput < IDLE) pending[a] = (pending[a] || 0) + TICK;
-    if (++ticks % FLUSH_EVERY === 0) flush();
+    // Writing progress can take tens of milliseconds on a phone with a large profile, so it
+    // waits while a timed game is running (QT.quiet); the time is kept in memory meanwhile.
+    if (++ticks % FLUSH_EVERY === 0 && !QT.quiet) flush();
   }
   function start() {
     if (typeof document === 'undefined' || typeof document.addEventListener !== 'function' || typeof setInterval !== 'function') return;

@@ -59,18 +59,32 @@
       if (!k) return `<span${style}></span>`;
       return `<button type="button" data-k="${k}" class="${k === 'enter' ? 'kp-enter' : /\d/.test(k) ? '' : 'kp-op'}"${style}${ARIA[k] ? ` aria-label="${ARIA[k]}"` : ''}>${LABEL[k] || k}</button>`;
     }).join('');
+    // A fast thumb often lands in the gap between two keys: give the tap to the nearest key
+    // rather than dropping it.
+    const nearest = (x, y) => {
+      let best = null, bestD = Infinity;
+      for (const b of pad.querySelectorAll('button')) {
+        const r = b.getBoundingClientRect();
+        const dx = Math.max(r.left - x, 0, x - r.right), dy = Math.max(r.top - y, 0, y - r.bottom);
+        const d = dx * dx + dy * dy;
+        if (d < bestD) { bestD = d; best = b; }
+      }
+      return bestD <= 24 * 24 ? best : null;
+    };
     pad.addEventListener('pointerdown', (e) => {
-      const btn = e.target.closest('button');
+      const btn = e.target.closest('button') || nearest(e.clientX, e.clientY);
       if (!btn) return;
       e.preventDefault();
-      if (navigator.vibrate) navigator.vibrate(4);
       const k = btn.dataset.k;
-      if (k === 'enter') return onEnter(active);
-      if (!active || active.disabled) return;
-      if (k === 'back') active.value = active.value.slice(0, -1);
-      else active.value += k;
-      active.dispatchEvent(new Event('input', { bubbles: true }));
+      if (k === 'enter') onEnter(active);
+      else if (active && !active.disabled) {
+        if (k === 'back') active.value = active.value.slice(0, -1);
+        else active.value += k;
+        active.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (navigator.vibrate) navigator.vibrate(4); // after the digit is in, never before
     });
+    pad.addEventListener('contextmenu', (e) => e.preventDefault()); // long-press menus
     anchor.after(pad);
     return {
       pad,

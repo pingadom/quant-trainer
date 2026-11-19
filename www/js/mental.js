@@ -374,13 +374,24 @@
         <div class="mm-top"><span id="mm-time"></span><span id="mm-score">Score: 0</span></div>
         <div class="mm-q" id="mm-q" aria-live="polite"></div>
         <form class="answer-row" id="zm-play" autocomplete="off">
-          <input type="text" id="mm-in" inputmode="numeric" autocomplete="off" placeholder="Type the answer" aria-label="Your answer">
+          <input type="text" id="mm-in" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" placeholder="Type the answer" aria-label="Your answer">
         </form>
         <p class="small" style="margin:8px 0 0">No Enter needed: the next question appears as soon as your answer is right.</p>
       </div>`;
     const $ = (sel) => el.querySelector(sel), $in = $('#mm-in'), $q = $('#mm-q'), $s = $('#mm-score'), $t = $('#mm-time');
     const timer = setInterval(tick, 200);
-    QT.cleanup = () => clearInterval(timer);
+    // While the clock runs: background saves wait (QT.quiet), and typing always reaches the
+    // answer box, even if it lost focus (a click on the card, or switching windows and back).
+    QT.quiet = (QT.quiet || 0) + 1;
+    let released = false;
+    const release = () => { if (!released) { released = true; QT.quiet = Math.max(0, (QT.quiet || 1) - 1); } };
+    const refocus = (e) => {
+      if (done || document.activeElement === $in || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (/^[0-9.-]$|^Backspace$/.test(e.key)) $in.focus({ preventScroll: true }); // the key then lands in the box
+    };
+    document.addEventListener('keydown', refocus, true);
+    const stopAll = () => { clearInterval(timer); document.removeEventListener('keydown', refocus, true); release(); };
+    QT.cleanup = stopAll;
     function next() {
       cur = list ? list[qi++ % list.length] : zmQuestion(s);
       $q.textContent = cur.q;
@@ -388,26 +399,32 @@
       shownAt = Date.now();
     }
     // A brief green flash on the answer box confirms each accepted answer, since the next
-    // question appears instantly and it's easy to wonder whether the last one counted.
-    let flashTimer = null;
+    // question appears instantly and it's easy to wonder whether the last one counted. It runs
+    // as a Web Animation, so it never forces a layout on the keystroke's path.
+    const card = $('#mm-card'), css = getComputedStyle(document.documentElement);
+    const okSoft = css.getPropertyValue('--ok-soft').trim() || '#dff3e4', ok = css.getPropertyValue('--ok').trim() || '#2e7d32';
+    let anim = null;
     const flash = () => {
-      const card = $('#mm-card');
-      card.classList.remove('zm-ok');
-      void card.offsetWidth; // restart the fade if answers come quickly
+      if (anim) anim.cancel();
+      if (typeof $in.animate !== 'function') return;
+      anim = $in.animate([{ backgroundColor: okSoft, borderColor: ok }, { backgroundColor: okSoft, borderColor: ok, offset: 0.3 }, {}], { duration: 260, easing: 'ease-out' });
       card.classList.add('zm-ok');
-      clearTimeout(flashTimer);
-      flashTimer = setTimeout(() => card.classList.remove('zm-ok'), 220);
+      anim.onfinish = () => card.classList.remove('zm-ok');
     };
-    $in.addEventListener('input', () => {
+    const check = () => {
       if (done) return;
-      const v = QT.parseAnswer($in.value);
+      const raw = $in.value.trim();
+      // The common case, typed digits, needs no parsing at all.
+      const v = raw === String(cur.a) ? cur.a : QT.parseAnswer(raw);
       if (v === cur.a) {
         answered.push({ ...cur, ok: true, you: String(v), ms: Date.now() - shownAt, t: Date.now() - (end - s.secs * 1000) });
         $s.textContent = `Score: ${answered.length}`;
-        flash();
         next();
+        flash();
       }
-    });
+    };
+    $in.addEventListener('input', (e) => { if (!e.isComposing) check(); });
+    $in.addEventListener('compositionend', check); // phone keyboards that compose send input late
     $('#zm-play').addEventListener('submit', (e) => e.preventDefault());
     QT.keypad.attach($('#zm-play'), [$in], () => {}, { keys: '', enter: false });
     function tick() {
@@ -418,7 +435,7 @@
     function finish() {
       if (done) return;
       done = true;
-      clearInterval(timer);
+      stopAll();
       QT.cleanup = null;
       const score = answered.length, st = store.get(), rec = (st.mental[key] ||= { best: null, runs: [] }), prev = rec.best;
       // The question you were stuck on when time ran out is saved for review too, if you'd
