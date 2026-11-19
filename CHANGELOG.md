@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.64.0
+
+- **Tech screening: one-page cheat sheet** (#/code/screening/sheet), for the morning of the interview, and printable. It covers the 45-minute plan, the review order, the bug tells, the deployment checklist, how to answer fundamentals with the key latency ratios, Python costs, useful phrases, and the in-interview checklist.
+- **Rapid-fire fundamentals** (#/code/screening/fundamentals/drill): 10 questions to answer out loud, then the model answer. Questions you mark "again" come back first next time, then ones you haven't seen.
+- The 45-minute mock's fundamentals stage now adds two questions from the fundamentals bank to the snippet's own follow-ups.
+- The technical-interview countdown adds a daily rapid-fire task, and on the day itself points to the cheat sheet.
+
 ## 0.63.1
 
 - **Zetamac input is more reliable and smoother:**

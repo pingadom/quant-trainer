@@ -368,7 +368,9 @@ def load_trades(path):
       ['Know the deployment checklist', 'Read the checklist below, then write a plan for one snippet in 5 minutes.', '#/code/screening'],
       ['Fundamentals', 'The five topics, especially Python from the inside and concurrency. Say each answer aloud before opening it.', '#/code/screening/fundamentals'],
       ['Python internals', 'Flip through the Python internals cards: mutability, references, the GIL, generators.', '#/flashcards/python'],
+      ['Rapid-fire fundamentals', 'Ten questions at a time, answered out loud; the ones you miss come back first.', '#/code/screening/fundamentals/drill'],
       ['Sit a full mock', '45 minutes, out loud, with the timer. Note your two weakest moments and fix those.', '#/code/screening/mock'],
+      ['Read the cheat sheet', 'The morning of the interview: one page with everything above.', '#/code/screening/sheet'],
       ['Prepare your stories and questions', 'Why software engineering, why Optiver, one project you can explain in depth, two STAR stories, two questions to ask.', '#/stories'],
     ],
     phrases: [

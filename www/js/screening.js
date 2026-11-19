@@ -18,6 +18,7 @@
       <a class="back" href="#/code">← Coding</a>
       <h1>Optiver tech screening: prep guide</h1>
       <p class="lede">Everything for the 45-minute software engineering tech screening in one place: what it is, what the interviewer looks for, a plan for the 45 minutes, how to prepare, what to say, and practice for each part.</p>
+      <div class="row" style="margin:0 0 12px"><a class="btn" href="#/code/screening/sheet">One-page cheat sheet</a><a class="btn ghost" href="#/code/screening/mock">Full 45-minute mock</a><a class="btn ghost" href="#/code/screening/fundamentals/drill">Rapid-fire fundamentals</a></div>
       <nav class="card sc-toc" aria-label="On this page"><b>On this page</b> <button type="button" class="link" data-jump="sc-what">What it is</button> · <button type="button" class="link" data-jump="sc-look">What they look for</button> · <button type="button" class="link" data-jump="sc-time">The 45 minutes</button> · <button type="button" class="link" data-jump="sc-plan">How to prepare</button> · <button type="button" class="link" data-jump="sc-say">What to say</button> · <button type="button" class="link" data-jump="sc-snip">Practice snippets</button> · <button type="button" class="link" data-jump="sc-check">Checklists</button> · <button type="button" class="link" data-jump="sc-src">Sources</button></nav>
       <h2 id="sc-what">What the tech screening is</h2>
       <div class="card">${G.format}
@@ -166,7 +167,11 @@
         if ($('#mk-review')) $('#mk-review').readOnly = true;
       }
       if (stage === 3) body.insertAdjacentHTML('beforeend', `<h2>Deployment plan</h2><p class="question">${esc(E.deploy.ask)}</p><textarea id="mk-deploy" rows="5" aria-label="Your deployment plan"></textarea><details class="card"><summary>Compare with a strong plan (after writing yours)</summary><ul>${E.deploy.good.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></details>`);
-      if (stage === 4) body.insertAdjacentHTML('beforeend', `<h2>Fundamentals</h2>${E.fundamentals.map(([q, a]) => `<details class="fu"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}`);
+      if (stage === 4) {
+        // The snippet's own follow-ups, then two from the fundamentals bank, as an interviewer might widen the discussion.
+        const bank = QT.fundamentals.TOPICS.flatMap((t) => t.questions).map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).slice(0, 2).map((x) => x[1]);
+        body.insertAdjacentHTML('beforeend', `<h2>Fundamentals</h2>${E.fundamentals.map(([q, a]) => `<details class="fu"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}<p class="small">And more widely:</p>${bank.map(([q, a]) => `<details class="fu"><summary>${esc(q)}</summary><div>${a}</div></details>`).join('')}`);
+      }
       if (stage === STAGES.length - 1) $('#mk-next').textContent = 'Finish and score yourself';
       draw();
     }
@@ -206,6 +211,7 @@
     if (id === 'mock') return mock(el);
     if (id === 'spot') return QT.spottingView(el, sub);
     if (id === 'fundamentals') return QT.fundamentalsView(el, sub);
+    if (id === 'sheet') return QT.screeningSheet(el);
     const E = id && S.byId(id);
     return E ? exercise(el, E) : hub(el);
   };

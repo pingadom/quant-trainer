@@ -49,7 +49,7 @@
         <ul>${PROCESS.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: <a href="${GD_INTERN}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer intern</a> · <a href="${GD_INTERNSHIP}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer internship</a> · <a href="https://leetcode.com/discuss/topic/optiver/" target="_blank" rel="noopener">LeetCode Discuss: Optiver</a></p>
       </details>
-      <a class="card sc-promo" href="#/code/screening"><b>Tech screening: code review and deployment plans</b><span class="small">Optiver's 45-minute screening asks you to review a short snippet, suggest improvements and outline a deployment plan. ${QT.screening.EXERCISES.length} snippets to review, a guide to each part, and a full 45-minute mock.</span></a>
+      <a class="card sc-promo" href="#/code/screening"><b>Optiver tech screening: prep guide</b><span class="small">The 45-minute screening: review a snippet, suggest improvements, plan a deployment, discuss fundamentals. A full guide, ${QT.screening.EXERCISES.length} snippets to review, bug-spotting drills, fundamentals with rapid fire, a one-page cheat sheet and a 45-minute mock.</span></a>
       <a class="card sc-promo" href="#/code/data"><b>Data drills: NumPy, pandas and Polars</b><span class="small">${QT.dataDrills.ITEMS.length} short exercises on market-style data, run against hidden tests in your browser: drawdowns, rolling windows, groupby, as-of joins, bars, and a backtest without look-ahead. Each one links to the handbook chapter that teaches it.</span></a>
       <a class="card sc-promo" href="#/devbook"><b>Quant dev handbook: data structures and algorithms</b><span class="small">Learn the methods behind these problems first: two pointers, sliding windows, hashing, heaps, graphs, binary search, dynamic programming and more, in ${QT.devbook ? QT.devbook.PARTS.flatMap((p) => p.chapters).length : 17} chapters with tested Python.</span></a>
       <div class="row" style="margin:14px 0"><a class="btn" href="#/code/quiz">Knowledge quiz: ${QZ.N} questions, ${QZ.MINUTES} minutes</a><a class="btn" href="#/code/design">Design discussions (${QT.design.PROBLEMS.length})</a><a class="btn ghost" href="#/flashcards/python">Python internals cards</a><a class="btn ghost" href="#/bank/optiver">System design and fundamentals questions</a></div>
@@ -89,6 +89,7 @@
       { id: `code-${t.id}`, label: `Problem: ${t.title}, then its follow-ups`, href: `#/code/${t.id}` },
     ];
     out.unshift({ id: 'spot', label: 'Bug-spotting drill: 10 snippets', href: '#/code/screening/spot/mix', auto: s.code.spotLog.some((r) => sameDay(r.date)) });
+    out.splice(1, 0, { id: 'fund', label: 'Rapid-fire fundamentals: 10 questions out loud', href: '#/code/screening/fundamentals/drill', auto: s.code.fundLog.some((r) => sameDay(r.date)) });
     // The next unfinished chapter of the quant dev handbook's one-week route, until it's done.
     const route = QT.devbook?.ROUTES[0]?.chapters || [], nextCh = route.find((id) => !s.handbook[id]?.done);
     if (nextCh && QT.hbChapters?.[nextCh]) out.push({ id: `dsa-${nextCh}`, label: `Quant dev handbook: ${QT.hbChapters[nextCh].title}`, href: `#/devbook/${nextCh}`, auto: false });
@@ -108,7 +109,7 @@
     const idx = Math.max(0, Math.round((Date.parse(`${today}T12:00:00`) - Date.parse(`${T.start || today}T12:00:00`)) / DAY));
     const done = T.done[today] || [];
     const tasks = left === 0
-      ? [{ id: 'light', label: 'Light review only: reread the code-review guide and the deployment-plan checklist, and flip through the Python internals cards.', href: '#/code/screening' }]
+      ? [{ id: 'light', label: 'Light review only: read the one-page cheat sheet, then flip through the Python internals cards. No new material today.', href: '#/code/screening/sheet' }]
       : techTasks(today, idx);
     return `<div class="card" id="tech-plan"><h2 style="margin-top:0">Technical interview: ${left === 0 ? 'today' : `${left} day${left > 1 ? 's' : ''} to go`}</h2>
       <ul class="plan-tasks">${tasks.map((k) => { const ok = k.auto || done.includes(k.id); return `<li><label><input type="checkbox" data-task="${k.id}"${ok ? ' checked' : ''}${k.auto ? ' disabled' : ''}> <a href="${k.href}">${esc(k.label)}</a></label>${k.auto ? ' <span class="small">(done)</span>' : ''}</li>`; }).join('')}</ul>

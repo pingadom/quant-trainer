@@ -11,8 +11,82 @@
   QT.fundamentalsLeetcode = lcList;
 
   QT.fundamentalsView = (el, id) => {
+    if (id === 'drill') return drill(el);
     const t = id && F().byId[id];
     return t ? topic(el, t) : overview(el);
+  };
+
+  // ---------------------------------------------------------------- rapid fire
+  // Ten questions from every topic: answer out loud, open the model answer, then mark it. Questions
+  // marked "again" come first next time, then ones never seen, then the rest, shuffled.
+  const allQs = () => F().TOPICS.flatMap((t) => t.questions.map(([q, a], i) => ({ key: `${t.id}:${i}`, t, q, a })));
+  function pickDrill(n) {
+    const seen = store.get().code.fundQ, shuffle = (xs) => xs.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+    const again = shuffle(allQs().filter((x) => seen[x.key] === 0)), fresh = shuffle(allQs().filter((x) => seen[x.key] === undefined)), known = shuffle(allQs().filter((x) => seen[x.key] === 1));
+    return [...again, ...fresh, ...known].slice(0, n);
+  }
+  function drill(el) {
+    const qs = pickDrill(10), marks = [];
+    let i = 0;
+    const show = () => {
+      const x = qs[i];
+      el.innerHTML = `
+        <a class="back" href="#/code/screening/fundamentals">← Fundamentals</a>
+        <h1>Rapid fire: fundamentals</h1>
+        <div class="session"><span>Question ${i + 1} of ${qs.length}</span><span class="small">${esc(x.t.title)}</span></div>
+        <div class="card"><p class="question">${esc(x.q)}</p>
+          <p class="small">Answer out loud first, in about a minute: the physical fact, the constraint, the design choice, the trade-off.</p>
+          <button type="button" id="fr-show">Show the model answer</button>
+          <div class="solution" id="fr-sol" hidden>${x.a}</div>
+          <div class="row" id="fr-rate" hidden style="margin-top:10px"><span class="small">How did your answer compare?</span><button type="button" class="ghost" data-r="0">Again: missed key points</button><button type="button" data-r="1">Got it</button></div></div>`;
+      el.querySelector('#fr-show').addEventListener('click', (e) => { e.target.hidden = true; el.querySelector('#fr-sol').hidden = false; el.querySelector('#fr-rate').hidden = false; });
+      el.querySelectorAll('[data-r]').forEach((b) => b.addEventListener('click', () => {
+        const ok = b.dataset.r === '1';
+        store.get().code.fundQ[x.key] = ok ? 1 : 0;
+        marks.push({ x, ok });
+        store.save();
+        if (++i < qs.length) show(); else end();
+      }));
+    };
+    const end = () => {
+      const right = marks.filter((m) => m.ok).length, c = store.get().code;
+      c.fundLog = [...c.fundLog, { date: new Date().toISOString(), n: marks.length, right }].slice(-60);
+      store.touchDay();
+      store.save();
+      const missed = marks.filter((m) => !m.ok);
+      el.innerHTML = `
+        <a class="back" href="#/code/screening/fundamentals">← Fundamentals</a>
+        <h1>Rapid fire: done</h1>
+        <div class="tiles"><div class="tile"><div class="v">${right}<span class="of">/${marks.length}</span></div><div class="k">answered well</div></div></div>
+        ${missed.length ? `<h2>To revisit</h2><p class="small">These come first next time.</p><ul>${missed.map((m) => `<li><a href="#/code/screening/fundamentals/${m.x.t.id}">${esc(m.x.t.title)}</a>: ${esc(m.x.q)}</li>`).join('')}</ul>` : '<p>All ten answered well.</p>'}
+        <div class="row" style="margin-top:14px"><button type="button" id="fr-again">Ten more</button><a class="btn ghost" href="#/code/screening/fundamentals">All topics</a></div>`;
+      el.querySelector('#fr-again').addEventListener('click', () => drill(el));
+    };
+    show();
+  }
+
+  // ---------------------------------------------------------------- the cheat sheet
+  // One page for the morning of the screening, and printable.
+  QT.screeningSheet = (el) => {
+    const S = QT.screening, G = S.GUIDE, f = F();
+    const ratios = f.LATENCY.filter(([a]) => /L1|Main memory|context switch|data centre|fibre|London/.test(a));
+    el.innerHTML = `
+      <a class="back no-print" href="#/code/screening">← Tech screening</a>
+      <div class="title-row"><h1>Tech screening: cheat sheet</h1><button type="button" class="ghost no-print" id="sh-print">Print</button></div>
+      <p class="small">Everything on one page, for a last read before the interview.</p>
+      <div class="sh-grid">
+        <section class="card"><h2>The 45 minutes</h2><ol class="small">${G.timing.map(([t, h, d]) => `<li><b>${esc(t)}: ${esc(h)}</b> ${esc(d)}</li>`).join('')}</ol></section>
+        <section class="card"><h2>Reviewing the snippet</h2><ol class="small">${S.REVIEW_ORDER.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol><p class="small"><b>For each issue:</b> what's wrong, the fix, the business impact. Most serious first.</p></section>
+        <section class="card"><h2>Bug tells</h2><ul class="small">${QT.spotting.FAMILIES.map(([, name, tell]) => `<li><b>${esc(name)}:</b> ${esc(tell)}</li>`).join('')}</ul></section>
+        <section class="card"><h2>Deployment plan</h2><ol class="small">${S.DEPLOY_PLAN.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol></section>
+        <section class="card"><h2>Answering fundamentals</h2><ol class="small">${f.METHOD.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
+          <table class="hb-table small">${ratios.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="mono">${esc(b)}</td></tr>`).join('')}</table></section>
+        <section class="card"><h2>Python costs</h2><table class="hb-table small">${f.PYCOST.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="mono">${esc(b)}</td></tr>`).join('')}</table>
+          <p class="small">A float is a 24-byte object; a list of a million floats is about 32 MB, a NumPy array 8 MB. The GIL: threads help I/O, not CPU work.</p></section>
+        <section class="card"><h2>Useful phrases</h2><ul class="small">${G.phrases.map(([h, t]) => `<li><b>${esc(h)}:</b> ${esc(t)}</li>`).join('')}</ul></section>
+        <section class="card"><h2>In the interview</h2><ul class="small">${G.during.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></section>
+      </div>`;
+    el.querySelector('#sh-print').addEventListener('click', () => window.print());
   };
 
   function score(t) {
@@ -28,6 +102,7 @@
       <h2>How to answer a fundamentals question</h2>
       <div class="card"><ol style="margin:0">${F().METHOD.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
         <p class="small" style="margin-bottom:0">Interviewers care less about exact numbers than about whether you know the ratios (memory is ~100× slower than cache; a city away is milliseconds) and can reason from them.</p></div>
+      <div class="row" style="margin:12px 0"><a class="btn" href="#/code/screening/fundamentals/drill">Rapid fire: 10 questions out loud</a><a class="btn ghost" href="#/code/screening/sheet">One-page cheat sheet</a></div>
       <h2>Topics</h2>
       <div class="menu">${F().TOPICS.map((t) => `<a class="card" href="#/code/screening/fundamentals/${t.id}"><b>${esc(t.title)}</b><span class="small">${esc(t.blurb)}</span><span class="small">${t.questions.length} questions · self-check ${score(t)}/${t.checks.length}</span></a>`).join('')}</div>
       <h2>Latency numbers worth knowing</h2>

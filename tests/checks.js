@@ -992,7 +992,7 @@
         if (!rows?.length || new Set(rows.map((r) => r[2])).size !== rows.length) fail(`${where}: LeetCode list empty or repeated`);
         for (const [n, t, slug, d, why] of rows || []) if (!(Number.isInteger(n) && t && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && ['Easy', 'Medium', 'Hard'].includes(d) && why)) fail(`${where}: LeetCode entry ${n}`);
       };
-      if (F.TOPICS.length < 5 || F.LATENCY.length < 10 || F.HOTPATH.length < 5) fail('fundamentals: too little content');
+      if (F.TOPICS.length < 5 || F.LATENCY.length < 10 || F.HOTPATH.length < 5 || F.PYCOST.length < 6) fail('fundamentals: too little content');
       for (const t of F.TOPICS) {
         if (!t.reality || !t.constraints || !t.design || t.questions.length < 4 || t.checks.length < 3) fail(`fundamentals ${t.id}: incomplete`);
         lcOk(t.leetcode, `fundamentals ${t.id}`);
@@ -1010,10 +1010,16 @@
       for (const [, , href] of G.plan) if (!/^#\//.test(href)) fail(`screening guide: bad link ${href}`);
       const snap = JSON.parse(QT.store.exportJson());
       snap.code.fund = { 'arch-1': 1, 'net-2': 'yes', 'BAD KEY': 1, 'mem-1': 0 };
+      snap.code.fundQ = { 'python:3': 0, 'memory:1': 'x', 'BAD': 1 };
+      snap.code.fundLog = [{ date: '2026-11-20T09:00:00Z', n: 10.4, right: 7 }];
       QT.store.importJson(JSON.stringify(snap));
       const fd = QT.store.get().code.fund;
       if (fd['arch-1'] !== 1 || fd['net-2'] !== 1 || fd['mem-1'] !== 0 || fd['BAD KEY'] !== undefined) fail(`fundamentals: progress not sanitised ${JSON.stringify(fd)}`);
+      const fq = QT.store.get().code.fundQ, fl = QT.store.get().code.fundLog;
+      if (fq['python:3'] !== 0 || fq['memory:1'] !== 1 || fq.BAD !== undefined || fl[0]?.n !== 10) fail(`fundamentals: rapid-fire progress not sanitised ${JSON.stringify(fq)}`);
       snap.code.fund = {};
+      snap.code.fundQ = {};
+      snap.code.fundLog = [];
       QT.store.importJson(JSON.stringify(snap));
     }
 

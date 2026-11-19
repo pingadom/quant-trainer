@@ -251,5 +251,17 @@
     ['Give the trade-off', '"The array wastes memory for sparse prices and needs care when the price moves outside its range."'],
   ];
 
-  QT.fundamentals = { LATENCY, TOPICS, HOTPATH, METHOD, byId: Object.fromEntries(TOPICS.map((t) => [t.id, t])) };
+  // The Python costs worth knowing by heart (also in the "Python from the inside" topic).
+  const PYCOST = [
+    ['list: index, append, pop()', 'O(1)'],
+    ['list: insert(0, x), pop(0), x in list, remove', 'O(n)'],
+    ['dict / set: get, set, del, in', 'O(1) average'],
+    ['deque: append / popleft at either end', 'O(1)'],
+    ['heapq: push, pop / peek', 'O(log n) / O(1)'],
+    ['heapify', 'O(n)'],
+    ['sort / sorted (stable)', 'O(n log n)'],
+    ['bisect search / insort', 'O(log n) / O(n)'],
+  ];
+
+  QT.fundamentals = { LATENCY, TOPICS, HOTPATH, METHOD, PYCOST, byId: Object.fromEntries(TOPICS.map((t) => [t.id, t])) };
 })();

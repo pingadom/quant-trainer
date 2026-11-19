@@ -1318,3 +1318,16 @@ select { font-family: var(--body); }
 
 /* Keypad: no gestures, selection or callouts on the pad, so every tap is a key press. */
 .keypad { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; }
+
+/* Tech screening cheat sheet (#/code/screening/sheet) */
+.sh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.sh-grid .card { margin: 0; }
+.sh-grid h2 { margin: 0 0 6px; font-size: 1.05rem; }
+.sh-grid ol, .sh-grid ul { padding-left: 1.2em; margin: 0; }
+.sh-grid li { margin-bottom: 3px; }
+@media print {
+  .no-print, .sidebar, .tabbar, .ticker, header, nav { display: none !important; }
+  .sh-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sh-grid .card { break-inside: avoid; box-shadow: none; }
+  body { background: #fff; }
+}
