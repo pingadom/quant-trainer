@@ -12,6 +12,7 @@
 
   QT.fundamentalsView = (el, id) => {
     if (id === 'drill') return drill(el);
+    if (id === 'sheet') return sheet(el);
     const t = id && F().byId[id];
     return t ? topic(el, t) : overview(el);
   };
@@ -65,6 +66,20 @@
     show();
   }
 
+  // ---------------------------------------------------------------- the fundamentals cheat sheet
+  function sheet(el) {
+    const f = F();
+    el.innerHTML = `
+      <a class="back no-print" href="#/code/screening/fundamentals">← Fundamentals</a>
+      <div class="title-row"><h1>Fundamentals cheat sheet</h1><button type="button" class="ghost no-print" id="fs-print">Print</button></div>
+      <p class="small">Each row is an answer: the physical fact, the constraint it creates, and the design choice it leads to. Say them in that order, then add the trade-off.</p>
+      ${f.SHEET.map(([title, rows]) => `<section class="fs-sec"><h2>${esc(title)}</h2><div class="fd-scroll"><table class="hb-table fs-table"><tr><th>Physical reality</th><th>Constraint</th><th>Design choice</th></tr>${rows.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join('')}</table></div></section>`).join('')}
+      <section class="fs-sec"><h2>Latency numbers</h2><div class="fd-scroll"><table class="hb-table fs-table">${f.LATENCY.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="mono">${esc(b)}</td></tr>`).join('')}</table></div></section>
+      <section class="fs-sec"><h2>Python costs</h2><div class="fd-scroll"><table class="hb-table fs-table">${f.PYCOST.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="mono">${esc(b)}</td></tr>`).join('')}</table></div></section>
+      <p class="small no-print">More depth, with questions and model answers, in each <a href="#/code/screening/fundamentals">fundamentals topic</a>.</p>`;
+    el.querySelector('#fs-print').addEventListener('click', () => window.print());
+  }
+
   // ---------------------------------------------------------------- the cheat sheet
   // One page for the morning of the screening, and printable.
   QT.screeningSheet = (el) => {
@@ -82,7 +97,8 @@
         <section class="card"><h2>Answering fundamentals</h2><ol class="small">${f.METHOD.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
           <table class="hb-table small">${ratios.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="mono">${esc(b)}</td></tr>`).join('')}</table></section>
         <section class="card"><h2>Python costs</h2><table class="hb-table small">${f.PYCOST.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="mono">${esc(b)}</td></tr>`).join('')}</table>
-          <p class="small">A float is a 24-byte object; a list of a million floats is about 32 MB, a NumPy array 8 MB. The GIL: threads help I/O, not CPU work.</p></section>
+          <p class="small">A float is a 24-byte object; a list of a million floats is about 32 MB, a NumPy array 8 MB. The GIL: threads help I/O, not CPU work.</p>
+          <p class="small no-print"><a href="#/code/screening/fundamentals/sheet">The full fundamentals cheat sheet →</a></p></section>
         <section class="card"><h2>Useful phrases</h2><ul class="small">${G.phrases.map(([h, t]) => `<li><b>${esc(h)}:</b> ${esc(t)}</li>`).join('')}</ul></section>
         <section class="card"><h2>In the interview</h2><ul class="small">${G.during.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></section>
       </div>`;
@@ -102,7 +118,7 @@
       <h2>How to answer a fundamentals question</h2>
       <div class="card"><ol style="margin:0">${F().METHOD.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
         <p class="small" style="margin-bottom:0">Interviewers care less about exact numbers than about whether you know the ratios (memory is ~100× slower than cache; a city away is milliseconds) and can reason from them.</p></div>
-      <div class="row" style="margin:12px 0"><a class="btn" href="#/code/screening/fundamentals/drill">Rapid fire: 10 questions out loud</a><a class="btn ghost" href="#/code/screening/sheet">One-page cheat sheet</a></div>
+      <div class="row" style="margin:12px 0"><a class="btn" href="#/code/screening/fundamentals/drill">Rapid fire: 10 questions out loud</a><a class="btn ghost" href="#/code/screening/fundamentals/sheet">Fundamentals cheat sheet</a><a class="btn ghost" href="#/code/screening/sheet">Whole-screening cheat sheet</a></div>
       <h2>Topics</h2>
       <div class="menu">${F().TOPICS.map((t) => `<a class="card" href="#/code/screening/fundamentals/${t.id}"><b>${esc(t.title)}</b><span class="small">${esc(t.blurb)}</span><span class="small">${t.questions.length} questions · self-check ${score(t)}/${t.checks.length}</span></a>`).join('')}</div>
       <h2>Latency numbers worth knowing</h2>

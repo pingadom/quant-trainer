@@ -993,6 +993,7 @@
         for (const [n, t, slug, d, why] of rows || []) if (!(Number.isInteger(n) && t && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && ['Easy', 'Medium', 'Hard'].includes(d) && why)) fail(`${where}: LeetCode entry ${n}`);
       };
       if (F.TOPICS.length < 5 || F.LATENCY.length < 10 || F.HOTPATH.length < 5 || F.PYCOST.length < 6) fail('fundamentals: too little content');
+      if (F.SHEET.length < 4 || F.SHEET.some(([t, rows]) => !t || rows.length < 3 || rows.some((r) => r.length !== 3 || r.some((c) => !c)))) fail('fundamentals: cheat sheet rows malformed');
       for (const t of F.TOPICS) {
         if (!t.reality || !t.constraints || !t.design || t.questions.length < 4 || t.checks.length < 3) fail(`fundamentals ${t.id}: incomplete`);
         lcOk(t.leetcode, `fundamentals ${t.id}`);

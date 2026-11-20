@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.64.1
+
+- **Fundamentals cheat sheet** (#/code/screening/fundamentals/sheet), printable. For computer architecture, memory management, concurrency, networking, and the OS and I/O, each row is a ready answer: the physical fact (with its number), the constraint it creates, and the design choice it leads to. Latency numbers and Python costs are included.
+
 ## 0.64.0
 
 - **Tech screening: one-page cheat sheet** (#/code/screening/sheet), for the morning of the interview, and printable. It covers the 45-minute plan, the review order, the bug tells, the deployment checklist, how to answer fundamentals with the key latency ratios, Python costs, useful phrases, and the in-interview checklist.

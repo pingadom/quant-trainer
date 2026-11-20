@@ -263,5 +263,50 @@
     ['bisect search / insort', 'O(log n) / O(n)'],
   ];
 
-  QT.fundamentals = { LATENCY, TOPICS, HOTPATH, METHOD, PYCOST, byId: Object.fromEntries(TOPICS.map((t) => [t.id, t])) };
+  // The fundamentals cheat sheet (#/code/screening/fundamentals/sheet): for each topic, rows of
+  // [physical fact, the constraint it creates, the design choice it leads to]. Numbers are the
+  // orders of magnitude used throughout this section.
+  const SHEET = [
+    ['Computer architecture', [
+      ['Main memory ~100 ns; L1 cache ~1 ns (100×)', 'How data is laid out matters more than how many operations you do', 'Contiguous arrays, ring buffers, price-indexed books; avoid pointer chasing'],
+      ['Memory moves in 64-byte cache lines; the prefetcher reads ahead', 'Sequential access is nearly free; scattered access misses on every read', 'Loop in storage order; keep fields used together in one line; structure-of-arrays'],
+      ['Cores keep caches consistent per line', 'Two threads writing neighbouring data bounce the line (false sharing)', 'Pad per-thread data to 64 bytes; accumulate per thread, combine at the end'],
+      ['A mispredicted branch wastes 15–20 cycles', 'Unpredictable branches in hot loops are slow', 'Straight-line common path; rare cases out of the loop; branch-free code'],
+      ['Clock speeds stalled around 2005 (heat)', 'One thread no longer gets faster for free', 'Use caches well, vectorise (SIMD), parallelise what splits'],
+      ['A thread that stays on one core keeps its caches warm', 'Moving threads, or sharing the core, evicts them', 'Pin hot threads to dedicated cores; keep housekeeping on others'],
+    ]],
+    ['Memory management', [
+      ['Stack allocation is a pointer move; heap allocation usually tens of ns, sometimes far more', 'Allocation causes unpredictable latency spikes', 'Preallocate; object pools and arenas; no allocation on the hot path'],
+      ['Virtual memory in 4 KB pages; first touch faults (~µs), swap costs ms', 'The first message to touch new memory pays', 'Pre-touch and lock memory at start-up (mlock), no swap, huge pages (2 MB)'],
+      ['Garbage collectors pause or slow the program when they choose', 'Tail latency you don\'t control', 'Produce no garbage in steady state; low-pause collectors; C++ on the hot path'],
+      ['Python: every value is a heap object (a float is 24 bytes), reference counted', 'Memory-hungry, slow loops over many small objects', 'NumPy arrays (8 bytes per float), __slots__, generators'],
+      ['Mixed allocate/free in long-running processes fragments memory', 'Memory grows though much of it is free', 'Fixed-size pools; restart or compact; bounded structures'],
+      ['A leak in a GC language is memory still reachable but never used', 'Memory and GC pauses grow over the trading day', 'Bound caches (LRU, time-to-live); remove orders when complete; monitor heap'],
+    ]],
+    ['Concurrency', [
+      ['Sharing a write between cores moves a cache line (tens of ns)', 'Shared mutable state is slow and needs synchronisation', 'Share less: partition by symbol; one writer per piece of state; pass messages'],
+      ['Compilers and CPUs reorder memory operations', 'Without synchronisation threads see stale or torn data: races', 'Locks or atomics, which also order memory; never rely on timing'],
+      ['Blocking costs a context switch (~2–5 µs) plus cold caches', 'Waiting can cost more than the work itself', 'Busy-spin on dedicated cores; lock-free single-producer single-consumer ring buffers'],
+      ['Uncontended mutex ~20 ns; contended, threads sleep (µs)', 'A hot lock serialises everyone', 'Short critical sections; finer-grained locks; or designs with no shared lock'],
+      ['Deadlock needs mutual exclusion, hold-and-wait, no pre-emption and a circular wait', 'Threads hang forever', 'Take locks in one global order; timeouts; never call callbacks holding a lock'],
+      ['Amdahl: a serial fraction s caps speed-up at 1/s', 'More cores stop helping', 'Shrink the serial part before adding cores'],
+      ['Python\'s GIL: one thread runs bytecode at a time', 'Threads don\'t speed up CPU-bound Python', 'Threads for I/O; processes or NumPy (which releases the GIL) for CPU work'],
+    ]],
+    ['Networking', [
+      ['Light in fibre: 5 µs per km; London ↔ New York round trip ~60–70 ms', 'Distance is latency; software can\'t beat it', 'Colocate in the exchange\'s data centre; microwave links between cities'],
+      ['The kernel stack costs µs per message (system calls, copies, interrupts)', 'Software overhead dominates inside a data centre', 'Kernel bypass with busy polling; FPGAs for the fastest paths'],
+      ['TCP: reliable and ordered; a lost packet stalls everything behind it', 'Retransmission delay (head-of-line blocking)', 'TCP for orders: each must arrive exactly once, in order'],
+      ['UDP multicast: one packet reaches every subscriber, with no guarantees', 'Packets can be lost or arrive out of order', 'Market data on multicast, with sequence numbers, A/B feeds and recovery from a snapshot'],
+      ['Nagle\'s algorithm plus delayed ACKs can hold small messages for ms', 'Small urgent messages wait', 'TCP_NODELAY on order sessions'],
+      ['Bandwidth isn\'t latency: 1,500 bytes take 1.2 µs to send at 10 Gb/s', 'Bursts (the open, news) can overflow links and queue', 'Size links for peaks; small fixed-layout binary messages, not JSON'],
+      ['A connection costs a round trip to set up (TLS adds more)', 'Connecting on demand adds latency', 'Open and log in to sessions before trading; keep them open'],
+    ]],
+    ['Operating system and I/O', [
+      ['A system call ~0.1–1 µs; an NVMe read ~20–100 µs; fsync to disk can take ms', 'Disk and kernel calls on the hot path add latency', 'Log and persist on another thread through a queue; batch writes'],
+      ['The scheduler can pre-empt any thread, and interrupts land on cores', 'Random pauses on latency-critical threads', 'Isolate cores for hot threads; steer interrupts elsewhere'],
+      ['Clocks drift between machines', 'Timestamps from different hosts disagree', 'Synchronise (PTP/NTP); compare times from one clock; measure latency on one host'],
+    ]],
+  ];
+
+  QT.fundamentals = { LATENCY, TOPICS, HOTPATH, METHOD, PYCOST, SHEET, byId: Object.fromEntries(TOPICS.map((t) => [t.id, t])) };
 })();

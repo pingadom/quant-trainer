@@ -1331,3 +1331,10 @@ select { font-family: var(--body); }
   .sh-grid .card { break-inside: avoid; box-shadow: none; }
   body { background: #fff; }
 }
+
+/* Fundamentals cheat sheet */
+.fs-sec h2 { margin: 16px 0 6px; font-size: 1.1rem; }
+.fs-table { width: 100%; font-size: 0.88rem; }
+.fs-table td { vertical-align: top; }
+.fs-table th:first-child, .fs-table td:first-child { width: 36%; }
+@media print { .fs-sec { break-inside: avoid; } .fs-table { font-size: 0.78rem; } }
