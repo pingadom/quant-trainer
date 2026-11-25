@@ -54,6 +54,7 @@
     ['oa', 'Online assessment: class design', 'Optiver\'s coding test is reported to be one or two long problems where you fill in a class whose methods are called on a stream of events. Read the whole statement before coding, and test the edge cases yourself: candidates say the visible tests are few.'],
     ['tech', 'Technical interviews: data structures', 'Build a data structure on the spot and explain what each operation costs.'],
     ['debug', 'Debugging and code review', 'Recent candidates describe a round where you find logical bugs (not syntax errors) and performance problems in someone else\'s code.'],
+    ['live', 'Interview 2: live coding mocks', 'Optiver\'s second round includes an hour of live coding on a practical trading problem. Each mock comes in three parts that build on each other, the way an interviewer adds requirements once the last part works. Time yourself, talk as you code, and carry your code from one part to the next.'],
     ['warm', 'Warm-ups', 'Short problems from older reports. Good for getting used to the editor.'],
   ];
 
@@ -2518,6 +2519,980 @@
 
           def days_between(a, b):
               return day_number(b) - day_number(a)`,
+      },
+    },
+
+    // ------------------------------------------------------------------ Interview 2: live coding mocks
+    // Three practical trading problems, each in three parts that build on each other the way a live
+    // coding interview does: the interviewer adds a requirement once the last one works.
+    {
+      id: 'lc-pos-1', title: 'Position keeper, part 1: positions', group: 'live', diff: 'Easy', tags: ['hash map', 'design'], mock: 'positions', part: 1,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'PositionKeeper',
+      sig: { init: [], methods: [['fill', ['symbol', 'side', 'qty', 'price'], 'the new position in that symbol'], ['position', ['symbol'], 'the net position, 0 if never traded'], ['symbols', [], 'symbols with a non-zero position, sorted']] },
+      body: `<p>A small trading firm needs to know its position in each stock as fills arrive from the exchange.</p>
+        <ul>
+          <li><code>fill(symbol, side, qty, price)</code>: we bought (<code>"BUY"</code>) or sold (<code>"SELL"</code>) <code>qty</code> shares. Selling more than we hold makes the position negative (short). Return the new position.</li>
+          <li><code>position(symbol)</code>: the net position; 0 for a symbol we've never traded.</li>
+          <li><code>symbols()</code>: the symbols whose position isn't zero, sorted alphabetically.</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls. Quantities and prices are positive integers.', 'Part 2 adds profit and loss, so think about what you\'ll need to remember about each fill.'],
+      note: 'Part 1 of a three-part live coding mock. In the interview, say what you\'re storing and why before you type.',
+      tests: [
+        { ex: true, init: [], ops: [['fill', 'ASML', 'BUY', 100, 650], ['fill', 'ASML', 'SELL', 30, 655], ['fill', 'SHELL', 'SELL', 50, 28], ['position', 'ASML'], ['position', 'SHELL'], ['position', 'ING'], ['symbols']],
+          out: [100, 70, -50, 70, -50, 0, ['ASML', 'SHELL']], why: 'Selling shares we don\'t hold (SHELL) gives a short position of −50.' },
+        { name: 'back to flat drops the symbol', init: [], ops: [['fill', 'A', 'BUY', 5, 10], ['fill', 'A', 'SELL', 5, 11], ['symbols'], ['position', 'A']], out: [5, 0, [], 0] },
+        { name: 'long to short in one fill', init: [], ops: [['fill', 'B', 'BUY', 3, 10], ['fill', 'B', 'SELL', 10, 9], ['symbols']], out: [3, -7, ['B']] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        for (let k = 0; k < 30; k++) {
+          const x = r.next();
+          if (x < 0.7) ops.push(['fill', r.pick(['A', 'B', 'C']), r.pick(['BUY', 'SELL']), r.int(1, 5), r.int(8, 12)]);
+          else if (x < 0.9) ops.push(['position', r.pick(['A', 'B', 'C', 'D'])]);
+          else ops.push(['symbols']);
+        }
+        return { init: [], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [], syms = Array.from({ length: 500 }, (_, i) => `S${i}`);
+          for (let k = 0; k < 200000; k++) {
+            const x = r.next();
+            if (x < 0.8) ops.push(['fill', r.pick(syms), r.pick(['BUY', 'SELL']), r.int(1, 100), r.int(10, 500)]);
+            else if (x < 0.9995) ops.push(['position', r.pick(syms)]);
+            else ops.push(['symbols']);
+          }
+          return { init: [], ops };
+        },
+      },
+      hints: ['A dictionary from symbol to position does almost everything.', 'Buys add and sells subtract; a negative position is a short.', 'For symbols(), filter the zero positions and sort. It\'s called rarely, so O(n log n) there is fine; say so.'],
+      sol: {
+        idea: 'A dict from symbol to signed position: buys add, sells subtract.',
+        steps: ['fill: add +qty for a buy, −qty for a sell, and return the new value.', 'position: dict.get(symbol, 0).', 'symbols: the keys with a non-zero value, sorted.'],
+        cx: 'O(1) per fill and position; O(n log n) for symbols over n symbols.',
+        trap: 'Forgetting that sells can take a position negative, and listing symbols that are back to zero.',
+      },
+      ref: {
+        js: code`
+          class PositionKeeper {
+            constructor() { this.pos = new Map(); }
+            fill(symbol, side, qty, price) {
+              const p = (this.pos.get(symbol) || 0) + (side === 'BUY' ? qty : -qty);
+              this.pos.set(symbol, p);
+              return p;
+            }
+            position(symbol) { return this.pos.get(symbol) || 0; }
+            symbols() { return [...this.pos].filter(([, p]) => p !== 0).map(([s]) => s).sort(); }
+          }`,
+        py: code`
+          class PositionKeeper:
+              def __init__(self):
+                  self.pos = {}              # symbol -> signed position
+
+              def fill(self, symbol, side, qty, price):
+                  self.pos[symbol] = self.pos.get(symbol, 0) + (qty if side == 'BUY' else -qty)
+                  return self.pos[symbol]
+
+              def position(self, symbol):
+                  return self.pos.get(symbol, 0)
+
+              def symbols(self):
+                  return sorted(s for s, p in self.pos.items() if p != 0)`,
+      },
+    },
+    {
+      id: 'lc-pos-2', title: 'Position keeper, part 2: realised P&L (FIFO)', group: 'live', diff: 'Medium', tags: ['queues', 'hash map', 'trading maths'], mock: 'positions', part: 2,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'PositionKeeper',
+      sig: { init: [], methods: [['fill', ['symbol', 'side', 'qty', 'price'], 'the profit or loss realised by this fill'], ['position', ['symbol'], 'the net position'], ['realised', ['symbol'], 'total realised profit or loss in that symbol']] },
+      body: `<p>The desk now wants profit and loss. Fills that reduce a position <b>close</b> earlier ones, oldest first (FIFO), and closing realises the difference in price.</p>
+        <ul>
+          <li><code>fill(symbol, side, qty, price)</code>: as before, but return the profit or loss <b>realised by this fill</b>. Closing a long realises (sell price − buy price) per share; closing a short realises (sell price − buy price) too, where the sell came first. Whatever isn't used to close opens a new position at this fill's price; a fill can flip a long into a short.</li>
+          <li><code>position(symbol)</code> as before. <code>realised(symbol)</code>: the total realised so far (0 if never traded).</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls. Quantities and prices are positive integers, so all answers are integers.', 'Each fill may close many earlier fills; across the whole run each opening fill is closed at most once.'],
+      note: 'Part 2 of the mock. The interviewer wants to hear how you\'ll store open lots before you code.',
+      tests: [
+        { ex: true, init: [], ops: [['fill', 'ASML', 'BUY', 100, 650], ['fill', 'ASML', 'BUY', 50, 660], ['fill', 'ASML', 'SELL', 120, 670], ['position', 'ASML'], ['realised', 'ASML']],
+          out: [0, 0, 2000 + 200, 30, 2200], why: 'The sale closes the 100 bought at 650 (+20 each, 2,000), then 20 of the 50 bought at 660 (+10 each, 200).' },
+        { name: 'shorts realise when bought back', init: [], ops: [['fill', 'A', 'SELL', 10, 50], ['fill', 'A', 'BUY', 4, 45], ['position', 'A'], ['realised', 'A']], out: [0, 20, -6, 20] },
+        { name: 'one fill flips long to short', init: [], ops: [['fill', 'B', 'BUY', 3, 10], ['fill', 'B', 'SELL', 5, 12], ['position', 'B'], ['fill', 'B', 'BUY', 2, 11]], out: [0, 6, -2, 2] },
+        { name: 'losses are negative', init: [], ops: [['fill', 'C', 'BUY', 5, 20], ['fill', 'C', 'SELL', 5, 18], ['realised', 'C'], ['realised', 'D']], out: [0, -10, -10, 0] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        for (let k = 0; k < 30; k++) {
+          const x = r.next();
+          if (x < 0.75) ops.push(['fill', r.pick(['A', 'B']), r.pick(['BUY', 'SELL']), r.int(1, 6), r.int(8, 12)]);
+          else if (x < 0.88) ops.push(['position', r.pick(['A', 'B', 'C'])]);
+          else ops.push(['realised', r.pick(['A', 'B', 'C'])]);
+        }
+        return { init: [], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [], syms = Array.from({ length: 50 }, (_, i) => `S${i}`);
+          for (let k = 0; k < 200000; k++) {
+            const x = r.next();
+            if (x < 0.85) ops.push(['fill', r.pick(syms), r.pick(['BUY', 'SELL']), r.int(1, 100), r.int(90, 110)]);
+            else if (x < 0.93) ops.push(['position', r.pick(syms)]);
+            else ops.push(['realised', r.pick(syms)]);
+          }
+          return { init: [], ops };
+        },
+      },
+      hints: ['Keep each symbol\'s open position as a queue of lots [signed quantity, price], oldest first. All open lots have the same sign.', 'A fill in the opposite direction takes from the front of the queue until it\'s used up or the queue is empty; anything left over becomes a new lot.', 'Use collections.deque so taking from the front is O(1).'],
+      sol: {
+        idea: 'A FIFO queue of open lots per symbol; opposite fills consume lots from the front.',
+        steps: ['Signed quantity d = +qty for a buy, −qty for a sell.', 'While d isn\'t zero and the front lot has the opposite sign: close m = min(|d|, |lot|) shares. Realised += m × (price − lot price) for a long lot, m × (lot price − price) for a short lot.', 'Shrink the lot (pop it at zero) and move d towards zero by m.', 'If d is still non-zero, append [d, price] as a new lot. Add the realised amount to the symbol\'s total and return it.'],
+        cx: 'O(1) amortised per fill: every lot is created once and removed at most once.',
+        trap: 'Getting the sign wrong when closing shorts, forgetting the flip (remainder opens a new lot), and using average cost when FIFO was asked.',
+      },
+      ref: {
+        js: code`
+          class PositionKeeper {
+            constructor() { this.lots = new Map(); this.real = new Map(); }
+            fill(symbol, side, qty, price) {
+              if (!this.lots.has(symbol)) this.lots.set(symbol, { q: [], head: 0 });
+              const L = this.lots.get(symbol);
+              let d = side === 'BUY' ? qty : -qty, gain = 0;
+              while (d !== 0 && L.head < L.q.length && Math.sign(L.q[L.head][0]) !== Math.sign(d)) {
+                const lot = L.q[L.head], m = Math.min(Math.abs(d), Math.abs(lot[0])), s = Math.sign(lot[0]);
+                gain += m * (price - lot[1]) * s;
+                lot[0] -= m * s;
+                d += m * s;
+                if (lot[0] === 0) L.head++;
+              }
+              if (d !== 0) L.q.push([d, price]);
+              this.real.set(symbol, (this.real.get(symbol) || 0) + gain);
+              return gain;
+            }
+            position(symbol) {
+              const L = this.lots.get(symbol);
+              let p = 0;
+              if (L) for (let i = L.head; i < L.q.length; i++) p += L.q[i][0];
+              return p;
+            }
+            realised(symbol) { return this.real.get(symbol) || 0; }
+          }`,
+        py: code`
+          from collections import deque
+
+          class PositionKeeper:
+              def __init__(self):
+                  self.lots = {}             # symbol -> deque of [signed qty, price], oldest first
+                  self.pos = {}              # symbol -> net position
+                  self.real = {}             # symbol -> realised P&L
+
+              def fill(self, symbol, side, qty, price):
+                  lots = self.lots.setdefault(symbol, deque())
+                  d = qty if side == 'BUY' else -qty
+                  self.pos[symbol] = self.pos.get(symbol, 0) + d
+                  gain = 0
+                  while d and lots and (lots[0][0] > 0) != (d > 0):
+                      lot = lots[0]
+                      m = min(abs(d), abs(lot[0]))
+                      s = 1 if lot[0] > 0 else -1
+                      gain += m * (price - lot[1]) * s
+                      lot[0] -= m * s
+                      d += m * s
+                      if lot[0] == 0:
+                          lots.popleft()
+                  if d:
+                      lots.append([d, price])
+                  self.real[symbol] = self.real.get(symbol, 0) + gain
+                  return gain
+
+              def position(self, symbol):
+                  return self.pos.get(symbol, 0)
+
+              def realised(self, symbol):
+                  return self.real.get(symbol, 0)`,
+      },
+    },
+    {
+      id: 'lc-pos-3', title: 'Position keeper, part 3: mark-to-market and a limit', group: 'live', diff: 'Medium', tags: ['queues', 'hash map', 'risk'], mock: 'positions', part: 3,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'PositionKeeper',
+      sig: { init: ['limit'], methods: [['fill', ['symbol', 'side', 'qty', 'price'], 'the realised P&L of the fill, or null if it was rejected'], ['mark', ['symbol', 'price'], ''], ['position', ['symbol'], 'the net position'], ['unrealised', ['symbol'], 'open P&L at the latest price'], ['total', [], 'realised plus unrealised, over all symbols']] },
+      body: `<p>Risk wants live P&L and a hard limit. The constructor takes <code>limit</code>, the largest absolute position allowed in any one symbol.</p>
+        <ul>
+          <li><code>fill(...)</code>: as in part 2, but if the fill would leave |position| above <code>limit</code>, reject it: change nothing and return <code>null</code>.</li>
+          <li><code>mark(symbol, price)</code>: a new market price for the symbol.</li>
+          <li><code>unrealised(symbol)</code>: the profit or loss on the open lots at the <b>latest price</b>: the most recent <code>mark</code> or accepted fill in that symbol, whichever came last. For each open lot, (latest − lot price) × signed quantity.</li>
+          <li><code>total()</code>: realised plus unrealised, summed over every symbol.</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls; positive integer quantities and prices, so answers are integers.', 'total() is called often in the large test: don\'t recompute every lot of every symbol each time.'],
+      note: 'Part 3 of the mock. Expect the interviewer to ask how you\'d make total() fast, and what "latest price" should mean.',
+      tests: [
+        { ex: true, init: [100], ops: [['fill', 'ASML', 'BUY', 60, 650], ['mark', 'ASML', 660], ['unrealised', 'ASML'], ['fill', 'ASML', 'BUY', 50, 661], ['fill', 'ASML', 'SELL', 20, 665], ['unrealised', 'ASML'], ['total']],
+          out: [0, null, 600, null, 300, 40 * 15, 300 + 600],
+          why: 'The 50-share buy would take the position to 110, over the limit of 100, so it\'s rejected. The sale closes 20 of the lot at 650 (+300), leaving 40 at 650 marked at 665: 600 open.' },
+        { name: 'a fill sets the latest price', init: [10], ops: [['fill', 'A', 'BUY', 4, 20], ['fill', 'A', 'BUY', 1, 22], ['unrealised', 'A'], ['total']], out: [0, 0, 8, 8] },
+        { name: 'shorts gain when the price falls', init: [10], ops: [['fill', 'B', 'SELL', 5, 30], ['mark', 'B', 26], ['unrealised', 'B'], ['position', 'B']], out: [0, null, 20, -5] },
+        { name: 'exactly at the limit is allowed', init: [5], ops: [['fill', 'C', 'BUY', 5, 10], ['fill', 'C', 'BUY', 1, 10], ['fill', 'C', 'SELL', 10, 11], ['fill', 'C', 'SELL', 11, 11], ['position', 'C'], ['total']], out: [0, null, 5, null, -5, 5] },
+        { name: 'total over several symbols', init: [100], ops: [['fill', 'A', 'BUY', 2, 10], ['fill', 'B', 'SELL', 3, 50], ['mark', 'A', 12], ['mark', 'B', 49], ['total'], ['unrealised', 'Z']], out: [0, 0, null, null, 4 + 3, 0] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        for (let k = 0; k < 30; k++) {
+          const x = r.next();
+          if (x < 0.55) ops.push(['fill', r.pick(['A', 'B']), r.pick(['BUY', 'SELL']), r.int(1, 6), r.int(8, 12)]);
+          else if (x < 0.7) ops.push(['mark', r.pick(['A', 'B']), r.int(8, 12)]);
+          else if (x < 0.8) ops.push(['position', r.pick(['A', 'B'])]);
+          else if (x < 0.9) ops.push(['unrealised', r.pick(['A', 'B', 'C'])]);
+          else ops.push(['total']);
+        }
+        return { init: [r.int(4, 10)], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [], syms = Array.from({ length: 200 }, (_, i) => `S${i}`);
+          for (let k = 0; k < 200000; k++) {
+            const x = r.next();
+            if (x < 0.5) ops.push(['fill', r.pick(syms), r.pick(['BUY', 'SELL']), r.int(1, 100), r.int(90, 110)]);
+            else if (x < 0.75) ops.push(['mark', r.pick(syms), r.int(90, 110)]);
+            else if (x < 0.85) ops.push(['unrealised', r.pick(syms)]);
+            else ops.push(['total']);
+          }
+          return { init: [1000], ops };
+        },
+      },
+      hints: ['Unrealised = latest × (net position) − (cost of the open lots), where the cost is Σ lot price × signed quantity. Keep that cost as a running number per symbol.', 'For total(), keep a running sum across symbols and update it by the change in one symbol\'s figure whenever a fill or mark touches that symbol.', 'Check the limit before changing anything: position + signed quantity.'],
+      sol: {
+        idea: 'Part 2\'s FIFO lots, plus per symbol: net position, open cost (Σ price × signed qty of open lots) and latest price. Unrealised = latest × position − open cost. Keep total as a running sum updated by deltas.',
+        steps: ['fill: reject if |position + d| > limit. Otherwise process lots as in part 2, keeping the open cost in step: subtract lot price × closed signed quantity, add price × the new lot\'s quantity.', 'After any fill or mark, set the latest price, recompute that symbol\'s realised + unrealised, and add the change to the running total.', 'unrealised: latest × position − open cost (0 if no lots). total: the running sum.'],
+        cx: 'O(1) amortised per call.',
+        trap: 'Recomputing total() from every lot each time (too slow), and applying the fill before checking the limit.',
+      },
+      ref: {
+        js: code`
+          class PositionKeeper {
+            constructor(limit) { this.limit = limit; this.S = new Map(); this.sum = 0; }
+            get(symbol) {
+              if (!this.S.has(symbol)) this.S.set(symbol, { q: [], head: 0, pos: 0, cost: 0, last: 0, real: 0, val: 0 });
+              return this.S.get(symbol);
+            }
+            refresh(x) {
+              const v = x.real + (x.pos ? x.last * x.pos - x.cost : 0);
+              this.sum += v - x.val;
+              x.val = v;
+            }
+            fill(symbol, side, qty, price) {
+              const x = this.get(symbol);
+              let d = side === 'BUY' ? qty : -qty;
+              if (Math.abs(x.pos + d) > this.limit) return null;
+              x.pos += d;
+              let gain = 0;
+              while (d !== 0 && x.head < x.q.length && Math.sign(x.q[x.head][0]) !== Math.sign(d)) {
+                const lot = x.q[x.head], m = Math.min(Math.abs(d), Math.abs(lot[0])), s = Math.sign(lot[0]);
+                gain += m * (price - lot[1]) * s;
+                x.cost -= lot[1] * m * s;
+                lot[0] -= m * s;
+                d += m * s;
+                if (lot[0] === 0) x.head++;
+              }
+              if (d !== 0) { x.q.push([d, price]); x.cost += price * d; }
+              x.real += gain;
+              x.last = price;
+              this.refresh(x);
+              return gain;
+            }
+            mark(symbol, price) { const x = this.get(symbol); x.last = price; this.refresh(x); return null; }
+            position(symbol) { return this.S.has(symbol) ? this.S.get(symbol).pos : 0; }
+            unrealised(symbol) { const x = this.S.get(symbol); return x && x.pos ? x.last * x.pos - x.cost : 0; }
+            total() { return this.sum; }
+          }`,
+        py: code`
+          from collections import deque
+
+          class PositionKeeper:
+              def __init__(self, limit):
+                  self.limit = limit
+                  self.s = {}                # symbol -> per-symbol state
+                  self.sum = 0               # running total over all symbols
+
+              def _get(self, symbol):
+                  if symbol not in self.s:
+                      self.s[symbol] = {'lots': deque(), 'pos': 0, 'cost': 0, 'last': 0, 'real': 0, 'val': 0}
+                  return self.s[symbol]
+
+              def _refresh(self, x):
+                  v = x['real'] + (x['last'] * x['pos'] - x['cost'] if x['pos'] else 0)
+                  self.sum += v - x['val']
+                  x['val'] = v
+
+              def fill(self, symbol, side, qty, price):
+                  x = self._get(symbol)
+                  d = qty if side == 'BUY' else -qty
+                  if abs(x['pos'] + d) > self.limit:
+                      return None
+                  x['pos'] += d
+                  lots, gain = x['lots'], 0
+                  while d and lots and (lots[0][0] > 0) != (d > 0):
+                      lot = lots[0]
+                      m = min(abs(d), abs(lot[0]))
+                      s = 1 if lot[0] > 0 else -1
+                      gain += m * (price - lot[1]) * s
+                      x['cost'] -= lot[1] * m * s
+                      lot[0] -= m * s
+                      d += m * s
+                      if lot[0] == 0:
+                          lots.popleft()
+                  if d:
+                      lots.append([d, price])
+                      x['cost'] += price * d
+                  x['real'] += gain
+                  x['last'] = price
+                  self._refresh(x)
+                  return gain
+
+              def mark(self, symbol, price):
+                  x = self._get(symbol)
+                  x['last'] = price
+                  self._refresh(x)
+
+              def position(self, symbol):
+                  return self.s[symbol]['pos'] if symbol in self.s else 0
+
+              def unrealised(self, symbol):
+                  x = self.s.get(symbol)
+                  return x['last'] * x['pos'] - x['cost'] if x and x['pos'] else 0
+
+              def total(self):
+                  return self.sum`,
+      },
+    },
+
+    {
+      id: 'lc-feed-1', title: 'Order book from a feed, part 1: price levels', group: 'live', diff: 'Easy', tags: ['sorted list', 'bisect', 'design'], mock: 'feed', part: 1,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'Book',
+      sig: { init: [], methods: [['update', ['side', 'price', 'size'], ''], ['best', [], '[best bid, best ask], null for an empty side'], ['depth', ['side', 'n'], 'up to n levels [[price, size], ...], best first']] },
+      body: `<p>An exchange publishes the total size resting at each price. Keep the book.</p>
+        <ul>
+          <li><code>update(side, price, size)</code>: the size now at that price on that side (<code>"BID"</code> or <code>"ASK"</code>). Size 0 means the level is gone.</li>
+          <li><code>best()</code>: <code>[highest bid price, lowest ask price]</code>, null for an empty side.</li>
+          <li><code>depth(side, n)</code>: the best <code>n</code> levels on that side as <code>[price, size]</code>, best first (fewer if the side has fewer).</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls. Prices are integers (ticks); up to a few thousand levels per side.', 'Removing a level that isn\'t there does nothing.'],
+      note: 'Part 1 of a three-part mock. Part 2 adds sequence numbers; part 3 asks what it costs to trade.',
+      tests: [
+        { ex: true, init: [], ops: [['update', 'BID', 99, 10], ['update', 'BID', 100, 5], ['update', 'ASK', 102, 7], ['update', 'ASK', 101, 3], ['best'], ['depth', 'BID', 5], ['update', 'ASK', 101, 0], ['best'], ['depth', 'ASK', 1]],
+          out: [null, null, null, null, [100, 101], [[100, 5], [99, 10]], null, [100, 102], [[102, 7]]], why: 'Removing the 101 ask leaves 102 as the best ask.' },
+        { name: 'empty sides', init: [], ops: [['best'], ['depth', 'ASK', 3], ['update', 'BID', 5, 0], ['best']], out: [[null, null], [], null, [null, null]] },
+        { name: 'changing a level\'s size', init: [], ops: [['update', 'ASK', 10, 4], ['update', 'ASK', 10, 9], ['depth', 'ASK', 2]], out: [null, null, [[10, 9]]] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        for (let k = 0; k < 30; k++) {
+          const x = r.next();
+          if (x < 0.7) ops.push(['update', r.pick(['BID', 'ASK']), r.int(1, 8), r.pick([0, 0, r.int(1, 9)])]);
+          else if (x < 0.85) ops.push(['best']);
+          else ops.push(['depth', r.pick(['BID', 'ASK']), r.int(1, 4)]);
+        }
+        return { init: [], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [];
+          for (let k = 0; k < 200000; k++) {
+            const x = r.next();
+            if (x < 0.7) { const side = r.pick(['BID', 'ASK']); ops.push(['update', side, side === 'BID' ? r.int(1, 1000) : r.int(1001, 2000), r.chance(0.3) ? 0 : r.int(1, 500)]); }
+            else if (x < 0.95) ops.push(['best']);
+            else ops.push(['depth', r.pick(['BID', 'ASK']), 5]);
+          }
+          return { init: [], ops };
+        },
+      },
+      hints: ['A dict per side from price to size gives O(1) updates. What does best() then cost?', 'Bids are best at the high end and asks at the low end: read them in opposite directions.', 'Keep a sorted list of the prices on each side (bisect.insort to add, bisect to find and remove), so the best is at one end.'],
+      sol: {
+        idea: 'Per side: a dict price → size, and a sorted list of prices maintained with bisect.',
+        steps: ['update: size 0 removes the price from the dict and the sorted list (if present); otherwise set the size, inserting the price into the sorted list if it\'s new.', 'best: the last bid price and the first ask price in the sorted lists.', 'depth: walk the sorted list from the best end, n levels.'],
+        cx: 'Updates O(L) to insert or remove a level (a list shift, fast in practice), O(1) to change a size; best O(1); depth O(n).',
+        trap: 'Scanning all levels with max() on every best() call: fine for 10 levels, too slow for thousands.',
+      },
+      ref: {
+        js: code`
+          class Book {
+            constructor() { this.size = { BID: new Map(), ASK: new Map() }; this.px = { BID: [], ASK: [] }; }
+            at(a, p) { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < p) lo = m + 1; else hi = m; } return lo; }
+            update(side, price, size) {
+              const m = this.size[side], a = this.px[side];
+              if (size === 0) {
+                if (m.delete(price)) a.splice(this.at(a, price), 1);
+              } else {
+                if (!m.has(price)) a.splice(this.at(a, price), 0, price);
+                m.set(price, size);
+              }
+              return null;
+            }
+            best() {
+              const b = this.px.BID, a = this.px.ASK;
+              return [b.length ? b[b.length - 1] : null, a.length ? a[0] : null];
+            }
+            depth(side, n) {
+              const a = this.px[side], m = this.size[side];
+              const ps = side === 'BID' ? a.slice(-n).reverse() : a.slice(0, n);
+              return ps.map((p) => [p, m.get(p)]);
+            }
+          }`,
+        py: code`
+          from bisect import bisect_left, insort
+
+          class Book:
+              def __init__(self):
+                  self.size = {'BID': {}, 'ASK': {}}     # side -> {price: size}
+                  self.px = {'BID': [], 'ASK': []}        # side -> sorted prices
+
+              def update(self, side, price, size):
+                  levels, prices = self.size[side], self.px[side]
+                  if size == 0:
+                      if levels.pop(price, None) is not None:
+                          del prices[bisect_left(prices, price)]
+                  else:
+                      if price not in levels:
+                          insort(prices, price)
+                      levels[price] = size
+
+              def best(self):
+                  b, a = self.px['BID'], self.px['ASK']
+                  return [b[-1] if b else None, a[0] if a else None]
+
+              def depth(self, side, n):
+                  prices = self.px[side]
+                  chosen = prices[::-1][:n] if side == 'BID' else prices[:n]
+                  return [[p, self.size[side][p]] for p in chosen]`,
+      },
+    },
+    {
+      id: 'lc-feed-2', title: 'Order book from a feed, part 2: sequence numbers', group: 'live', diff: 'Medium', tags: ['hash map', 'streams', 'design'], mock: 'feed', part: 2,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'FeedBook',
+      sig: { init: [], methods: [['onMessage', ['seq', 'side', 'price', 'size'], 'how many messages this call applied'], ['gap', [], 'true while messages are waiting for a missing one'], ['best', [], '[best bid, best ask]']] },
+      body: `<p>The feed arrives over UDP, so messages can be lost, duplicated or out of order. Each carries a sequence number, starting at 1. Updates must be applied <b>in sequence order, exactly once</b>.</p>
+        <ul>
+          <li><code>onMessage(seq, side, price, size)</code>: if <code>seq</code> was already applied or is already waiting, ignore it. If it's the next expected number, apply it, then any waiting messages that now follow in order. If it's ahead, keep it waiting. Return how many updates this call applied.</li>
+          <li><code>gap()</code>: true while any message is waiting (something before it is missing).</li>
+          <li><code>best()</code>: as in part 1, from applied updates only.</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls. Sequence numbers are positive integers; a duplicate always carries the same content as the original.', 'Updates mean the same as in part 1.'],
+      note: 'Part 2 of the mock. Say what a real feed handler would do while the gap is open (stop trading on the book, request a retransmission, or recover from a snapshot).',
+      tests: [
+        { ex: true, init: [], ops: [['onMessage', 1, 'BID', 100, 5], ['onMessage', 3, 'ASK', 103, 2], ['gap'], ['best'], ['onMessage', 2, 'ASK', 101, 4], ['gap'], ['best'], ['onMessage', 2, 'ASK', 101, 4]],
+          out: [1, 0, true, [100, null], 2, false, [100, 101], 0], why: 'Message 3 waits for 2. When 2 arrives, both apply (2 then 3). The repeated 2 is ignored.' },
+        { name: 'duplicate while waiting', init: [], ops: [['onMessage', 2, 'BID', 7, 1], ['onMessage', 2, 'BID', 7, 1], ['gap'], ['onMessage', 1, 'BID', 6, 1], ['best']], out: [0, 0, true, 2, [7, null]] },
+        { name: 'order matters: a later update wins', init: [], ops: [['onMessage', 2, 'BID', 50, 0], ['onMessage', 1, 'BID', 50, 9], ['best']], out: [0, 2, [null, null]] },
+      ],
+      fuzz: (r) => {
+        const msgs = [];
+        for (let s = 1; s <= 12; s++) msgs.push([s, r.pick(['BID', 'ASK']), r.int(1, 6), r.pick([0, r.int(1, 5)])]);
+        const order = [];
+        msgs.forEach((m) => { order.push(m); if (r.chance(0.3)) order.push(m); });
+        r.shuffle(order);
+        const ops = [];
+        for (const m of order) { ops.push(['onMessage', ...m]); if (r.chance(0.3)) ops.push([r.pick(['gap', 'best'])]); }
+        return { init: [], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [];
+          const N = 150000, msgs = [];
+          for (let s = 1; s <= N; s++) { const side = r.pick(['BID', 'ASK']); msgs.push([s, side, side === 'BID' ? r.int(1, 1000) : r.int(1001, 2000), r.chance(0.3) ? 0 : r.int(1, 99)]); }
+          for (let i = 0; i < N; i += 50) { const block = msgs.slice(i, i + 50); r.shuffle(block); for (const m of block) { ops.push(['onMessage', ...m]); if (r.chance(0.15)) ops.push(['onMessage', ...m]); } ops.push(['best']); }
+          while (ops.length < 200000) ops.push(['gap']);
+          return { init: [], ops };
+        },
+      },
+      hints: ['Keep next, the sequence number you\'re waiting for, and a dict of waiting messages by sequence number.', 'After storing a message, loop: while next is in the waiting dict, pop it, apply it and increment next.', 'Reuse part 1\'s Book to apply updates.'],
+      sol: {
+        idea: 'A next-expected counter plus a dict of buffered messages, draining the buffer in order; the book itself is part 1\'s.',
+        steps: ['Ignore seq < next and seq already in the buffer (duplicates).', 'Put the message in the buffer, then while next is in the buffer: pop it, apply it to the book, next += 1, count it.', 'gap() is "the buffer isn\'t empty". best() reads the book.'],
+        cx: 'O(1) per message plus the book update; each message is buffered and applied once.',
+        trap: 'Applying out-of-order messages straight away (a later update can be overwritten by an earlier one), and treating a duplicate of a buffered message as new.',
+      },
+      ref: {
+        js: code`
+          class FeedBook {
+            constructor() { this.next = 1; this.wait = new Map(); this.size = { BID: new Map(), ASK: new Map() }; this.px = { BID: [], ASK: [] }; }
+            at(a, p) { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < p) lo = m + 1; else hi = m; } return lo; }
+            apply(side, price, size) {
+              const m = this.size[side], a = this.px[side];
+              if (size === 0) { if (m.delete(price)) a.splice(this.at(a, price), 1); }
+              else { if (!m.has(price)) a.splice(this.at(a, price), 0, price); m.set(price, size); }
+            }
+            onMessage(seq, side, price, size) {
+              if (seq < this.next || this.wait.has(seq)) return 0;
+              this.wait.set(seq, [side, price, size]);
+              let n = 0;
+              while (this.wait.has(this.next)) {
+                const [s, p, z] = this.wait.get(this.next);
+                this.wait.delete(this.next);
+                this.apply(s, p, z);
+                this.next++;
+                n++;
+              }
+              return n;
+            }
+            gap() { return this.wait.size > 0; }
+            best() { const b = this.px.BID, a = this.px.ASK; return [b.length ? b[b.length - 1] : null, a.length ? a[0] : null]; }
+          }`,
+        py: code`
+          from bisect import bisect_left, insort
+
+          class FeedBook:
+              def __init__(self):
+                  self.next = 1                          # the sequence number we need next
+                  self.waiting = {}                      # seq -> (side, price, size), ahead of a gap
+                  self.size = {'BID': {}, 'ASK': {}}
+                  self.px = {'BID': [], 'ASK': []}
+
+              def _apply(self, side, price, size):
+                  levels, prices = self.size[side], self.px[side]
+                  if size == 0:
+                      if levels.pop(price, None) is not None:
+                          del prices[bisect_left(prices, price)]
+                  else:
+                      if price not in levels:
+                          insort(prices, price)
+                      levels[price] = size
+
+              def on_message(self, seq, side, price, size):
+                  if seq < self.next or seq in self.waiting:
+                      return 0                           # duplicate
+                  self.waiting[seq] = (side, price, size)
+                  applied = 0
+                  while self.next in self.waiting:
+                      self._apply(*self.waiting.pop(self.next))
+                      self.next += 1
+                      applied += 1
+                  return applied
+
+              def gap(self):
+                  return bool(self.waiting)
+
+              def best(self):
+                  b, a = self.px['BID'], self.px['ASK']
+                  return [b[-1] if b else None, a[0] if a else None]`,
+      },
+    },
+    {
+      id: 'lc-feed-3', title: 'Order book from a feed, part 3: what it costs to trade', group: 'live', diff: 'Medium', tags: ['sorted list', 'trading maths'], mock: 'feed', part: 3,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'Book',
+      sig: { init: [], methods: [['update', ['side', 'price', 'size'], ''], ['costToBuy', ['qty'], 'total cost of buying qty from the asks, or null'], ['costToSell', ['qty'], 'total received for selling qty into the bids, or null'], ['spread', [], 'best ask − best bid, or null']] },
+      body: `<p>A trader asks: "what would it cost to buy 500 right now?" Using part 1's book:</p>
+        <ul>
+          <li><code>update(side, price, size)</code>: as in part 1.</li>
+          <li><code>costToBuy(qty)</code>: buying takes the cheapest asks first, level by level. Return the total paid, or <code>null</code> if the asks don't hold <code>qty</code> in total.</li>
+          <li><code>costToSell(qty)</code>: selling takes the highest bids first. Return the total received, or <code>null</code>.</li>
+          <li><code>spread()</code>: best ask − best bid, or <code>null</code> if a side is empty.</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls; integer prices and sizes. Queries don\'t change the book.', 'Quantities asked are usually small compared with the whole book.'],
+      note: 'Part 3 of the mock. Mention the average price (cost ÷ qty) and that real books move while you trade.',
+      tests: [
+        { ex: true, init: [], ops: [['update', 'ASK', 101, 3], ['update', 'ASK', 102, 5], ['update', 'BID', 99, 4], ['costToBuy', 6], ['costToBuy', 9], ['costToSell', 4], ['spread']],
+          out: [null, null, null, 3 * 101 + 3 * 102, null, 4 * 99, 2], why: 'Buying 6 takes all 3 at 101 and 3 of the 5 at 102. The asks only hold 8, so buying 9 isn\'t possible.' },
+        { name: 'empty book', init: [], ops: [['costToBuy', 1], ['costToSell', 1], ['spread']], out: [null, null, null] },
+        { name: 'exact fit and removed levels', init: [], ops: [['update', 'BID', 50, 2], ['update', 'BID', 49, 3], ['update', 'BID', 50, 0], ['costToSell', 3], ['update', 'ASK', 52, 1], ['spread']], out: [null, null, null, 147, null, 3] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        for (let k = 0; k < 30; k++) {
+          const x = r.next();
+          if (x < 0.6) { const side = r.pick(['BID', 'ASK']); ops.push(['update', side, side === 'BID' ? r.int(1, 5) : r.int(6, 10), r.pick([0, r.int(1, 5)])]); }
+          else if (x < 0.75) ops.push(['costToBuy', r.int(1, 12)]);
+          else if (x < 0.9) ops.push(['costToSell', r.int(1, 12)]);
+          else ops.push(['spread']);
+        }
+        return { init: [], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [];
+          for (let k = 0; k < 200000; k++) {
+            const x = r.next();
+            if (x < 0.6) { const side = r.pick(['BID', 'ASK']); ops.push(['update', side, side === 'BID' ? r.int(1, 1000) : r.int(1001, 2000), r.chance(0.3) ? 0 : r.int(1, 500)]); }
+            else if (x < 0.75) ops.push(['costToBuy', r.int(1, 1500)]);
+            else if (x < 0.9) ops.push(['costToSell', r.int(1, 1500)]);
+            else ops.push(['spread']);
+          }
+          return { init: [], ops };
+        },
+      },
+      hints: ['Walk the sorted prices from the best end, taking min(remaining, size at that level) each time.', 'If the levels run out before the quantity is covered, the answer is null, not a partial cost.', 'Stop as soon as the quantity is covered: a small order touches only a few levels, so this is fast even with thousands of levels.'],
+      sol: {
+        idea: 'Part 1\'s sorted levels; walk from the best price, taking what each level offers, until the quantity is covered.',
+        steps: ['cost_to_buy: for each ask price from lowest: take = min(left, size); cost += take × price; left −= take; stop at 0. If prices run out first, return null.', 'cost_to_sell: the same over bids from highest.', 'spread: if both sides exist, lowest ask − highest bid.'],
+        cx: 'O(k) per query for the k levels touched; updates as in part 1.',
+        trap: 'Walking the bids from the lowest price, and returning a partial cost instead of null when the book is too thin.',
+      },
+      ref: {
+        js: code`
+          class Book {
+            constructor() { this.size = { BID: new Map(), ASK: new Map() }; this.px = { BID: [], ASK: [] }; }
+            at(a, p) { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < p) lo = m + 1; else hi = m; } return lo; }
+            update(side, price, size) {
+              const m = this.size[side], a = this.px[side];
+              if (size === 0) { if (m.delete(price)) a.splice(this.at(a, price), 1); }
+              else { if (!m.has(price)) a.splice(this.at(a, price), 0, price); m.set(price, size); }
+              return null;
+            }
+            walk(prices, sizes, qty) {
+              let cost = 0;
+              for (const p of prices) {
+                const take = Math.min(qty, sizes.get(p));
+                cost += take * p;
+                qty -= take;
+                if (qty === 0) return cost;
+              }
+              return null;
+            }
+            costToBuy(qty) { return this.walk(this.px.ASK, this.size.ASK, qty); }
+            costToSell(qty) {
+              const b = this.px.BID, it = { *[Symbol.iterator]() { for (let i = b.length - 1; i >= 0; i--) yield b[i]; } };
+              return this.walk(it, this.size.BID, qty);
+            }
+            spread() { const b = this.px.BID, a = this.px.ASK; return b.length && a.length ? a[0] - b[b.length - 1] : null; }
+          }`,
+        py: code`
+          from bisect import bisect_left, insort
+
+          class Book:
+              def __init__(self):
+                  self.size = {'BID': {}, 'ASK': {}}
+                  self.px = {'BID': [], 'ASK': []}
+
+              def update(self, side, price, size):
+                  levels, prices = self.size[side], self.px[side]
+                  if size == 0:
+                      if levels.pop(price, None) is not None:
+                          del prices[bisect_left(prices, price)]
+                  else:
+                      if price not in levels:
+                          insort(prices, price)
+                      levels[price] = size
+
+              def _walk(self, prices, sizes, qty):
+                  cost = 0
+                  for p in prices:
+                      take = min(qty, sizes[p])
+                      cost += take * p
+                      qty -= take
+                      if qty == 0:
+                          return cost
+                  return None                       # not enough liquidity
+
+              def cost_to_buy(self, qty):
+                  return self._walk(self.px['ASK'], self.size['ASK'], qty)
+
+              def cost_to_sell(self, qty):
+                  return self._walk(reversed(self.px['BID']), self.size['BID'], qty)
+
+              def spread(self):
+                  b, a = self.px['BID'], self.px['ASK']
+                  return a[0] - b[-1] if a and b else None`,
+      },
+    },
+
+    {
+      id: 'lc-risk-1', title: 'Pre-trade risk gate, part 1: size and rate', group: 'live', diff: 'Easy', tags: ['queues', 'sliding window'], mock: 'risk', part: 1,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'RiskGate',
+      sig: { init: ['maxQty', 'maxRate'], methods: [['check', ['t', 'symbol', 'side', 'qty'], '"OK" or the reason it\'s rejected']] },
+      body: `<p>Every order passes a risk gate before it reaches the exchange. The constructor takes <code>max_qty</code> and <code>max_rate</code>.</p>
+        <ul>
+          <li><code>check(t, symbol, side, qty)</code>, with <code>t</code> in milliseconds (never decreasing): return <code>"MAX_QTY"</code> if <code>qty &gt; max_qty</code>; otherwise <code>"RATE"</code> if <code>max_rate</code> orders have already been accepted in the last second, that is with times in (t − 1000, t]; otherwise accept it and return <code>"OK"</code>.</li>
+          <li>Rejected orders don't count towards the rate.</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls. Check the reasons in the order given.', 'Exchanges really do fine or disconnect firms that exceed message-rate limits, which is why this check exists.'],
+      note: 'Part 1 of a three-part mock. Part 2 adds positions; part 3 adds a kill switch.',
+      tests: [
+        { ex: true, init: [100, 2], ops: [['check', 0, 'A', 'BUY', 10], ['check', 400, 'A', 'BUY', 150], ['check', 500, 'B', 'SELL', 5], ['check', 900, 'A', 'BUY', 5], ['check', 1000, 'A', 'BUY', 5], ['check', 1500, 'A', 'SELL', 5]],
+          out: ['OK', 'MAX_QTY', 'OK', 'RATE', 'OK', 'OK'], why: 'At t = 900 two orders (t = 0 and 500) are inside the last second. At t = 1000 the order from t = 0 has left the window, so there is room again.' },
+        { name: 'boundary of the window', init: [10, 1], ops: [['check', 0, 'A', 'BUY', 1], ['check', 999, 'A', 'BUY', 1], ['check', 1000, 'A', 'BUY', 1]], out: ['OK', 'RATE', 'OK'] },
+        { name: 'rejects don\'t use up the rate', init: [10, 1], ops: [['check', 0, 'A', 'BUY', 50], ['check', 1, 'A', 'BUY', 5]], out: ['MAX_QTY', 'OK'] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        let t = 0;
+        for (let k = 0; k < 30; k++) { t += r.int(0, 400); ops.push(['check', t, r.pick(['A', 'B']), r.pick(['BUY', 'SELL']), r.int(1, 12)]); }
+        return { init: [r.int(6, 10), r.int(1, 3)], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [];
+          let t = 0;
+          for (let k = 0; k < 200000; k++) { t += r.int(0, 3); ops.push(['check', t, 'S' + r.int(0, 99), r.pick(['BUY', 'SELL']), r.int(1, 120)]); }
+          return { init: [100, 500], ops };
+        },
+      },
+      hints: ['Keep the times of accepted orders in a deque.', 'Only record a time once the order is accepted: rejected orders don\'t count.', 'Before deciding, pop times ≤ t − 1000 from the front; the length is then the number in the last second.'],
+      sol: {
+        idea: 'A deque of accepted times; drop expired ones from the front before each check.',
+        steps: ['If qty > max_qty, return "MAX_QTY".', 'Pop times ≤ t − 1000. If the deque holds max_rate times, return "RATE".', 'Otherwise append t and return "OK".'],
+        cx: 'O(1) amortised per check.',
+        trap: 'Counting rejected orders towards the rate, and getting the window boundary wrong (t − 1000 is outside).',
+      },
+      ref: {
+        js: code`
+          class RiskGate {
+            constructor(maxQty, maxRate) { this.maxQty = maxQty; this.maxRate = maxRate; this.times = []; this.head = 0; }
+            check(t, symbol, side, qty) {
+              if (qty > this.maxQty) return 'MAX_QTY';
+              while (this.head < this.times.length && this.times[this.head] <= t - 1000) this.head++;
+              if (this.times.length - this.head >= this.maxRate) return 'RATE';
+              this.times.push(t);
+              return 'OK';
+            }
+          }`,
+        py: code`
+          from collections import deque
+
+          class RiskGate:
+              def __init__(self, max_qty, max_rate):
+                  self.max_qty, self.max_rate = max_qty, max_rate
+                  self.accepted = deque()            # times of accepted orders, oldest first
+
+              def check(self, t, symbol, side, qty):
+                  if qty > self.max_qty:
+                      return 'MAX_QTY'
+                  while self.accepted and self.accepted[0] <= t - 1000:
+                      self.accepted.popleft()
+                  if len(self.accepted) >= self.max_rate:
+                      return 'RATE'
+                  self.accepted.append(t)
+                  return 'OK'`,
+      },
+    },
+    {
+      id: 'lc-risk-2', title: 'Pre-trade risk gate, part 2: position limits', group: 'live', diff: 'Medium', tags: ['queues', 'hash map', 'risk'], mock: 'risk', part: 2,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'RiskGate',
+      sig: { init: ['maxQty', 'maxRate', 'maxPos'], methods: [['check', ['t', 'symbol', 'side', 'qty'], '"OK" or the reason'], ['onFill', ['symbol', 'side', 'qty'], '']] },
+      body: `<p>Risk adds a position limit, so a bug can't build a huge position. The constructor also takes <code>max_pos</code>.</p>
+        <ul>
+          <li><code>onFill(symbol, side, qty)</code>: an order was filled; update the position.</li>
+          <li><code>check(...)</code>: as in part 1, but between the two existing checks, reject with <code>"POSITION"</code> if filling this order completely would leave |position| in that symbol above <code>max_pos</code>. Order of checks: <code>MAX_QTY</code>, then <code>POSITION</code>, then <code>RATE</code>.</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls. Positions come only from fills, not from orders still open.', 'Say in the interview why counting open orders too would be safer, and what it would cost.'],
+      note: 'Part 2 of the mock.',
+      tests: [
+        { ex: true, init: [100, 10, 50], ops: [['check', 0, 'A', 'BUY', 40], ['onFill', 'A', 'BUY', 40], ['check', 10, 'A', 'BUY', 20], ['check', 20, 'A', 'SELL', 90], ['check', 30, 'A', 'SELL', 120], ['check', 40, 'B', 'SELL', 50]],
+          out: ['OK', null, 'POSITION', 'OK', 'MAX_QTY', 'OK'], why: 'Long 40: buying 20 more would make 60 > 50. Selling 90 would leave −50, which is allowed.' },
+        { name: 'position check before rate', init: [10, 1, 5], ops: [['check', 0, 'A', 'BUY', 1], ['check', 1, 'A', 'BUY', 9], ['check', 2, 'A', 'BUY', 2]], out: ['OK', 'POSITION', 'RATE'] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        let t = 0;
+        for (let k = 0; k < 30; k++) {
+          t += r.int(0, 400);
+          if (r.chance(0.6)) ops.push(['check', t, r.pick(['A', 'B']), r.pick(['BUY', 'SELL']), r.int(1, 12)]);
+          else ops.push(['onFill', r.pick(['A', 'B']), r.pick(['BUY', 'SELL']), r.int(1, 8)]);
+        }
+        return { init: [r.int(6, 10), r.int(1, 3), r.int(5, 15)], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [];
+          let t = 0;
+          for (let k = 0; k < 200000; k++) {
+            t += r.int(0, 3);
+            if (r.chance(0.7)) ops.push(['check', t, 'S' + r.int(0, 99), r.pick(['BUY', 'SELL']), r.int(1, 120)]);
+            else ops.push(['onFill', 'S' + r.int(0, 99), r.pick(['BUY', 'SELL']), r.int(1, 100)]);
+          }
+          return { init: [100, 500, 1000], ops };
+        },
+      },
+      hints: ['A dict of positions, as in the position keeper.', 'Compute the position after a complete fill (current ± qty) and compare its absolute value with the limit.', 'Insert the new check between the two you have, so the order of reasons matches.'],
+      sol: {
+        idea: 'Part 1 plus a dict of positions from fills, checked between the size and rate checks.',
+        steps: ['MAX_QTY as before.', 'POSITION: if |position(symbol) ± qty| > max_pos, reject.', 'RATE as before, and only then accept.', 'on_fill: add or subtract qty.'],
+        cx: 'O(1) amortised per call.',
+        trap: 'Checking the rate first (an order rejected for position would then use up a rate slot if you append before checking), and forgetting sells push the position negative.',
+      },
+      ref: {
+        js: code`
+          class RiskGate {
+            constructor(maxQty, maxRate, maxPos) { this.maxQty = maxQty; this.maxRate = maxRate; this.maxPos = maxPos; this.times = []; this.head = 0; this.pos = new Map(); }
+            check(t, symbol, side, qty) {
+              if (qty > this.maxQty) return 'MAX_QTY';
+              const after = (this.pos.get(symbol) || 0) + (side === 'BUY' ? qty : -qty);
+              if (Math.abs(after) > this.maxPos) return 'POSITION';
+              while (this.head < this.times.length && this.times[this.head] <= t - 1000) this.head++;
+              if (this.times.length - this.head >= this.maxRate) return 'RATE';
+              this.times.push(t);
+              return 'OK';
+            }
+            onFill(symbol, side, qty) { this.pos.set(symbol, (this.pos.get(symbol) || 0) + (side === 'BUY' ? qty : -qty)); return null; }
+          }`,
+        py: code`
+          from collections import deque
+
+          class RiskGate:
+              def __init__(self, max_qty, max_rate, max_pos):
+                  self.max_qty, self.max_rate, self.max_pos = max_qty, max_rate, max_pos
+                  self.accepted = deque()
+                  self.pos = {}                      # symbol -> position from fills
+
+              def check(self, t, symbol, side, qty):
+                  if qty > self.max_qty:
+                      return 'MAX_QTY'
+                  after = self.pos.get(symbol, 0) + (qty if side == 'BUY' else -qty)
+                  if abs(after) > self.max_pos:
+                      return 'POSITION'
+                  while self.accepted and self.accepted[0] <= t - 1000:
+                      self.accepted.popleft()
+                  if len(self.accepted) >= self.max_rate:
+                      return 'RATE'
+                  self.accepted.append(t)
+                  return 'OK'
+
+              def on_fill(self, symbol, side, qty):
+                  self.pos[symbol] = self.pos.get(symbol, 0) + (qty if side == 'BUY' else -qty)`,
+      },
+    },
+    {
+      id: 'lc-risk-3', title: 'Pre-trade risk gate, part 3: the kill switch', group: 'live', diff: 'Medium', tags: ['queues', 'state machine', 'risk'], mock: 'risk', part: 3,
+      src: ['Optiver: interview tips for software engineers (its live coding round is a practical trading problem; this one is ours)', 'https://optiver.com/working-at-optiver/career-hub/optiver-interview-tips-for-software-engineers/'],
+      kind: 'cls', name: 'RiskGate',
+      sig: { init: ['maxQty', 'maxRate', 'maxPos', 'maxRejects'], methods: [['check', ['t', 'symbol', 'side', 'qty'], '"OK", a reason, or "KILLED"'], ['onFill', ['symbol', 'side', 'qty'], ''], ['kill', [], ''], ['reset', [], '']] },
+      body: `<p>A strategy that keeps hitting the limits is probably broken. Add a kill switch. The constructor also takes <code>max_rejects</code>.</p>
+        <ul>
+          <li>While the switch is on, every <code>check</code> returns <code>"KILLED"</code> (and these don't count as rejects).</li>
+          <li><b>Automatic:</b> when a check is rejected and that makes <code>max_rejects</code> rejects with times in (t − 1000, t], that check still returns its own reason, and the switch turns on.</li>
+          <li><code>kill()</code> turns it on by hand; <code>reset()</code> turns it off and forgets past rejects.</li>
+          <li>Everything from part 2 still applies.</li>
+        </ul>`,
+      rules: ['Up to 200,000 calls; t never decreases.', 'A real kill switch would also cancel every open order and stop new ones: say so.'],
+      note: 'Part 3 of the mock: the interviewer will ask what else a kill switch must do in production.',
+      tests: [
+        { ex: true, init: [10, 100, 100, 3], ops: [['check', 0, 'A', 'BUY', 50], ['check', 100, 'A', 'BUY', 50], ['check', 200, 'A', 'BUY', 5], ['check', 300, 'A', 'BUY', 50], ['check', 400, 'A', 'BUY', 5], ['reset'], ['check', 500, 'A', 'BUY', 5]],
+          out: ['MAX_QTY', 'MAX_QTY', 'OK', 'MAX_QTY', 'KILLED', null, 'OK'], why: 'The third reject inside one second (t = 300) trips the switch, so the next order is KILLED until reset.' },
+        { name: 'old rejects leave the window', init: [10, 100, 100, 2], ops: [['check', 0, 'A', 'BUY', 50], ['check', 1000, 'A', 'BUY', 50], ['check', 1001, 'A', 'BUY', 5]], out: ['MAX_QTY', 'MAX_QTY', 'OK'] },
+        { name: 'manual kill', init: [10, 100, 100, 5], ops: [['kill'], ['check', 0, 'A', 'BUY', 1], ['reset'], ['check', 1, 'A', 'BUY', 1]], out: [null, 'KILLED', null, 'OK'] },
+      ],
+      fuzz: (r) => {
+        const ops = [];
+        let t = 0;
+        for (let k = 0; k < 30; k++) {
+          t += r.int(0, 300);
+          const x = r.next();
+          if (x < 0.6) ops.push(['check', t, r.pick(['A', 'B']), r.pick(['BUY', 'SELL']), r.int(1, 12)]);
+          else if (x < 0.8) ops.push(['onFill', r.pick(['A', 'B']), r.pick(['BUY', 'SELL']), r.int(1, 8)]);
+          else if (x < 0.9) ops.push(['reset']);
+          else ops.push(['kill']);
+        }
+        return { init: [r.int(6, 10), r.int(1, 3), r.int(5, 15), r.int(2, 4)], ops };
+      },
+      perf: {
+        label: 'Large test: 200,000 calls',
+        gen: (r) => {
+          const ops = [];
+          let t = 0;
+          for (let k = 0; k < 200000; k++) {
+            t += r.int(0, 3);
+            const x = r.next();
+            if (x < 0.75) ops.push(['check', t, 'S' + r.int(0, 99), r.pick(['BUY', 'SELL']), r.int(1, 130)]);
+            else if (x < 0.95) ops.push(['onFill', 'S' + r.int(0, 99), r.pick(['BUY', 'SELL']), r.int(1, 100)]);
+            else if (x < 0.999) ops.push(['reset']);
+            else ops.push(['kill']);
+          }
+          return { init: [100, 500, 1000, 200], ops };
+        },
+      },
+      hints: ['A second deque, of reject times, works like the rate window.', 'Check the killed flag before anything else, and remember reset() also clears the reject history.', 'Work out the reason first; if it isn\'t OK, record the reject, prune old ones, and trip the switch if the count reaches max_rejects.'],
+      sol: {
+        idea: 'Part 2 plus a killed flag and a deque of reject times with the same one-second window.',
+        steps: ['If killed, return "KILLED".', 'Compute the reason as in part 2 (accepting the order only if it\'s OK).', 'If rejected: append t to the reject deque, drop times ≤ t − 1000, and if the count is at least max_rejects, set killed. Return the reason.', 'kill sets the flag; reset clears it and empties the reject deque.'],
+        cx: 'O(1) amortised per call.',
+        trap: 'Returning KILLED for the reject that trips the switch (the spec says it keeps its reason), and counting KILLED answers as rejects.',
+      },
+      ref: {
+        js: code`
+          class RiskGate {
+            constructor(maxQty, maxRate, maxPos, maxRejects) {
+              Object.assign(this, { maxQty, maxRate, maxPos, maxRejects });
+              this.times = []; this.head = 0; this.pos = new Map(); this.rejects = []; this.rhead = 0; this.killed = false;
+            }
+            reason(t, symbol, side, qty) {
+              if (qty > this.maxQty) return 'MAX_QTY';
+              const after = (this.pos.get(symbol) || 0) + (side === 'BUY' ? qty : -qty);
+              if (Math.abs(after) > this.maxPos) return 'POSITION';
+              while (this.head < this.times.length && this.times[this.head] <= t - 1000) this.head++;
+              if (this.times.length - this.head >= this.maxRate) return 'RATE';
+              this.times.push(t);
+              return 'OK';
+            }
+            check(t, symbol, side, qty) {
+              if (this.killed) return 'KILLED';
+              const why = this.reason(t, symbol, side, qty);
+              if (why !== 'OK') {
+                this.rejects.push(t);
+                while (this.rejects[this.rhead] <= t - 1000) this.rhead++;
+                if (this.rejects.length - this.rhead >= this.maxRejects) this.killed = true;
+              }
+              return why;
+            }
+            onFill(symbol, side, qty) { this.pos.set(symbol, (this.pos.get(symbol) || 0) + (side === 'BUY' ? qty : -qty)); return null; }
+            kill() { this.killed = true; return null; }
+            reset() { this.killed = false; this.rejects = []; this.rhead = 0; return null; }
+          }`,
+        py: code`
+          from collections import deque
+
+          class RiskGate:
+              def __init__(self, max_qty, max_rate, max_pos, max_rejects):
+                  self.max_qty, self.max_rate, self.max_pos = max_qty, max_rate, max_pos
+                  self.max_rejects = max_rejects
+                  self.accepted = deque()
+                  self.rejects = deque()             # times of recent rejects
+                  self.pos = {}
+                  self.killed = False
+
+              def _reason(self, t, symbol, side, qty):
+                  if qty > self.max_qty:
+                      return 'MAX_QTY'
+                  after = self.pos.get(symbol, 0) + (qty if side == 'BUY' else -qty)
+                  if abs(after) > self.max_pos:
+                      return 'POSITION'
+                  while self.accepted and self.accepted[0] <= t - 1000:
+                      self.accepted.popleft()
+                  if len(self.accepted) >= self.max_rate:
+                      return 'RATE'
+                  self.accepted.append(t)
+                  return 'OK'
+
+              def check(self, t, symbol, side, qty):
+                  if self.killed:
+                      return 'KILLED'
+                  why = self._reason(t, symbol, side, qty)
+                  if why != 'OK':
+                      self.rejects.append(t)
+                      while self.rejects[0] <= t - 1000:
+                          self.rejects.popleft()
+                      if len(self.rejects) >= self.max_rejects:
+                          self.killed = True
+                  return why
+
+              def on_fill(self, symbol, side, qty):
+                  self.pos[symbol] = self.pos.get(symbol, 0) + (qty if side == 'BUY' else -qty)
+
+              def kill(self):
+                  self.killed = True
+
+              def reset(self):
+                  self.killed = False
+                  self.rejects.clear()`,
       },
     },
   ];

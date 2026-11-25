@@ -6,7 +6,7 @@ const { layoutAudit } = require('../layout-audit');
 
 const ROUTES = ['', 'coach', 'coach/diagnostic', 'coach/session', 'drill/dice/1', 'practice', 'topic/bayes', 'review', 'mistakes',
   'bank', 'bank/js', 'iq/js-reroll', 'iq/ts-rent', 'mock/sig', 'cases', 'case/ltcm', 'mental', 'tricks', 'tricks/near-100', 'market', 'estimate', 'lab', 'roadmap', 'more',
-  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'today', 'today/2026-01-05', 'handbook/exam/all', 'devbook', 'devbook/dsa-complexity', 'devbook/dsa-window', 'devbook/dsa-dp', 'devbook/dsa-streaming', 'devbook/dsa-numpy', 'devbook/dsa-pandas', 'devbook/dsa-polars', 'devbook/dsa-marketdata', 'devbook/exam/dsa-data', 'devbook/exam/all', 'devbook/sheet', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/screening/spot', 'code/screening/spot/mix', 'code/screening/spot/time', 'code/screening/spot/trace', 'code/screening/fundamentals', 'code/screening/fundamentals/drill', 'code/screening/sheet', 'code/screening/fundamentals/sheet', 'code/screening/fundamentals/architecture', 'code/screening/fundamentals/python', 'code/data', 'code/data/np-drawdown', 'code/data/pl-bars', 'code/data/md-clean', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
+  'figgie', 'quote', 'kelly', 'daily', 'oa', 'oa/seq', 'oa/seq/practice/all', 'oa/seq/test/seq24', 'oa/game/switch', 'oa/game/target', 'oa/game/pump', 'oa/battery/0', 'progress', 'talk', 'talk/sig-three-dice', 'appearance', 'tour', 'tour/5', 'mental/rep/frac', 'bank/wincent', 'plan', 'topic/markov', 'flashcards', 'mental/challenge/abc12345/30', 'search', 'search/kelly', 'search/wincent%20dice', 'bank/all/unsure', 'bank/js/todo', 'iq/cl-monty-hall', 'handbook', 'handbook/arith', 'handbook/counting', 'handbook/prob-basics', 'handbook/conditional', 'handbook/expectation', 'handbook/variance', 'handbook/distributions', 'handbook/symmetry', 'handbook/recursion', 'handbook/markov', 'handbook/walks', 'handbook/stopping', 'handbook/continuous', 'handbook/toolkit', 'handbook/linalg', 'handbook/brownian', 'handbook/stochastic', 'handbook/exam/stochastic', 'handbook/clt', 'handbook/estimation', 'handbook/testing', 'handbook/regression', 'handbook/matrix', 'handbook/timeseries', 'handbook/betting', 'handbook/market-making', 'handbook/options', 'handbook/fermi', 'handbook/games', 'handbook/factors', 'handbook/backtest', 'handbook/craft', 'handbook/review', 'handbook/sheet', 'handbook/exam/foundations', 'today', 'today/2026-01-05', 'handbook/exam/all', 'devbook', 'devbook/dsa-complexity', 'devbook/dsa-window', 'devbook/dsa-dp', 'devbook/dsa-streaming', 'devbook/dsa-numpy', 'devbook/dsa-pandas', 'devbook/dsa-polars', 'devbook/dsa-marketdata', 'devbook/exam/dsa-data', 'devbook/exam/all', 'devbook/sheet', 'screen', 'screen/citadel', 'screen/part/mm', 'stories', 'stories/why-firm', 'weak', 'weak/session', 'weak/session/mm', 'code', 'code/screening', 'code/screening/order-retry', 'code/screening/mock', 'code/screening/spot', 'code/screening/spot/mix', 'code/screening/spot/time', 'code/screening/spot/trace', 'code/screening/fundamentals', 'code/screening/fundamentals/drill', 'code/screening/sheet', 'code/round2', 'code/round2/live/positions', 'code/design/sd-frankfurt', 'code/design/sd-remote-desk', 'code/lc-pos-2', 'code/screening/fundamentals/sheet', 'code/screening/fundamentals/architecture', 'code/screening/fundamentals/python', 'code/data', 'code/data/np-drawdown', 'code/data/pl-bars', 'code/data/md-clean', 'code/design', 'code/design/d-order-book', 'flashcards/python', 'code/opt-worst-trade', 'code/opt-debug-position', 'code/quiz', 'code/quiz/all', 'mental/flow', 'mental/60in6', 'mental/flow/rhythm', 'mental/flow/method/sub-borrow', 'sse', 'sse/all', 'sse/all/equity-quant', 'sse/all/any/pca', 'sse/drill/statistics-regression', 'sse/q/q-py-001', 'sse/mock', 'sse/sim', 'sse/sim/two-dice/2', 'sse/sim/three-cards/4', 'sse/q/q-py-002'];
 
 let problems;
 test.beforeEach(async ({ page }) => {
@@ -624,7 +624,7 @@ test.describe('accessibility in every theme', () => {
 });
 
 test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
-  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'code', 'code/opt-order-book', 'code/quiz', 'code/data', 'code/data/pd-asof', 'devbook/dsa-pandas', 'code/screening', 'code/screening/fundamentals/networking', 'sse', 'sse/all', 'sse/q/q-eq-001']) {
+  for (const r of ['', 'coach', 'topic/bayes', 'bank', 'iq/js-reroll', 'more', 'mistakes', 'estimate', 'mental', 'tricks', 'tricks/near-100', 'figgie', 'quote', 'kelly', 'daily', 'oa', 'progress', 'talk', 'talk/sig-three-dice', 'code', 'code/opt-order-book', 'code/quiz', 'code/data', 'code/data/pd-asof', 'devbook/dsa-pandas', 'code/screening', 'code/screening/fundamentals/networking', 'code/round2', 'code/design/sd-order-flow', 'sse', 'sse/all', 'sse/q/q-eq-001']) {
     test(`no serious violations on #/${r}`, async ({ page }) => {
       await page.goto(`./?demo#/${r}`); // demo data so the populated screens are checked too
       await expect(page.locator('main h1').first()).toBeVisible();
@@ -768,6 +768,31 @@ test('tech screening guide and fundamentals: jump within the guide, answer a sel
   await expect(page.locator('.sh-grid section')).toHaveCount(8);
   await page.goto('./#/code/screening/fundamentals/sheet');
   await expect(page.locator('.fs-sec')).toHaveCount(7);
+});
+
+test('interview 2: role-play reveals requirements after you ask, and a coding part starts from your last part', async ({ page }) => {
+  await page.goto('./#/code');
+  await page.locator('a[href="#/code/round2"]').first().click();
+  await expect(page.locator('h1')).toHaveText('Optiver interview 2: system design and live coding');
+  await page.locator('.menu a[href="#/code/design/sd-frankfurt"]').click();
+  await expect(page.locator('#dz-clar')).toBeHidden();
+  await page.locator('#dz-q').fill('How fast do we need to be?');
+  await page.locator('#dz-clar-go').click();
+  await expect(page.locator('#dz-clar')).toContainText('A few milliseconds behind');
+  await page.locator('#dz-clock-go').click();
+  await expect(page.locator('#dz-big-clock')).toContainText('requirements');
+  await page.locator('details.card summary', { hasText: 'Components, numbers and trade-offs' }).click();
+  await expect(page.locator('.dz-table').first()).toContainText('Risk layer with kill switch');
+  // Live coding: part 2 can start from the code saved for part 1.
+  await page.goto('./#/code/round2/live/positions');
+  await page.locator('#lm-go').click();
+  await expect(page.locator('#lm-clock')).toContainText('left');
+  await page.goto('./#/code/lc-pos-1');
+  await page.evaluate(() => { const r = window.QT.store.get().code.p; r['lc-pos-1'] = { py: 'class PositionKeeper:\n    pass  # mine\n', js: '', solved: 0, subs: 0, first: false }; window.QT.store.save(); });
+  await page.goto('./#/code/lc-pos-2');
+  if (await page.locator('.lang-seg [data-lang="py"]').getAttribute('aria-pressed') !== 'true') await page.locator('.lang-seg [data-lang="py"]').click();
+  await page.locator('#carry').click();
+  await expect(page.locator('#editor')).toHaveValue(/# mine/);
 });
 
 test('data drills: open a drill, keep your code, run the tests and see it marked passed', async ({ page }) => {

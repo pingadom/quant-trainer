@@ -466,12 +466,194 @@ def days_between(a, b):
     return (datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)).days
 
 
+
+# ---- Interview 2 live coding mocks: share-by-share and replay-from-scratch versions
+class PosB1:
+    def __init__(self):
+        self.fills = []
+
+    def fill(self, symbol, side, qty, price):
+        self.fills.append((symbol, qty if side == 'BUY' else -qty))
+        return self.position(symbol)
+
+    def position(self, symbol):
+        return sum(q for s, q in self.fills if s == symbol)
+
+    def symbols(self):
+        return sorted({s for s, _ in self.fills if self.position(s) != 0})
+
+
+class PosB2:
+    """Every share is its own lot: +1 or -1 at a price, oldest first."""
+    def __init__(self):
+        self.units, self.real = {}, {}
+
+    def fill(self, symbol, side, qty, price):
+        u = self.units.setdefault(symbol, [])
+        sign, gain = (1 if side == 'BUY' else -1), 0
+        for _ in range(qty):
+            if u and u[0][0] == -sign:
+                s0, p0 = u.pop(0)
+                gain += (price - p0) * s0
+            else:
+                u.append((sign, price))
+        self.real[symbol] = self.real.get(symbol, 0) + gain
+        return gain
+
+    def position(self, symbol):
+        return sum(s for s, _ in self.units.get(symbol, []))
+
+    def realised(self, symbol):
+        return self.real.get(symbol, 0)
+
+
+class PosB3(PosB2):
+    def __init__(self, limit):
+        super().__init__()
+        self.limit, self.last = limit, {}
+
+    def fill(self, symbol, side, qty, price):
+        if abs(self.position(symbol) + (qty if side == 'BUY' else -qty)) > self.limit:
+            return None
+        self.last[symbol] = price
+        return super().fill(symbol, side, qty, price)
+
+    def mark(self, symbol, price):
+        self.last[symbol] = price
+
+    def unrealised(self, symbol):
+        return sum((self.last.get(symbol, 0) - p) * s for s, p in self.units.get(symbol, []))
+
+    def total(self):
+        names = set(self.units) | set(self.real)
+        return sum(self.real.get(n, 0) + self.unrealised(n) for n in names)
+
+
+class BookB1:
+    def __init__(self):
+        self.lv = {'BID': {}, 'ASK': {}}
+
+    def update(self, side, price, size):
+        if size:
+            self.lv[side][price] = size
+        else:
+            self.lv[side].pop(price, None)
+
+    def best(self):
+        b, a = self.lv['BID'], self.lv['ASK']
+        return [max(b) if b else None, min(a) if a else None]
+
+    def depth(self, side, n):
+        prices = sorted(self.lv[side], reverse=(side == 'BID'))[:n]
+        return [[q, self.lv[side][q]] for q in prices]
+
+
+class FeedB2:
+    """Keep every message; the applied prefix is 1..k with nothing missing; replay it for best()."""
+    def __init__(self):
+        self.got, self.k = {}, 0
+
+    def on_message(self, seq, side, price, size):
+        if seq in self.got:
+            return 0
+        self.got[seq] = (side, price, size)
+        before = self.k
+        while self.k + 1 in self.got:
+            self.k += 1
+        return self.k - before
+
+    def gap(self):
+        return any(q > self.k for q in self.got)
+
+    def best(self):
+        b = BookB1()
+        for q in range(1, self.k + 1):
+            b.update(*self.got[q])
+        return b.best()
+
+
+class BookB3(BookB1):
+    def _units(self, side):
+        out = []
+        for q in sorted(self.lv[side], reverse=(side == 'BID')):
+            out += [q] * self.lv[side][q]
+        return out
+
+    def cost_to_buy(self, qty):
+        u = self._units('ASK')
+        return sum(u[:qty]) if len(u) >= qty else None
+
+    def cost_to_sell(self, qty):
+        u = self._units('BID')
+        return sum(u[:qty]) if len(u) >= qty else None
+
+    def spread(self):
+        b, a = self.best()
+        return a - b if a is not None and b is not None else None
+
+
+class RiskB1:
+    def __init__(self, max_qty, max_rate):
+        self.max_qty, self.max_rate, self.ok = max_qty, max_rate, []
+
+    def _reason(self, t, symbol, side, qty):
+        if qty > self.max_qty:
+            return 'MAX_QTY'
+        if sum(1 for x in self.ok if t - 1000 < x <= t) >= self.max_rate:
+            return 'RATE'
+        self.ok.append(t)
+        return 'OK'
+
+    def check(self, t, symbol, side, qty):
+        return self._reason(t, symbol, side, qty)
+
+
+class RiskB2(RiskB1):
+    def __init__(self, max_qty, max_rate, max_pos):
+        super().__init__(max_qty, max_rate)
+        self.max_pos, self.fills = max_pos, []
+
+    def _reason(self, t, symbol, side, qty):
+        if qty > self.max_qty:
+            return 'MAX_QTY'
+        pos = sum(q for s, q in self.fills if s == symbol)
+        if abs(pos + (qty if side == 'BUY' else -qty)) > self.max_pos:
+            return 'POSITION'
+        return super()._reason(t, symbol, side, 0)
+
+    def on_fill(self, symbol, side, qty):
+        self.fills.append((symbol, qty if side == 'BUY' else -qty))
+
+
+class RiskB3(RiskB2):
+    def __init__(self, max_qty, max_rate, max_pos, max_rejects):
+        super().__init__(max_qty, max_rate, max_pos)
+        self.max_rejects, self.rej, self.killed = max_rejects, [], False
+
+    def check(self, t, symbol, side, qty):
+        if self.killed:
+            return 'KILLED'
+        why = self._reason(t, symbol, side, qty)
+        if why != 'OK':
+            self.rej.append(t)
+            if sum(1 for x in self.rej if t - 1000 < x <= t) >= self.max_rejects:
+                self.killed = True
+        return why
+
+    def kill(self):
+        self.killed = True
+
+    def reset(self):
+        self.killed, self.rej = False, []
+
 BRUTE = {
     'opt-worst-trade': WorstTrade, 'opt-checkout': Checkout, 'opt-tickets': TicketBot, 'opt-log-window': LogMonitor,
     'opt-trucks': TruckHub, 'opt-numbers-station': Decoder, 'opt-pumpkins': PumpkinShow, 'opt-dividends': Dividends,
     'opt-order-book': OrderBook, 'opt-route': route, 'opt-tree-errors': tree, 'opt-ring-deque': RingDeque,
     'opt-lru': LRUCache, 'opt-peak-live': peak_live, 'opt-debug-position': Position, 'opt-debug-matcher': match_orders,
     'opt-pair-sum': pair_sum, 'opt-days-between': days_between,
+    'lc-pos-1': PosB1, 'lc-pos-2': PosB2, 'lc-pos-3': PosB3, 'lc-feed-1': BookB1, 'lc-feed-2': FeedB2, 'lc-feed-3': BookB3,
+    'lc-risk-1': RiskB1, 'lc-risk-2': RiskB2, 'lc-risk-3': RiskB3,
 }
 
 

@@ -645,17 +645,19 @@
     if (QT.design) {
       const ids = new Set();
       for (const P of QT.design.PROBLEMS) {
-        if (ids.has(P.id) || !/^d-[a-z0-9-]+$/.test(P.id)) fail(`design ${P.id}: duplicate or bad id`);
+        if (ids.has(P.id) || !(P.system ? /^sd-[a-z0-9-]+$/ : /^d-[a-z0-9-]+$/).test(P.id)) fail(`design ${P.id}: duplicate or bad id`);
         ids.add(P.id);
         const keys = P.clarify.filter((c) => c[2]).length;
         if (!P.prompt || P.clarify.length < 3 || keys < 2 || P.clarify.some((c) => c.length !== 3 || !c[0] || !c[1])) fail(`design ${P.id}: clarifying questions`);
         if (!P.stages.length || P.stages.some((S) => !S.ask || !S.hints.length || !S.good.length)) fail(`design ${P.id}: stages`);
         if (P.pushbacks.length < 3 || P.pushbacks.some((B) => !B.says || !B.good.length)) fail(`design ${P.id}: pushbacks`);
-        if (P.diagram.length < 2 || !P.model.structures.length || !P.model.costs.length || !P.model.sketch.includes('def ')) fail(`design ${P.id}: diagram or model answer`);
+        if (P.system ? P.diagram.length < 3 || P.model.components.length < 4 || !P.model.numbers.length || P.model.tradeoffs.length < 2 || !(P.minutes > 0) || P.clarify.length < 6 || P.pushbacks.length < 4
+          : P.diagram.length < 2 || !P.model.structures.length || !P.model.costs.length || !P.model.sketch.includes('def ')) fail(`design ${P.id}: diagram or model answer`);
         if (P.codeLink && QT.code && !QT.code.byId(P.codeLink)) fail(`design ${P.id}: links to a missing problem ${P.codeLink}`);
         if (/undefined|NaN|\[object/.test(JSON.stringify(P))) fail(`design ${P.id}: junk in the text`);
       }
-      if (QT.design.RUBRIC.length !== 6) fail('design: the rubric should have six items');
+      if (QT.design.RUBRIC.length !== 6 || QT.design.SYS_RUBRIC.length !== 6) fail('design: each rubric should have six items');
+      if (QT.design.PROBLEMS.filter((P) => P.system).length < 5) fail('design: too few system design role-plays');
     }
     if (QT.pyCards && QT.flashcards) {
       const py = QT.flashcards.CARDS.filter(QT.flashcards.DECKS.python.has);
@@ -1013,14 +1015,18 @@
       snap.code.fund = { 'arch-1': 1, 'net-2': 'yes', 'BAD KEY': 1, 'mem-1': 0 };
       snap.code.fundQ = { 'python:3': 0, 'memory:1': 'x', 'BAD': 1 };
       snap.code.fundLog = [{ date: '2026-11-20T09:00:00Z', n: 10.4, right: 7 }];
+      snap.code.r2 = { positions: 1764000000000, 'BAD KEY': 5, feed: -3 };
       QT.store.importJson(JSON.stringify(snap));
       const fd = QT.store.get().code.fund;
       if (fd['arch-1'] !== 1 || fd['net-2'] !== 1 || fd['mem-1'] !== 0 || fd['BAD KEY'] !== undefined) fail(`fundamentals: progress not sanitised ${JSON.stringify(fd)}`);
       const fq = QT.store.get().code.fundQ, fl = QT.store.get().code.fundLog;
+      const r2 = QT.store.get().code.r2;
+      if (r2.positions !== 1764000000000 || r2.feed !== 0 || r2['BAD KEY'] !== undefined) fail(`interview 2: mock clocks not sanitised ${JSON.stringify(r2)}`);
       if (fq['python:3'] !== 0 || fq['memory:1'] !== 1 || fq.BAD !== undefined || fl[0]?.n !== 10) fail(`fundamentals: rapid-fire progress not sanitised ${JSON.stringify(fq)}`);
       snap.code.fund = {};
       snap.code.fundQ = {};
       snap.code.fundLog = [];
+      snap.code.r2 = {};
       QT.store.importJson(JSON.stringify(snap));
     }
 

@@ -30,6 +30,7 @@
     if (a === 'design') return QT.designView(el, b);
     if (a === 'screening') return QT.screeningView(el, b, c);
     if (a === 'data') return QT.dataView(el, b);
+    if (a === 'round2') return QT.round2View(el, b, c);
     const P = a && C.byId(a);
     if (P) return problem(el, P);
     list(el);
@@ -49,6 +50,7 @@
         <ul>${PROCESS.map((x) => `<li>${x}</li>`).join('')}</ul>
         <p class="small">Sources: <a href="${GD_INTERN}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer intern</a> · <a href="${GD_INTERNSHIP}" target="_blank" rel="noopener">Glassdoor: Optiver software engineer internship</a> · <a href="https://leetcode.com/discuss/topic/optiver/" target="_blank" rel="noopener">LeetCode Discuss: Optiver</a></p>
       </details>
+      <a class="card sc-promo" href="#/code/round2"><b>Optiver interview 2: system design and live coding</b><span class="small">The round after the screening: a role-play where you're a startup trading firm's CTO, and an hour of live coding on a practical trading problem. What to expect, how to approach each, ${QT.design.PROBLEMS.filter((P) => P.system).length} role-plays, three staged coding mocks and a two-week plan.</span></a>
       <a class="card sc-promo" href="#/code/screening"><b>Optiver tech screening: prep guide</b><span class="small">The 45-minute screening: review a snippet, suggest improvements, plan a deployment, discuss fundamentals. A full guide, ${QT.screening.EXERCISES.length} snippets to review, bug-spotting drills, fundamentals with rapid fire, a one-page cheat sheet and a 45-minute mock.</span></a>
       <a class="card sc-promo" href="#/code/data"><b>Data drills: NumPy, pandas and Polars</b><span class="small">${QT.dataDrills.ITEMS.length} short exercises on market-style data, run against hidden tests in your browser: drawdowns, rolling windows, groupby, as-of joins, bars, and a backtest without look-ahead. Each one links to the handbook chapter that teaches it.</span></a>
       <a class="card sc-promo" href="#/devbook"><b>Quant dev handbook: data structures and algorithms</b><span class="small">Learn the methods behind these problems first: two pointers, sliding windows, hashing, heaps, graphs, binary search, dynamic programming and more, in ${QT.devbook ? QT.devbook.PARTS.flatMap((p) => p.chapters).length : 17} chapters with tested Python.</span></a>
@@ -154,15 +156,19 @@
     let lang = state().lang, busy = false, watchdog = null, saveTimer = null, hints = 0, escaped = false;
     const voidMethod = (m) => P.kind === 'cls' && P.sig.methods.some(([n, , ret]) => n === m && !ret);
     const r0 = rec(P.id);
+    // Live coding mocks come in parts: link the parts, and let a part start from your code for the last one.
+    const parts = P.mock ? C.PROBLEMS.filter((q) => q.mock === P.mock).sort((a, b) => a.part - b.part) : [];
+    const prevP = parts.find((q) => q.part === P.part - 1), nextP = parts.find((q) => q.part === P.part + 1);
     el.innerHTML = `
-      <a class="back" href="#/code">← Coding</a>
+      <a class="back" href="${P.mock ? `#/code/round2/live/${P.mock}` : '#/code'}">← ${P.mock ? 'Live coding mock' : 'Coding'}</a>
       <h1>${esc(P.title)}</h1>
+      ${P.mock ? `<p class="small">Part ${P.part} of ${parts.length}${prevP ? ` · <a href="#/code/${prevP.id}">part ${prevP.part}</a>` : ''}${nextP ? ` · <a href="#/code/${nextP.id}">part ${nextP.part}</a> (open it once this part passes)` : ''}</p>` : ''}
       <div class="row code-meta"><span class="chip">${P.diff}</span><span class="chip">${groupName(P.group)}</span>${P.tags.map((t) => `<span class="chip">${esc(t)}</span>`).join('')}<span id="solved-tag">${r0?.solved ? '<span class="status-tag done">Solved</span>' : ''}</span></div>
       <div class="card code-statement">
         ${P.body}
         <h3>Limits</h3>
         <ul>${P.rules.map((x) => `<li>${x}</li>`).join('')}</ul>
-        <p class="small">${P.note} Reported at: <a href="${P.src[1]}" target="_blank" rel="noopener">${esc(P.src[0])}</a></p>
+        <p class="small">${P.note} ${P.src[1] ? `Reported at: <a href="${P.src[1]}" target="_blank" rel="noopener">${esc(P.src[0])}</a>` : `Source: ${esc(P.src[0])}.`}</p>
       </div>
       <h2>Examples</h2>
       <div id="examples"></div>
@@ -171,6 +177,7 @@
           <div class="lang-seg" role="group" aria-label="Language">${Object.entries(LANGS).map(([k, v]) => `<button type="button" data-lang="${k}" aria-pressed="${k === lang}">${v}</button>`).join('')}</div>
           <span class="small" id="pos"></span>
           <button type="button" class="ghost" id="reset">Reset code</button>
+          ${prevP ? `<button type="button" class="ghost" id="carry">Start from my part ${prevP.part} code</button>` : ''}
         </div>
         <label for="editor" class="small">Your code${P.starter ? ' (the code to fix)' : ''}</label>
         <textarea id="editor" class="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" rows="18"></textarea>
@@ -216,6 +223,13 @@
       $('#ref').textContent = P.ref[lang];
       position();
     }
+    $('#carry')?.addEventListener('click', () => {
+      const mine = rec(prevP.id)?.[lang];
+      if (!mine) { status.textContent = `No saved part ${prevP.part} code in this language yet.`; return; }
+      ed.value = mine;
+      save();
+      status.textContent = `Your part ${prevP.part} code is in the editor: now extend it.`;
+    });
     function save() {
       clearTimeout(saveTimer);
       const r = recOf(P.id);

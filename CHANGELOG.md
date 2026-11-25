@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.65.0
+
+- **Optiver interview 2: system design and live coding** (Coding → Optiver interview 2, #/code/round2), for the round after the tech screening. It covers what each interview is (from the invitation and candidate reports), how to run the role-play and approach live coding, numbers worth knowing, the Python to reach for, a two-week plan and sources.
+- **Five system design role-plays** where you are a startup trading firm's CTO:
+  - trading BMW in Frankfurt from Amsterdam;
+  - prices from several exchanges with fast queries;
+  - a firm-wide market data platform;
+  - orders, confirmations and never selling what we don't have;
+  - traders in Amsterdam with systems in Frankfurt over a narrow link.
+- **How a role-play runs:** the interviewer's requirements stay hidden until you've written your questions. Then you design step by step and face 4–7 curveballs (disconnects, lost data, runaway bugs, cost cuts, growth). A model design gives the components, numbers and trade-offs. There's a 60-minute clock with phase prompts, and a system-design rubric.
+- **Three live coding mocks in three parts each:** a position keeper (positions, FIFO realised P&L, mark-to-market with a limit), an order book from a feed (levels, sequence numbers, cost to trade) and a pre-trade risk gate (size and rate, position limits, a self-tripping kill switch).
+  - Each part runs against hidden and large tests and can start from your code for the previous part. A mock page runs the hour.
+  - CI checks every part against Python and JavaScript references and an independent brute-force version.
+
 ## 0.64.1
 
 - **Fundamentals cheat sheet** (#/code/screening/fundamentals/sheet), printable. For computer architecture, memory management, concurrency, networking, and the OS and I/O, each row is a ready answer: the physical fact (with its number), the constraint it creates, and the design choice it leads to. Latency numbers and Python costs are included.

@@ -16,7 +16,8 @@
       <p class="lede">Practice for the talking part of a technical interview. Optiver says its software engineering interviews should feel like solving a problem with a colleague: ask about load, latency and edge cases first, choose structures and say what they cost, explain how they work inside, and revise when the interviewer pushes back. Each problem walks through that conversation.</p>
       <p class="small">Source for the approach: <a href="${D.GUIDE[1]}" target="_blank" rel="noopener">${esc(D.GUIDE[0])}</a>. The problems and model answers are ours.</p>
       <div class="card"><b>How to use it.</b> Say everything out loud, as if the interviewer were there. Type your clarifying questions before you see any answers, use hints only when stuck, and answer each pushback before you reveal what a good answer covers. Then score yourself honestly.</div>
-      <div class="menu">${D.PROBLEMS.map((P) => {
+      <p class="small">For Optiver's second round, the system design role-plays (you play a startup trading firm's CTO) are in the <a href="#/code/round2">Interview 2 prep</a>.</p>
+      <div class="menu">${D.PROBLEMS.filter((P) => !P.system).map((P) => {
         const r = runs(P.id), last = r[r.length - 1];
         return `<a class="card" href="#/code/design/${P.id}"><b>${esc(P.title)}</b><span class="small">${esc(P.prompt.split('. ')[0])}.</span><span class="small">${last ? `${r.length} run${r.length > 1 ? 's' : ''} · last ${avg(last).toFixed(1)}/3` : 'not tried'}</span></a>`;
       }).join('')}</div>`;
@@ -27,16 +28,18 @@
   }
 
   function problem(el, P) {
-    const keyN = P.clarify.filter((c) => c[2]).length;
+    const keyN = P.clarify.filter((c) => c[2]).length, sys = !!P.system, RUB = sys ? D.SYS_RUBRIC : D.RUBRIC;
     el.innerHTML = `
-      <a class="back" href="#/code/design">← Design discussions</a>
+      <a class="back" href="${sys ? '#/code/round2' : '#/code/design'}">← ${sys ? 'Interview 2 prep' : 'Design discussions'}</a>
       <h1>${esc(P.title)}</h1>
+      ${sys ? `<div class="card"><b>A system design role-play, about ${P.minutes} minutes.</b> You are the CTO; the interviewer holds the requirements and answers only what you ask. Spend roughly 10 minutes on requirements and numbers, 25 on the design, 20 on the interviewer's curveballs, and keep 5 for questions. Talk the whole time and sketch boxes and arrows on paper.
+        <div class="row" style="margin-top:8px"><button type="button" class="ghost" id="dz-clock-go">Start the ${P.minutes}-minute clock</button><span class="mono" id="dz-big-clock" aria-live="off"></span></div></div>` : ''}
       <div class="card dz-prompt"><span class="eyebrow">The interviewer says</span><p>${esc(P.prompt)}</p></div>
       <div class="row dz-tools"><button type="button" class="ghost" id="dz-rec">Record yourself</button><span class="small" id="dz-rec-msg" aria-live="polite">Recording stays on this device.</span></div>
       <audio id="dz-audio" controls hidden></audio>
 
-      <h2>1. Clarify first</h2>
-      <p class="small">Before designing anything, what would you ask? Write your questions, then compare.</p>
+      <h2>1. ${sys ? 'Gather the requirements' : 'Clarify first'}</h2>
+      <p class="small">${sys ? 'The requirements are hidden until you ask. Write every question you\'d ask the interviewer, then reveal what they would have told you: the ones marked key change the design.' : 'Before designing anything, what would you ask? Write your questions, then compare.'}</p>
       <label class="small" for="dz-q">Your clarifying questions</label>
       <textarea id="dz-q" rows="4" placeholder="One per line"></textarea>
       <div class="row"><button type="button" id="dz-clar-go">Show what a strong candidate asks</button></div>
@@ -66,16 +69,20 @@
         <div id="dz-diagram" hidden>${diagramHtml(P.diagram)}</div>
 
         <h2>5. Model answer</h2>
-        <details class="card"><summary><b>Structures, costs and a Python sketch</b></summary>
+        ${sys ? `<details class="card"><summary><b>Components, numbers and trade-offs</b></summary>
+          <table class="dz-table"><thead><tr><th>Component</th><th>Role</th></tr></thead><tbody>${P.model.components.map(([n, w]) => `<tr><td><b>${esc(n)}</b></td><td>${esc(w)}</td></tr>`).join('')}</tbody></table>
+          <table class="dz-table"><thead><tr><th>Number</th><th>Value</th></tr></thead><tbody>${P.model.numbers.map(([o, c]) => `<tr><td>${esc(o)}</td><td>${esc(c)}</td></tr>`).join('')}</tbody></table>
+          <p><b>Trade-offs to say out loud</b></p><ul>${P.model.tradeoffs.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+        </details>` : `<details class="card"><summary><b>Structures, costs and a Python sketch</b></summary>
           <table class="dz-table"><thead><tr><th>Structure</th><th>Why</th></tr></thead><tbody>${P.model.structures.map(([n, w]) => `<tr><td><code>${esc(n)}</code></td><td>${esc(w)}</td></tr>`).join('')}</tbody></table>
           <table class="dz-table"><thead><tr><th>Operation</th><th>Cost</th></tr></thead><tbody>${P.model.costs.map(([o, c]) => `<tr><td>${esc(o)}</td><td>${esc(c)}</td></tr>`).join('')}</tbody></table>
           <pre class="dz-code"><code>${esc(P.model.sketch)}</code></pre>
-        </details>
+        </details>`}
         ${P.codeLink && QT.code?.byId(P.codeLink) ? `<p><a class="btn ghost" href="#/code/${P.codeLink}">Code the core: ${esc(QT.code.byId(P.codeLink).title)}</a></p>` : ''}
 
         <h2>6. Score yourself</h2>
         <form id="dz-rubric" class="card">
-          ${D.RUBRIC.map((r, i) => `<fieldset class="dz-score"><legend>${esc(r)}</legend>${[1, 2, 3].map((v) => `<label><input type="radio" name="r${i}" value="${v}" required> ${['', 'Not yet', 'Partly', 'Yes'][v]}</label>`).join('')}</fieldset>`).join('')}
+          ${RUB.map((r, i) => `<fieldset class="dz-score"><legend>${esc(r)}</legend>${[1, 2, 3].map((v) => `<label><input type="radio" name="r${i}" value="${v}" required> ${['', 'Not yet', 'Partly', 'Yes'][v]}</label>`).join('')}</fieldset>`).join('')}
           <button>Save score</button>
           <p class="small" id="dz-saved" aria-live="polite"></p>
         </form>
@@ -128,17 +135,30 @@
     });
     $('#dz-rubric').addEventListener('submit', (e) => {
       e.preventDefault();
-      const s = D.RUBRIC.map((_, i) => +new FormData(e.target).get(`r${i}`));
+      const s = RUB.map((_, i) => +new FormData(e.target).get(`r${i}`));
       if (s.some((v) => !(v >= 1 && v <= 3))) return;
       const asked = P.clarify.filter((c, i) => c[2] && el.querySelector(`[data-c="${i}"]`).checked).length;
       const all = store.get().code.design;
       all[P.id] = [...(all[P.id] || []), { date: new Date().toISOString(), s, c: [asked, keyN] }].slice(-20);
       store.touchDay();
       store.save();
-      const weakest = D.RUBRIC[s.indexOf(Math.min(...s))];
+      const weakest = RUB[s.indexOf(Math.min(...s))];
       $('#dz-saved').textContent = `Saved: ${(s.reduce((a, b) => a + b, 0) / s.length).toFixed(1)} out of 3, and ${asked} of ${keyN} key questions asked. Work on: ${weakest.toLowerCase()}.`;
     });
     recorder($('#dz-rec'), $('#dz-rec-msg'), $('#dz-audio'), cleanups);
+    $('#dz-clock-go')?.addEventListener('click', (e) => {
+      const end = Date.now() + P.minutes * 60000;
+      e.target.disabled = true;
+      const tick = () => {
+        const left = Math.max(0, end - Date.now()), used = P.minutes - left / 60000;
+        const phase = used < 10 ? 'requirements' : used < 35 ? 'design' : used < 55 ? 'curveballs' : 'your questions';
+        $('#dz-big-clock').textContent = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')} left · now: ${phase}`;
+        if (!left) clearInterval(id);
+      };
+      const id = setInterval(tick, 1000);
+      cleanups.push(() => clearInterval(id));
+      tick();
+    });
   }
 
   // Record yourself talking through the problem; played back here and never uploaded.
