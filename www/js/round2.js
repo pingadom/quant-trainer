@@ -77,6 +77,7 @@
       <a class="back" href="#/code">← Coding</a>
       <h1>Optiver interview 2: system design and live coding</h1>
       <p class="lede">The round after the tech screening: two interviews of about an hour each, over Zoom. In one you play the CTO of a startup trading firm and design a system by asking the right questions; in the other you solve a practical trading problem in code. This page has what to expect, how to approach each, realistic mocks of both, and a two-week plan.</p>
+      <a class="card sc-promo" href="#/code/round2/guide"><b>Study guide: the knowledge underneath</b><span class="small">Ten modules: how exchanges work, the anatomy of a trading system, requirements and numbers, building blocks, reliability, networking, concurrency, class design, algorithms, communication. Each with examples, lines to say, self-checks and LeetCode practice, plus a plan to Tuesday 1 December.</span></a>
       <div class="row" style="margin:0 0 12px"><a class="btn" href="#/code/design/sd-frankfurt">Start with the classic role-play</a><a class="btn ghost" href="#/code/round2/live/positions">Live coding mock 1</a><a class="btn ghost" href="#/code/screening/fundamentals/sheet">Fundamentals cheat sheet</a></div>
 
       <h2>What to expect</h2>
@@ -146,6 +147,88 @@
     });
   }
 
-  QT.round2View = (el, a, b) => (a === 'live' && MOCKS[b] ? liveMock(el, b) : hub(el));
+  // ---------------------------------------------------------------- the study guide
+  const G = () => QT.round2Guide;
+  const marks = () => (store.get().code.r2g ||= {});
+  const lcList = (rows) => `<ul class="fd-lc">${rows.map(([n, title, slug, diff, why]) => `<li><a href="https://leetcode.com/problems/${slug}/" target="_blank" rel="noopener">${n}. ${esc(title)}</a> <span class="chip">${diff}</span>${why ? ` <span class="small">${esc(why)}</span>` : ''}</li>`).join('')}</ul>`;
+  const score = (m) => m.checks.filter((c) => marks()[c.id] === 1).length;
+
+  function guideIndex(el) {
+    el.innerHTML = `
+      <a class="back" href="#/code/round2">← Interview 2 prep</a>
+      <h1>Interview 2 study guide</h1>
+      <p class="lede">Everything underneath the system design role-play and the live coding challenge, in ten modules. Each teaches the knowledge with examples, gives you lines to say in the interview, checks you with a few questions, and points to practice: free LeetCode problems, handbook chapters and the mocks.</p>
+      <h2>Plan to Tuesday 1 December</h2>
+      <ol class="sc-plan">${G().PLAN.map(([d, t]) => `<li><b>${esc(d)}:</b> ${esc(t)}</li>`).join('')}</ol>
+      <p class="small">If the interview is later, spread the same plan out and add a role-play or a mock each extra day.</p>
+      <h2>Modules</h2>
+      <div class="menu">${G().MODULES.map((m, i) => `<a class="card" href="#/code/round2/guide/${m.id}"><b>${i + 1}. ${esc(m.title)}</b><span class="small">${esc(m.why.split('. ')[0])}.</span><span class="small">self-check ${score(m)}/${m.checks.length}</span></a>`).join('')}</div>`;
+  }
+
+  function guideModule(el, m) {
+    const all = G().MODULES, i = all.indexOf(m), next = all[i + 1];
+    const dev = (m.devbook || []).filter((id) => QT.hbChapters?.[id]);
+    el.innerHTML = `
+      <a class="back" href="#/code/round2/guide">← Study guide</a>
+      <h1>${i + 1}. ${esc(m.title)}</h1>
+      <p class="lede">${esc(m.why)}</p>
+      ${m.sections.map(([h, html]) => `<h2>${esc(h)}</h2><div class="card">${html}</div>`).join('')}
+      <h2>Say it in the interview</h2>
+      <div class="card"><ul style="margin:0">${m.say.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
+      <h2>Check yourself</h2>
+      <div>${m.checks.map(checkHtml).join('')}</div>
+      ${m.leetcode.length ? `<h2>LeetCode practice</h2><p class="small">Free problems that train this module's technique. Solve them in Python, explaining your choices out loud.</p>${lcList(m.leetcode)}` : ''}
+      ${dev.length ? `<h2>Go deeper: quant dev handbook</h2>${dev.map((id) => `<div class="card"><a href="#/devbook/${id}"><b>${esc(QT.hbChapters[id].title)}</b></a>${(QT.devbook.LEETCODE[id] || []).length ? lcList(QT.devbook.LEETCODE[id].map(([n, t, s, d]) => [n, t, s, d, ''])) : ''}</div>`).join('')}` : ''}
+      <h2>Practise in the app</h2>
+      <div class="row">${m.links.map(([l, h]) => `<a class="btn ghost" href="${h}">${esc(l)}</a>`).join('')}</div>
+      <div class="row" style="margin-top:14px">${next ? `<a class="btn" href="#/code/round2/guide/${next.id}">Next: ${esc(next.title)} →</a>` : ''}<a class="btn ghost" href="#/code/round2/guide">All modules</a></div>`;
+    el.querySelectorAll('.r2-check').forEach((box) => wireCheck(box, m.checks.find((c) => c.id === box.dataset.id)));
+  }
+
+  function checkHtml(c) {
+    const prev = marks()[c.id] === 1 ? ' <span class="status-tag done">Right last time</span>' : '';
+    if (c.opts) {
+      const order = c.opts.map((_, k) => k).sort((a, b) => ((a * 5 + c.id.length) % 4) - ((b * 5 + c.id.length) % 4));
+      return `<div class="card r2-check" data-id="${c.id}"><p class="question">${esc(c.q)}${prev}</p>
+        <div class="hb-opts">${order.map((k) => `<button type="button" class="hb-opt" data-k="${k}">${esc(c.opts[k][0])}</button>`).join('')}</div>
+        <div class="hb-fb" aria-live="polite"></div><div class="solution" hidden>${c.sol}</div></div>`;
+    }
+    return `<form class="card r2-check" data-id="${c.id}" autocomplete="off"><p class="question">${esc(c.q)}${prev}</p>
+      <div class="answer-row"><input type="text" aria-label="Your answer" placeholder="Your answer"><button>Check</button></div>
+      <div class="hb-fb" aria-live="polite"></div><div class="solution" hidden>${c.sol}</div></form>`;
+  }
+
+  function wireCheck(box, c) {
+    const fb = box.querySelector('.hb-fb'), sol = box.querySelector('.solution');
+    const record = (ok) => { marks()[c.id] = ok ? 1 : 0; store.touchDay(); store.save(); };
+    if (c.opts) {
+      box.querySelectorAll('.hb-opt').forEach((b) => b.addEventListener('click', () => {
+        const k = +b.dataset.k, ok = k === 0;
+        box.querySelectorAll('.hb-opt').forEach((x) => { x.disabled = true; });
+        b.classList.add(ok ? 'right' : 'wrong');
+        fb.innerHTML = ok ? '<span class="fb-inline ok">✓ Right</span>' : `<span class="fb-inline bad">Not that one.</span> ${esc(c.opts[k][1] || '')}`;
+        sol.hidden = false;
+        record(ok);
+      }));
+      return;
+    }
+    box.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const raw = box.querySelector('input').value;
+      if (!raw.trim()) { fb.textContent = 'Type an answer first.'; return; }
+      const v = QT.parseAnswer(raw);
+      if (Number.isNaN(v)) { fb.textContent = "Couldn't read that. Try a number like 3.9 or 10000."; return; }
+      const ok = QT.isCorrectFor(v, c);
+      fb.innerHTML = ok ? '<span class="fb-inline ok">✓ Right</span>' : '<span class="fb-inline bad">Not quite.</span>';
+      sol.hidden = false;
+      record(ok);
+    });
+  }
+
+  QT.round2View = (el, a, b) => {
+    if (a === 'live' && MOCKS[b]) return liveMock(el, b);
+    if (a === 'guide') return b && G().byId[b] ? guideModule(el, G().byId[b]) : guideIndex(el);
+    return hub(el);
+  };
   QT.round2 = { MOCKS };
 })();

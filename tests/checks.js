@@ -1030,6 +1030,31 @@
       QT.store.importJson(JSON.stringify(snap));
     }
 
+    // Interview 2 study guide: modules complete, checks well formed, links valid, progress sanitised.
+    {
+      const M = QT.round2Guide.MODULES, ids = new Set();
+      if (M.length < 10 || QT.round2Guide.PLAN.length < 6) fail('round 2 guide: too few modules or plan days');
+      for (const m of M) {
+        if (!m.title || !m.why || m.sections.length < 2 || m.say.length < 2 || m.checks.length < 1 || !m.links.length) fail(`round 2 guide ${m.id}: incomplete`);
+        for (const [, html] of m.sections) if (/undefined|NaN/.test(html)) fail(`round 2 guide ${m.id}: junk`);
+        for (const [n, t, slug, d, why] of m.leetcode) if (!(Number.isInteger(n) && t && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && ['Easy', 'Medium', 'Hard'].includes(d) && why)) fail(`round 2 guide ${m.id}: LeetCode ${n}`);
+        for (const id of m.devbook) if (!QT.hbChapters[id]) fail(`round 2 guide ${m.id}: missing chapter ${id}`);
+        for (const [, h] of m.links) if (!/^#\//.test(h)) fail(`round 2 guide ${m.id}: bad link ${h}`);
+        for (const c of m.checks) {
+          if (ids.has(c.id) || !/^[a-z]{2}-[0-9]{1,2}$/.test(c.id) || !c.sol || /<|>/.test(c.q)) fail(`round 2 guide: check ${c.id}`);
+          ids.add(c.id);
+          if (c.opts ? c.opts.length < 3 || c.opts.slice(1).some((o) => !o[1]) : !Number.isFinite(c.a)) fail(`round 2 guide: check ${c.id} malformed`);
+        }
+      }
+      const snap = JSON.parse(QT.store.exportJson());
+      snap.code.r2g = { 'mk-1': 1, 'rq-2': 'yes', BAD: 1, 'nw-1': 0 };
+      QT.store.importJson(JSON.stringify(snap));
+      const g = QT.store.get().code.r2g;
+      if (g['mk-1'] !== 1 || g['rq-2'] !== 1 || g['nw-1'] !== 0 || g.BAD !== undefined) fail(`round 2 guide: progress not sanitised ${JSON.stringify(g)}`);
+      snap.code.r2g = {};
+      QT.store.importJson(JSON.stringify(snap));
+    }
+
     // Daily activity: routes map to areas (non-practice pages to none), and stored time is sanitised.
     if (QT.activity) {
       const A = QT.activity;

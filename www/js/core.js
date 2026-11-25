@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.65.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.66.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -204,7 +204,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} }, design: {}, tech: { date: '', start: '', done: {} }, review: {}, smocks: [], spot: {}, trace: {}, spotLog: [], data: {}, fund: {}, fundQ: {}, fundLog: [], r2: {} }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] }, seqfam: {}, activity: {}, goal: 30 });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} }, design: {}, tech: { date: '', start: '', done: {} }, review: {}, smocks: [], spot: {}, trace: {}, spotLog: [], data: {}, fund: {}, fundQ: {}, fundLog: [], r2: {}, r2g: {} }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] }, seqfam: {}, activity: {}, goal: 30 });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -428,6 +428,8 @@
       // Rapid-fire fundamentals: the last rating per question ("topic:index" → 1 got it, 0 again), and runs.
       // Interview 2 live coding mocks: when each mock's hour was started.
       r2: mapKeys(cd.r2, (v) => Math.max(0, num(v)), (k) => /^[a-z]{2,12}$/.test(k)),
+      // Interview 2 study guide self-checks: check id → 1 right, 0 wrong.
+      r2g: mapKeys(cd.r2g, (v) => (v ? 1 : 0), (k) => /^[a-z]{2}-[0-9]{1,2}$/.test(k)),
       fundQ: mapKeys(cd.fundQ, (v) => (v ? 1 : 0), (k) => /^[a-z]{2,14}:[0-9]{1,2}$/.test(k)),
       fundLog: arr(cd.fundLog, 60).map((x) => ({ ...when(x), n: Math.max(0, Math.round(num(obj(x).n))), right: Math.max(0, Math.round(num(obj(x).right))) })),
       spotLog: arr(cd.spotLog, 60).map((x) => ({ ...when(x), n: Math.max(0, Math.round(num(obj(x).n))), right: Math.max(0, Math.round(num(obj(x).right))) })),

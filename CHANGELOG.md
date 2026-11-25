@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.66.0
+
+- **Interview 2 study guide** (Coding → Optiver interview 2 → Study guide, #/code/round2/guide): the knowledge underneath the system design role-play and the live coding, in ten modules:
+  1. how exchanges and trading work;
+  2. the anatomy of a trading system;
+  3. requirements and back-of-envelope numbers;
+  4. building blocks;
+  5. reliability;
+  6. networking;
+  7. concurrency;
+  8. designing a class under pressure;
+  9. the algorithms trading problems use;
+  10. communication.
+- **Each module has:**
+  - worked examples and lines to say in the interview;
+  - self-check questions, with numbers re-derived in research/verify_round2.py;
+  - free LeetCode problems checked against LeetCode's data (including Design an Ordered Stream, Number of Orders in the Backlog, Design a Food Rating System, Process Tasks Using Servers and the concurrency set);
+  - the matching quant dev handbook chapters with their LeetCode lists;
+  - links to the role-plays and coding mocks.
+- **A day-by-day plan** to an interview on Tuesday 1 December.
+
 ## 0.65.0
 
 - **Optiver interview 2: system design and live coding** (Coding → Optiver interview 2, #/code/round2), for the round after the tech screening. It covers what each interview is (from the invitation and candidate reports), how to run the role-play and approach live coding, numbers worth knowing, the Python to reach for, a two-week plan and sources.
