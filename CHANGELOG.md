@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.67.1
+
+- Tests: on phones, links to the coding pages now also exist in the (hidden) sidebar, so end-to-end tests click the link in the page itself. No change to the app.
+
 ## 0.67.0
 
 - **Quant SWE is now its own track.** The software engineering material moves out of the trading sections into a new **Quant SWE** section of the navigation, and the trading side of Theo is back to trading. The section holds:

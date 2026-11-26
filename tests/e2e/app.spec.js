@@ -702,7 +702,7 @@ test('quant dev handbook: its own course page, code listings, checks and a separ
 
 test('spotting: tap the bad line, see the tell and the fix; trace questions accept what Python prints', async ({ page }) => {
   await page.goto('./#/code/screening');
-  await page.locator('a[href="#/code/screening/spot"]').first().click();
+  await page.locator('main a[href="#/code/screening/spot"]').first().click();
   await expect(page.locator('h1')).toHaveText('Learning to spot bugs');
   await expect(page.locator('.sp-fam')).toHaveCount(12);
   await page.goto('./#/code/screening/spot/numbers');
@@ -740,9 +740,9 @@ test('tech screening guide and fundamentals: jump within the guide, answer a sel
   await page.locator('[data-jump="sc-check"]').click();
   await expect(page).toHaveURL(/#\/code\/screening$/);
   await expect(page.locator('#sc-check')).toBeInViewport();
-  await page.locator('a[href="#/code/screening/fundamentals"]').first().click();
+  await page.locator('main a[href="#/code/screening/fundamentals"]').first().click();
   await expect(page.locator('h1')).toHaveText('Fundamentals: how hardware shapes design');
-  await page.locator('a[href="#/code/screening/fundamentals/concurrency"]').click();
+  await page.locator('main a[href="#/code/screening/fundamentals/concurrency"]').click();
   await page.locator('.fd-q summary').first().click();
   await expect(page.locator('.fd-q .solution').first()).toBeVisible();
   const box = page.locator('form.fd-check[data-id="conc-1"]');
@@ -772,7 +772,7 @@ test('tech screening guide and fundamentals: jump within the guide, answer a sel
 
 test('interview 2: role-play reveals requirements after you ask, and a coding part starts from your last part', async ({ page }) => {
   await page.goto('./#/code');
-  await page.locator('a[href="#/code/round2"]').first().click();
+  await page.locator('main a[href="#/code/round2"]').first().click();
   await expect(page.locator('h1')).toHaveText('Optiver interview 2: system design and live coding');
   await page.locator('.menu a[href="#/code/design/sd-frankfurt"]').click();
   await expect(page.locator('#dz-clar')).toBeHidden();
@@ -795,7 +795,7 @@ test('interview 2: role-play reveals requirements after you ask, and a coding pa
   await expect(page.locator('#editor')).toHaveValue(/# mine/);
   // The study guide: a module teaches, then checks.
   await page.goto('./#/code/round2/guide');
-  await page.locator('a[href="#/code/round2/guide/markets"]').click();
+  await page.locator('main a[href="#/code/round2/guide/markets"]').click();
   const box = page.locator('form.r2-check[data-id="mk-3"]');
   await box.locator('input').fill('350');
   await box.locator('button').click();
@@ -826,11 +826,11 @@ test('quant SWE track: its own section, a guide, and the most specific link ligh
 
 test('data drills: open a drill, keep your code, run the tests and see it marked passed', async ({ page }) => {
   await page.goto('./#/code');
-  await page.locator('a[href="#/code/data"]').first().click();
+  await page.locator('main a[href="#/code/data"]').first().click();
   await expect(page.locator('h1')).toHaveText('Data drills: NumPy, pandas and Polars');
   const n = await page.evaluate(() => window.QT.dataDrills.ITEMS.length);
   await expect(page.locator('.menu a.card')).toHaveCount(n);
-  await page.locator('a[href="#/code/data/np-drawdown"]').click();
+  await page.locator('main a[href="#/code/data/np-drawdown"]').click();
   const box = page.locator('#dd-code');
   await expect(box).toHaveValue(/def max_drawdown/);
   // Your code is kept on this device.
@@ -856,7 +856,7 @@ test('data drills: open a drill, keep your code, run the tests and see it marked
   await expect(page.locator('#dd-code')).toHaveValue(/# The running peak/);
   // The handbook chapter links to its drills.
   await page.goto('./#/devbook/dsa-numpy');
-  await expect(page.locator('a[href="#/code/data/np-drawdown"]').first()).toBeVisible();
+  await expect(page.locator('main a[href="#/code/data/np-drawdown"]').first()).toBeVisible();
 });
 
 test('today: practice time is counted by area, against a daily goal', async ({ page }) => {
