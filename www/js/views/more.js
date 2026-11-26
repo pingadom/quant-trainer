@@ -44,8 +44,7 @@
       { href: '#/code/screening/fundamentals', name: 'Systems fundamentals', desc: 'Architecture, memory, concurrency, networking, Python internals' },
       { href: '#/code/design', name: 'Design discussions', desc: 'Data-structure design, talked through like an interview' },
       { href: '#/code/data', name: 'Data drills', desc: 'NumPy, pandas and Polars exercises' },
-      { href: '#/code/screening', name: 'Optiver tech screening', desc: 'Code review, bug spotting, deployment plans, a 45-minute mock' },
-      { href: '#/code/round2', name: 'Optiver interview 2', desc: 'CTO role-plays, live coding mocks and a study guide' },
+      { href: '#/swe/interviews', name: 'Interview prep', desc: 'Firm-specific preparation, stage by stage: Optiver tech screening and interview 2' },
     ] },
     { id: 'games', name: 'Trading games', items: [
       { route: 'figgie', href: '#/figgie', name: 'Figgie', desc: "Jane Street's card trading game, against three bots" },

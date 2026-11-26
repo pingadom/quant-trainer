@@ -126,10 +126,44 @@
     },
   ];
 
+  // Firm-specific preparation, one entry per firm, each stage in the order the process runs.
   const FIRMS = [
-    ['Optiver: tech screening', 'Review a snippet, suggest improvements, plan a deployment, discuss fundamentals: 45 minutes.', '#/code/screening'],
-    ['Optiver: interview 2', 'A system design role-play as a startup trading firm\'s CTO, and live coding on a practical trading problem.', '#/code/round2'],
+    {
+      name: 'Optiver',
+      role: 'Software engineer (internship and graduate)',
+      stages: [
+        {
+          title: 'Tech screening',
+          what: 'Review a snippet, suggest improvements, plan a deployment and discuss fundamentals: 45 minutes with an engineer.',
+          href: '#/code/screening',
+          links: [['Prep guide', '#/code/screening'], ['Bug spotting', '#/code/screening/spot'], ['Systems fundamentals', '#/code/screening/fundamentals'], ['Cheat sheet', '#/code/screening/sheet'], ['45-minute mock', '#/code/screening/mock']],
+        },
+        {
+          title: 'Interview 2',
+          what: 'Two interviews of about an hour: a system design role-play as a startup trading firm\'s CTO, and live coding on a practical trading problem.',
+          href: '#/code/round2',
+          links: [['Overview and mocks', '#/code/round2'], ['Study guide', '#/code/round2/guide'], ['Live coding: positions', '#/code/round2/live/positions'], ['CTO role-play: Frankfurt', '#/code/design/sd-frankfurt']],
+        },
+      ],
+    },
   ];
+
+  function interviews(el) {
+    el.innerHTML = `
+      <a class="back" href="#/swe">← Quant SWE guide</a>
+      <h1>SWE interview prep</h1>
+      <p class="lede">Preparation for a particular firm's software engineering interviews, stage by stage, in the order the process runs. What every firm tests is in the <a href="#/swe">Quant SWE guide</a>; this is the firm-specific layer on top.</p>
+      ${FIRMS.map((f) => `
+        <h2>${esc(f.name)}</h2>
+        <p class="small">${esc(f.role)}</p>
+        ${f.stages.map((s, i) => `
+          <section class="card swe-part">
+            <div class="swe-head"><h3><a href="${s.href}">${i + 1}. ${esc(s.title)}</a></h3></div>
+            <p class="small">${esc(s.what)}</p>
+            <div class="swe-links">${s.links.map(([l, h]) => `<a href="${h}">${esc(l)}</a>`).join('')}</div>
+          </section>`).join('')}`).join('')}
+      <p class="small">Preparing for another firm? Start from the <a href="#/swe">eight parts of the guide</a>: the coding, systems and design rounds at trading firms test the same ground.</p>`;
+  }
 
   function view(el) {
     const parts = PARTS.map((p) => ({ ...p, pr: p.progress() }));
@@ -154,7 +188,7 @@
           <div class="swe-links"><span class="small"><b>Practise:</b></span>${p.practise.map(([l, h]) => `<a href="${h}">${esc(l)}</a>`).join('')}</div>
         </section>`).join('')}
       <h2>Firm-specific preparation</h2>
-      <div class="menu">${FIRMS.map(([t, d, h]) => `<a class="card" href="${h}"><b>${esc(t)}</b><span class="small">${esc(d)}</span></a>`).join('')}</div>
+      <div class="menu">${FIRMS.flatMap((f) => f.stages.map((s) => `<a class="card" href="${s.href}"><b>${esc(f.name)}: ${esc(s.title.toLowerCase())}</b><span class="small">${esc(s.what)}</span></a>`)).join('')}<a class="card" href="#/swe/interviews"><b>All interview prep</b><span class="small">Every firm and stage on one page.</span></a></div>
       <h2>Everything in this track</h2>
       <ul class="small">
         <li><a href="#/devbook">Quant dev handbook</a>: 21 chapters on data structures, algorithms and data tools, with tested Python and LeetCode lists.</li>
@@ -168,5 +202,6 @@
   }
 
   QT.sweView = view;
+  QT.sweInterviews = interviews;
   QT.swe = { PARTS };
 })();

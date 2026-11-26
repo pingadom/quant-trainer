@@ -26,6 +26,7 @@
     ['#/code', 'Coding problems (Quant SWE)', 'software engineer swe coding leetcode programming optiver hackerrank online assessment python javascript data structures order book lru cache queue'],
     ['#/code/quiz', 'Coding knowledge quiz', 'computer science multiple choice operating systems networking tcp udp c++ python concurrency'],
     ['#/code/data', 'Data drills: NumPy, pandas and Polars', 'numpy pandas polars dataframe groupby merge asof resample vectorise broadcasting backtest data science'],
+    ['#/swe/interviews', 'SWE interview prep', 'interview prep firm specific optiver tech screening interview 2 stages software engineer internship'],
     ['#/swe', 'Quant SWE guide', 'software engineering quant developer quant dev swe guide principles track data structures algorithms systems design coding'],
     ['#/code/round2/guide', 'Interview 2 study guide', 'study guide exchanges order book trading system anatomy requirements estimation building blocks reliability networking concurrency class design algorithms communication leetcode'],
     ['#/code/round2', 'Optiver interview 2: system design and live coding', 'system design role play cto startup trading firm frankfurt exchange live coding practical trading problem order book position p&l risk gate kill switch'],

@@ -74,7 +74,7 @@
     const sys = D.PROBLEMS.filter((P) => P.system);
     const solved = (id) => store.get().code.p[id]?.solved;
     el.innerHTML = `
-      <a class="back" href="#/code">← Coding</a>
+      <a class="back" href="#/swe/interviews">← Interview prep</a>
       <h1>Optiver interview 2: system design and live coding</h1>
       <p class="lede">The round after the tech screening: two interviews of about an hour each, over Zoom. In one you play the CTO of a startup trading firm and design a system by asking the right questions; in the other you solve a practical trading problem in code. This page has what to expect, how to approach each, realistic mocks of both, and a two-week plan.</p>
       <a class="card sc-promo" href="#/code/round2/guide"><b>Study guide: the knowledge underneath</b><span class="small">Ten modules: how exchanges work, the anatomy of a trading system, requirements and numbers, building blocks, reliability, networking, concurrency, class design, algorithms, communication. Each with examples, lines to say, self-checks and LeetCode practice, plus a plan to Tuesday 1 December.</span></a>

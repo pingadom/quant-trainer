@@ -15,7 +15,7 @@
   function hub(el) {
     const mocks = store.get().code.smocks, G = S.GUIDE;
     el.innerHTML = `
-      <a class="back" href="#/code">← Coding</a>
+      <a class="back" href="#/swe/interviews">← Interview prep</a>
       <h1>Optiver tech screening: prep guide</h1>
       <p class="lede">Everything for the 45-minute software engineering tech screening in one place: what it is, what the interviewer looks for, a plan for the 45 minutes, how to prepare, what to say, and practice for each part.</p>
       <div class="row" style="margin:0 0 12px"><a class="btn" href="#/code/screening/sheet">One-page cheat sheet</a><a class="btn ghost" href="#/code/screening/fundamentals/sheet">Fundamentals cheat sheet</a><a class="btn ghost" href="#/code/screening/mock">Full 45-minute mock</a><a class="btn ghost" href="#/code/screening/fundamentals/drill">Rapid-fire fundamentals</a></div>

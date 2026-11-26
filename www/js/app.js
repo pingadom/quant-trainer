@@ -20,7 +20,7 @@
     stories: (el, id) => QT.stories.render(el, id),
     weak: (el, a, b) => QT.adapt.render(el, a, b),
     code: (el, a, b, c) => QT.coding.render(el, a, b, c),
-    swe: (el) => QT.sweView(el),
+    swe: (el, a) => (a === 'interviews' ? QT.sweInterviews(el) : QT.sweView(el)),
     sse: (el, a, b, c) => QT.sse.render(el, a, b, c),
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
@@ -86,7 +86,8 @@
     // specific match wins, so the Quant SWE links pick out their own parts of the Coding pages.
     const path = key ? [key, ...args].join('/') : '';
     const navLinks = [...document.querySelectorAll('.nav a[data-route]')];
-    const fit = (r) => (r.includes('/') ? (path === r || path.startsWith(`${r}/`) ? r.length : -1) : r === navKey ? r.length : -1);
+    const fit1 = (r) => (r.includes('/') ? (path === r || path.startsWith(`${r}/`) ? r.length : -1) : r === navKey ? r.length : -1);
+    const fit = (rs) => Math.max(...rs.split(' ').map(fit1));
     const best = Math.max(-1, ...navLinks.map((a) => fit(a.dataset.route)));
     navLinks.forEach((a) => a.classList.toggle('active', best >= 0 && fit(a.dataset.route) === best));
     // The section holding the current page is open, as are any you opened yourself; the rest fold.

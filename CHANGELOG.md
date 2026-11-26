@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.68.0
+
+- **Interview prep is one place in the Quant SWE section.** The sidebar's separate "Optiver tech screening" and "Optiver interview 2" links become a single **Interview prep** link. It opens a page listing each firm's stages in order, with links to the guides and mocks for each. It stays highlighted on every screening and interview 2 page.
+
 ## 0.67.1
 
 - Tests: on phones, links to the coding pages now also exist in the (hidden) sidebar, so end-to-end tests click the link in the page itself. No change to the app.
