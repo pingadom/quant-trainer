@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.67.0
+
+- **Quant SWE is now its own track.** The software engineering material moves out of the trading sections into a new **Quant SWE** section of the navigation, and the trading side of Theo is back to trading. The section holds:
+  - the Quant SWE guide and the quant dev handbook;
+  - coding problems, systems fundamentals, design discussions and data drills;
+  - the Python internals cards;
+  - the Optiver tech screening and interview 2 prep.
+- **The Quant SWE guide** (#/swe) sets out what software engineers and quant developers at trading firms must know, in eight parts:
+  1. your language and what happens underneath;
+  2. data structures and algorithms;
+  3. computer systems;
+  4. numerical and data tools;
+  5. markets and trading systems;
+  6. system design;
+  7. engineering practice;
+  8. interviewing.
+
+  Each part states its principles, links to where Theo teaches and practises them, and shows your progress. Firm-specific prep is listed separately.
+- The sidebar now highlights the most specific link: on a fundamentals page it's "Systems fundamentals", not "Coding problems". Old links all still work.
+
 ## 0.66.0
 
 - **Interview 2 study guide** (Coding → Optiver interview 2 → Study guide, #/code/round2/guide): the knowledge underneath the system design role-play and the live coding, in ten modules:

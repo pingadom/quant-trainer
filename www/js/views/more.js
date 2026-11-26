@@ -14,7 +14,6 @@
     ] },
     { id: 'learn', name: 'Learn', items: [
       { route: 'handbook', href: '#/handbook', name: 'Handbook', desc: 'A full course from the basics up, with homework and exams' },
-      { route: 'devbook', href: '#/devbook', name: 'Quant dev handbook', desc: 'Data structures and algorithms for coding interviews, with tested Python' },
       { route: 'practice', href: '#/practice', name: 'Practise by topic', desc: `Formula sheets and endless questions in ${QT.topics.length} topics` },
       { route: 'flashcards', href: '#/flashcards', name: 'Formula cards', desc: `${QT.flashcards.CARDS.filter(QT.flashcards.DECKS.formula.has).length} formulas, plus ${QT.flashcards.CARDS.filter(QT.flashcards.DECKS.python.has).length} Python internals cards, on a spaced schedule` },
       { route: 'tricks', href: '#/tricks', name: 'Speed tricks', desc: `${QT.tricks.length} guides to faster arithmetic, each with a drill` },
@@ -28,7 +27,6 @@
       { route: 'weak', href: '#/weak', name: 'Weak-spot training', desc: 'Your accuracy in each interview skill area, with a session for the weakest' },
       { route: 'mental', href: '#/mental', name: 'Mental maths', desc: 'Zetamac, 80 in 8, 60 in 6 (Flow Traders), flow training and speed reps' },
       { route: 'oa', href: '#/oa', name: 'Online tests', desc: 'Number sequences, Zap-N-style cognitive games, memory tests' },
-      { route: 'code', href: '#/code', name: 'Coding (SWE)', desc: 'Optiver software engineering problems and a CS knowledge quiz' },
     ] },
     { id: 'interviews', name: 'Interview prep', items: [
       { route: 'bank', href: '#/bank', name: 'Interview questions', desc: 'Questions candidates report, by firm, with sources' },
@@ -38,6 +36,16 @@
       { route: 'stories', href: '#/stories', name: 'Stories', desc: 'Write and rehearse your behavioural answers' },
       { route: 'sse', href: '#/sse', name: 'Citadel SSE prep', desc: 'Study plan for the Semi-Systematic Equities phone screen' },
       { href: 'firms/', name: 'Firm guides', desc: "Each firm's process and reported questions, as plain pages" },
+    ] },
+    { id: 'swe', name: 'Quant SWE', items: [
+      { route: 'swe', href: '#/swe', name: 'Quant SWE guide', desc: 'The software engineering track: principles in eight parts, where to learn and practise each' },
+      { route: 'devbook', href: '#/devbook', name: 'Quant dev handbook', desc: 'Data structures, algorithms and data tools, with tested Python' },
+      { route: 'code', href: '#/code', name: 'Coding problems', desc: 'Optiver-style problems, live coding mocks and a CS quiz, run against hidden tests' },
+      { href: '#/code/screening/fundamentals', name: 'Systems fundamentals', desc: 'Architecture, memory, concurrency, networking, Python internals' },
+      { href: '#/code/design', name: 'Design discussions', desc: 'Data-structure design, talked through like an interview' },
+      { href: '#/code/data', name: 'Data drills', desc: 'NumPy, pandas and Polars exercises' },
+      { href: '#/code/screening', name: 'Optiver tech screening', desc: 'Code review, bug spotting, deployment plans, a 45-minute mock' },
+      { href: '#/code/round2', name: 'Optiver interview 2', desc: 'CTO role-plays, live coding mocks and a study guide' },
     ] },
     { id: 'games', name: 'Trading games', items: [
       { route: 'figgie', href: '#/figgie', name: 'Figgie', desc: "Jane Street's card trading game, against three bots" },

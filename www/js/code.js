@@ -40,6 +40,7 @@
   function list(el) {
     const best = quizBest();
     el.innerHTML = `
+      <a class="back" href="#/swe">← Quant SWE guide</a>
       <h1>Coding</h1>
       <p class="lede">Practice for software engineering interviews at trading firms, starting with Optiver's SWE internship. Write Python or JavaScript here and run it against the tests, including hidden random cases and a large one that catches slow solutions.</p>
       <div class="tiles">

@@ -20,6 +20,7 @@
     stories: (el, id) => QT.stories.render(el, id),
     weak: (el, a, b) => QT.adapt.render(el, a, b),
     code: (el, a, b, c) => QT.coding.render(el, a, b, c),
+    swe: (el) => QT.sweView(el),
     sse: (el, a, b, c) => QT.sse.render(el, a, b, c),
   };
   // Which nav item lights up for each route (the bottom tab bar has fewer items than the sidebar).
@@ -27,12 +28,12 @@
   // Phone tabs: Home · Coach (my prep) · Practice (learn and practise) · Interviews · More (games, settings).
   const TAB_PARENT = {
     plan: 'coach', daily: 'coach', today: 'coach', progress: 'coach', roadmap: 'coach', drill: 'coach',
-    weak: 'practice', topic: 'practice', handbook: 'practice', devbook: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
+    weak: 'practice', topic: 'practice', handbook: 'practice', devbook: 'practice', swe: 'practice', flashcards: 'practice', tricks: 'practice', cases: 'practice', case: 'practice', lab: 'practice', review: 'practice', mistakes: 'practice', mental: 'practice', oa: 'practice', code: 'practice',
     iq: 'bank', sse: 'bank', mock: 'bank', talk: 'bank', screen: 'bank', stories: 'bank',
     figgie: 'more', quote: 'more', market: 'more', kelly: 'more', estimate: 'more', appearance: 'more', tour: '', search: 'more',
   };
 
-  const WIDE = ['', 'coach', 'practice', 'mental', 'bank', 'more', 'progress', 'cases', 'tricks', 'handbook', 'devbook', 'code', 'sse', 'weak', 'oa', 'roadmap', 'search', 'flashcards', 'screen', 'stories', 'mistakes'];
+  const WIDE = ['', 'coach', 'practice', 'swe', 'mental', 'bank', 'more', 'progress', 'cases', 'tricks', 'handbook', 'devbook', 'code', 'sse', 'weak', 'oa', 'roadmap', 'search', 'flashcards', 'screen', 'stories', 'mistakes'];
 
   const decode = (s) => {
     try {
@@ -81,7 +82,13 @@
       });
     }
     const navKey = NAV_PARENT[key] ?? key, tabKey = TAB_PARENT[key] ?? key;
-    document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.route === navKey));
+    // A link whose route has a path (code/screening) is active on that page and below it; the most
+    // specific match wins, so the Quant SWE links pick out their own parts of the Coding pages.
+    const path = key ? [key, ...args].join('/') : '';
+    const navLinks = [...document.querySelectorAll('.nav a[data-route]')];
+    const fit = (r) => (r.includes('/') ? (path === r || path.startsWith(`${r}/`) ? r.length : -1) : r === navKey ? r.length : -1);
+    const best = Math.max(-1, ...navLinks.map((a) => fit(a.dataset.route)));
+    navLinks.forEach((a) => a.classList.toggle('active', best >= 0 && fit(a.dataset.route) === best));
     // The section holding the current page is open, as are any you opened yourself; the rest fold.
     document.querySelectorAll('details.nav-sec').forEach((d) => { d.open = !!opened[d.dataset.sec] || !!d.querySelector('a.active'); });
     document.querySelectorAll('.tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.route === tabKey));

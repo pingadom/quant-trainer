@@ -1338,3 +1338,13 @@ select { font-family: var(--body); }
 .fs-table td { vertical-align: top; }
 .fs-table th:first-child, .fs-table td:first-child { width: 36%; }
 @media print { .fs-sec { break-inside: avoid; } .fs-table { font-size: 0.78rem; } }
+
+/* Quant SWE guide (#/swe) */
+.swe-part { margin: 0 0 12px; }
+.swe-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.swe-head h3 { margin: 0; }
+.swe-bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.swe-bar span { display: block; height: 100%; background: var(--accent); }
+.swe-principles { margin: 0 0 8px; padding-left: 1.2em; }
+.swe-principles li { margin-bottom: 4px; }
+.swe-links { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin-top: 4px; }
