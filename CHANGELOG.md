@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.69.0
+
+- **Interview 2 has a dated plan.** Set your interview date on the interview 2 page or the study guide, and you get a daily checklist that fits the six steps of preparation into the days you have. More days stretch a step; fewer squeeze several into one. Tasks Theo can see tick themselves: a module's self-checks answered, a role-play scored, a mock part solved. Anything left from an earlier day comes back under "catch up". On the day, it's light review only.
+- **Home shows it.** With a date set, the home screen shows "Optiver interview 2 in N days" and today's progress. Once you've started the software engineering track, a Quant SWE card shows your progress. New visitors see a link to the Quant SWE guide on the welcome screen.
+- The Citadel SSE page no longer counts down to a screen that has passed.
+
 ## 0.68.0
 
 - **Interview prep is one place in the Quant SWE section.** The sidebar's separate "Optiver tech screening" and "Optiver interview 2" links become a single **Interview prep** link. It opens a page listing each firm's stages in order, with links to the guides and mocks for each. It stays highlighted on every screening and interview 2 page.

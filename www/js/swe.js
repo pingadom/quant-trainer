@@ -152,6 +152,7 @@
     el.innerHTML = `
       <a class="back" href="#/swe">← Quant SWE guide</a>
       <h1>SWE interview prep</h1>
+      ${QT.round2?.planStatus()?.left >= 0 ? QT.swe.homeCard() : ''}
       <p class="lede">Preparation for a particular firm's software engineering interviews, stage by stage, in the order the process runs. What every firm tests is in the <a href="#/swe">Quant SWE guide</a>; this is the firm-specific layer on top.</p>
       ${FIRMS.map((f) => `
         <h2>${esc(f.name)}</h2>
@@ -203,5 +204,20 @@
 
   QT.sweView = view;
   QT.sweInterviews = interviews;
-  QT.swe = { PARTS };
+  // A home-screen card: the interview 2 countdown when a date is set, otherwise the track's
+  // progress once you've started it. Nothing for someone who has only done trading practice.
+  function homeCard() {
+    const st = QT.round2?.planStatus();
+    if (st && st.left >= 0) {
+      const when = st.left === 0 ? 'today' : st.left === 1 ? 'tomorrow' : `in ${st.left} days`;
+      return `<a class="card shortcut primary daily-card" href="#/code/round2"><b>Optiver interview 2 ${when}</b><span>${st.left === 0 ? 'Light review only today' : `Today's prep: ${st.done}/${st.tasks.length} done${st.late.length ? ` · ${st.late.length} to catch up` : ''}`}</span></a>`;
+    }
+    const c = S().code, n = (o) => Object.keys(o || {}).length;
+    const probs = Object.values(c.p).filter((r) => r.solved).length, designs = Object.values(c.design).filter((r) => r.length).length;
+    if (!probs && !designs && !n(c.review) && !n(c.data) && !n(c.fund)) return '';
+    const bits = [probs && `${probs} problem${probs > 1 ? 's' : ''} solved`, designs && `${designs} design${designs > 1 ? 's' : ''} practised`].filter(Boolean);
+    return `<a class="card shortcut daily-card" href="#/swe"><b>Quant SWE</b><span>${bits.join(' · ') || 'Pick up the software engineering track'}</span></a>`;
+  }
+
+  QT.swe = { PARTS, homeCard };
 })();

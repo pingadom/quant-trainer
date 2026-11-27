@@ -69,6 +69,89 @@
     ['SpaceComplexity: Optiver system design', 'https://spacecomplexity.ai/blog/optiver-system-design-interview', 'Prep site, unsourced: ask the latency target first; multicast with gap recovery; no databases or message brokers on the order path.'],
   ];
 
+  // ---------------------------------------------------------------- a dated plan to your interview
+  // Six steps of preparation, fitted to the days between setting the date and the interview: more
+  // days stretch a step over two, fewer squeeze several into one. Tasks the app can see tick
+  // themselves (a module's self-checks answered, a role-play scored, a mock part solved); the rest
+  // you tick. Anything left from an earlier day comes back as "catch up".
+  const DAY = 864e5;
+  const S = () => store.get().code;
+  const mod = (id) => {
+    const m = QT.round2Guide.byId[id], n = QT.round2Guide.MODULES.indexOf(m) + 1;
+    return { id: `mod-${id}`, label: `Study guide module ${n}: ${m.title}`, href: `#/code/round2/guide/${id}`, auto: () => m.checks.every((c) => c.id in (S().r2g || {})) };
+  };
+  const rp = (id, how) => ({ id: `rp-${id}`, label: `Role-play: ${QT.design.byId(id).title}${how ? `, ${how}` : ''}`, href: `#/code/design/${id}`, auto: () => (S().design[id] || []).length > 0 });
+  const part = (id) => { const P = QT.code.PROBLEMS.find((x) => x.id === id); return { id: `lc-${id}`, label: `Live coding: ${MOCKS[P.mock].title}, part ${P.part}`, href: `#/code/${id}`, auto: () => !!S().p[id]?.solved }; };
+  const mock = (m) => { const ps = QT.code.PROBLEMS.filter((P) => P.mock === m); return { id: `mock-${m}`, label: `Live coding mock: ${MOCKS[m].title}, all ${ps.length} parts in an hour`, href: `#/code/round2/live/${m}`, auto: () => ps.every((P) => S().p[P.id]?.solved) }; };
+  const leet = (n, title, slug) => ({ id: `leet-${n}`, label: `LeetCode ${n}: ${title}`, href: `https://leetcode.com/problems/${slug}/`, ext: true });
+  const hand = (id, label, href) => ({ id, label, href });
+  const STEPS = () => [
+    [mod('markets'), mod('anatomy'), part('lc-pos-1')],
+    [mod('requirements'), rp('sd-frankfurt', 'out loud and recorded'), part('lc-pos-2'), part('lc-pos-3')],
+    [mod('building-blocks'), mod('reliability'), rp('sd-order-flow'), leet(1656, 'Design an Ordered Stream', 'design-an-ordered-stream'), leet(1801, 'Number of Orders in the Backlog', 'number-of-orders-in-the-backlog')],
+    [mod('networking'), mod('concurrency'), mock('feed')],
+    [mod('class-design'), mod('techniques'), rp('sd-multi-prices'), hand('lc-design-2', 'Two LeetCode design problems from the class design module', '#/code/round2/guide/class-design')],
+    [mod('communication'), mock('risk'), hand('redo-rp', 'Redo your lowest-scoring role-play', '#/code/round2'), { id: 'fund-drill', label: 'Rapid-fire fundamentals: 10 questions out loud', href: '#/code/screening/fundamentals/drill', auto: () => S().fundLog.length > 0 }],
+  ];
+  const ON_THE_DAY = () => [
+    hand('day-sheet', 'Read the fundamentals cheat sheet', '#/code/screening/fundamentals/sheet'),
+    hand('day-say', 'Read the "say it" lines of each study guide module', '#/code/round2/guide'),
+    hand('day-qs', 'Prepare two questions for each interviewer', '#/code/round2'),
+  ];
+  const isoDays = (a, b) => Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / DAY);
+
+  // Where you are in the plan today, or null with no date set. `left` < 0 once the day has passed.
+  function planStatus() {
+    const T = S().r2plan;
+    if (!T || !T.date) return null;
+    const today = QT.dayKey(new Date()), left = isoDays(today, T.date);
+    const isDone = (t) => (t.auto ? t.auto() : false) || !!T.done[t.id];
+    if (left < 0) return { T, left, tasks: [], late: [], isDone };
+    if (left === 0) { const tasks = ON_THE_DAY(); return { T, left, tasks, late: [], isDone, done: tasks.filter(isDone).length }; }
+    const steps = STEPS(), n = steps.length;
+    const total = Math.max(1, isoDays(T.start || today, T.date)), k = Math.min(total - 1, Math.max(0, isoDays(T.start || today, today)));
+    const a = Math.floor((k * n) / total), b = Math.max(a, Math.floor(((k + 1) * n) / total) - 1);
+    const tasks = steps.slice(a, b + 1).flat();
+    const late = steps.slice(0, a).flat().filter((t) => !isDone(t));
+    return { T, left, tasks, late, isDone, done: tasks.filter(isDone).length, steps: [a + 1, b + 1, n] };
+  }
+
+  function planCard() {
+    const st = planStatus(), today = QT.dayKey(new Date());
+    if (!st) {
+      return `<form class="card" id="r2-form"><h2 style="margin-top:0">When is your interview?</h2>
+        <p class="small">Set the date for a daily checklist that fits the study guide, the role-plays and the live coding mocks into the days you have. The date stays on this device.</p>
+        <div class="row"><label class="small" for="r2-date">Interview date</label><input type="date" id="r2-date" min="${today}" required><button>Make my plan</button></div></form>`;
+    }
+    if (st.left < 0) return `<div class="card"><p style="margin:0">Your interview date (${st.T.date}) has passed. How did it go? Add what you were asked to <a href="#/stories">Stories</a>. <button type="button" class="link" id="r2-clear">Set a new date</button></p></div>`;
+    const li = (t) => { const auto = t.auto && t.auto(), ok = st.isDone(t); return `<li><label><input type="checkbox" data-r2task="${t.id}"${ok ? ' checked' : ''}${auto ? ' disabled' : ''}> <a href="${t.href}"${t.ext ? ' target="_blank" rel="noopener"' : ''}>${esc(t.label)}</a></label>${auto ? ' <span class="small">(done)</span>' : ''}</li>`; };
+    const when = st.left === 0 ? 'today' : st.left === 1 ? 'tomorrow' : `in ${st.left} days`;
+    return `<div class="card" id="r2-plan"><h2 style="margin-top:0">Interview 2 ${when}</h2>
+      <p class="small">${st.left === 0 ? 'Light review only. No new material today.' : `Today: step ${st.steps[0]}${st.steps[1] > st.steps[0] ? `–${st.steps[1]}` : ''} of ${st.steps[2]} · ${st.done} of ${st.tasks.length} done`}</p>
+      <ul class="plan-tasks">${st.tasks.map(li).join('')}</ul>
+      ${st.late.length ? `<details><summary class="small"><b>Catch up: ${st.late.length} from earlier days</b></summary><ul class="plan-tasks">${st.late.map(li).join('')}</ul></details>` : ''}
+      <p class="small">${st.T.date} · <button type="button" class="link" id="r2-clear">Change the date</button></p></div>`;
+  }
+
+  function wirePlan(el, again) {
+    const T = S().r2plan;
+    el.querySelector('#r2-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = el.querySelector('#r2-date').value;
+      if (!/^\d{4}-\d\d-\d\d$/.test(v)) return;
+      Object.assign(T, { date: v, start: QT.dayKey(new Date()) });
+      store.save();
+      again();
+    });
+    el.querySelector('#r2-clear')?.addEventListener('click', () => { T.date = ''; store.save(); again(); });
+    el.querySelectorAll('[data-r2task]').forEach((b) => b.addEventListener('change', () => {
+      if (b.checked) T.done[b.dataset.r2task] = 1;
+      else delete T.done[b.dataset.r2task];
+      store.touchDay();
+      store.save();
+    }));
+  }
+
   function hub(el) {
     const D = QT.design, C = QT.code, runs = store.get().code.design;
     const sys = D.PROBLEMS.filter((P) => P.system);
@@ -76,8 +159,9 @@
     el.innerHTML = `
       <a class="back" href="#/swe/interviews">← Interview prep</a>
       <h1>Optiver interview 2: system design and live coding</h1>
-      <p class="lede">The round after the tech screening: two interviews of about an hour each, over Zoom. In one you play the CTO of a startup trading firm and design a system by asking the right questions; in the other you solve a practical trading problem in code. This page has what to expect, how to approach each, realistic mocks of both, and a two-week plan.</p>
-      <a class="card sc-promo" href="#/code/round2/guide"><b>Study guide: the knowledge underneath</b><span class="small">Ten modules: how exchanges work, the anatomy of a trading system, requirements and numbers, building blocks, reliability, networking, concurrency, class design, algorithms, communication. Each with examples, lines to say, self-checks and LeetCode practice, plus a plan to Tuesday 1 December.</span></a>
+      <p class="lede">The round after the tech screening: two interviews of about an hour each, over Zoom. In one you play the CTO of a startup trading firm and design a system by asking the right questions; in the other you solve a practical trading problem in code. This page has what to expect, how to approach each, realistic mocks of both, and a day-by-day plan to your interview date.</p>
+      ${planCard()}
+      <a class="card sc-promo" href="#/code/round2/guide"><b>Study guide: the knowledge underneath</b><span class="small">Ten modules: how exchanges work, the anatomy of a trading system, requirements and numbers, building blocks, reliability, networking, concurrency, class design, algorithms, communication. Each with examples, lines to say, self-checks and LeetCode practice.</span></a>
       <div class="row" style="margin:0 0 12px"><a class="btn" href="#/code/design/sd-frankfurt">Start with the classic role-play</a><a class="btn ghost" href="#/code/round2/live/positions">Live coding mock 1</a><a class="btn ghost" href="#/code/screening/fundamentals/sheet">Fundamentals cheat sheet</a></div>
 
       <h2>What to expect</h2>
@@ -158,9 +242,10 @@
       <a class="back" href="#/code/round2">← Interview 2 prep</a>
       <h1>Interview 2 study guide</h1>
       <p class="lede">Everything underneath the system design role-play and the live coding challenge, in ten modules. Each teaches the knowledge with examples, gives you lines to say in the interview, checks you with a few questions, and points to practice: free LeetCode problems, handbook chapters and the mocks.</p>
-      <h2>Plan to Tuesday 1 December</h2>
+      ${planCard()}
+      <details class="card"><summary><b>The plan in full</b></summary>
       <ol class="sc-plan">${G().PLAN.map(([d, t]) => `<li><b>${esc(d)}:</b> ${esc(t)}</li>`).join('')}</ol>
-      <p class="small">If the interview is later, spread the same plan out and add a role-play or a mock each extra day.</p>
+      <p class="small">This is the plan for an interview on Tuesday 1 December. Set your date above and the checklist fits the same steps into the days you have.</p></details>
       <h2>Modules</h2>
       <div class="menu">${G().MODULES.map((m, i) => `<a class="card" href="#/code/round2/guide/${m.id}"><b>${i + 1}. ${esc(m.title)}</b><span class="small">${esc(m.why.split('. ')[0])}.</span><span class="small">self-check ${score(m)}/${m.checks.length}</span></a>`).join('')}</div>`;
   }
@@ -227,8 +312,10 @@
 
   QT.round2View = (el, a, b) => {
     if (a === 'live' && MOCKS[b]) return liveMock(el, b);
-    if (a === 'guide') return b && G().byId[b] ? guideModule(el, G().byId[b]) : guideIndex(el);
-    return hub(el);
+    if (a === 'guide' && b && G().byId[b]) return guideModule(el, G().byId[b]);
+    if (a === 'guide') guideIndex(el);
+    else hub(el);
+    wirePlan(el, () => QT.round2View(el, a, b));
   };
-  QT.round2 = { MOCKS };
+  QT.round2 = { MOCKS, planStatus };
 })();

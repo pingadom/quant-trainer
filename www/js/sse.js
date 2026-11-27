@@ -308,7 +308,7 @@
 
   function countdown() {
     const ms = INTERVIEW - Date.now();
-    if (ms <= 0) return 'Interview time reached';
+    if (ms <= 0) return 'Done';
     const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
     return `${d} day${d === 1 ? '' : 's'} ${h} h ${m} min`;
   }
@@ -318,9 +318,9 @@
     const tried = stats.reduce((s, t) => s + t.attempted, 0);
     el.innerHTML = `
       <h1>Citadel SSE prep</h1>
-      <p class="lede">Quantitative Trading, Semi-Systematic Equities: Phone Screen 1. 45 minutes on Zoom, Monday 23 November, 13:00 GMT.</p>
+      <p class="lede">Quantitative Trading, Semi-Systematic Equities: Phone Screen 1. 45 minutes on Zoom, Monday 23 November, 13:00 GMT.${Date.now() > INTERVIEW ? ' That screen has passed; the questions, drills and mocks stay useful for later rounds and other equity quant screens.' : ''}</p>
       <div class="tiles">
-        <div class="tile"><div class="v sse-clock" id="sse-count">${countdown()}</div><div class="k">until the interview</div></div>
+        <div class="tile"><div class="v sse-clock" id="sse-count">${countdown()}</div><div class="k">${Date.now() > INTERVIEW ? 'phone screen, 23 November' : 'until the interview'}</div></div>
         <div class="tile"><div class="v">${pct(readiness())}</div><div class="k">readiness (average mastery)</div></div>
         <div class="tile"><div class="v">${tried}<span class="of">/${ALL.length}</span></div><div class="k">questions attempted</div></div>
         <div class="tile"><div class="v">${due}</div><div class="k">due for review</div></div>

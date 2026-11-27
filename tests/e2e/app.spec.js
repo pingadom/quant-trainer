@@ -803,6 +803,36 @@ test('interview 2: role-play reveals requirements after you ask, and a coding pa
   await expect(page.locator('.fd-lc a[href*="number-of-orders-in-the-backlog"]')).toBeVisible();
 });
 
+test('interview 2 plan: set a date, the steps fit the days left, and home shows the countdown', async ({ page }) => {
+  await page.goto('./#/code/round2');
+  const day = (n) => page.evaluate((k) => { const d = new Date(); d.setDate(d.getDate() + k); return QT.dayKey(d); }, n);
+  await page.locator('#r2-date').fill(await day(4));
+  await page.locator('#r2-form button').click();
+  await expect(page.locator('#r2-plan h2')).toHaveText('Interview 2 in 4 days');
+  // Six steps over the days you have: squeezed into 4 days, stretched over 12, today only on the day.
+  const steps = (start, date) => page.evaluate(([s, d]) => { Object.assign(QT.store.get().code.r2plan, { start: s, date: d }); const st = QT.round2.planStatus(); return st.steps || st.tasks.length; }, [start, date]);
+  expect(await steps(await day(0), await day(4))).toEqual([1, 1, 6]);
+  expect(await steps(await day(-1), await day(3))).toEqual([2, 3, 6]);
+  expect(await steps(await day(-3), await day(1))).toEqual([5, 6, 6]);
+  expect(await steps(await day(-11), await day(1))).toEqual([6, 6, 6]);
+  expect(await steps(await day(-2), await day(10))).toEqual([2, 2, 6]);
+  expect(await steps(await day(-4), await day(0))).toBe(3);
+  // Earlier steps' unfinished tasks come back to catch up; one ticked by hand stays ticked.
+  await page.evaluate(([s, d]) => { Object.assign(QT.store.get().code.r2plan, { start: s, date: d }); QT.store.save(); }, [await day(-2), await day(2)]);
+  await page.reload();
+  await expect(page.locator('#r2-plan summary')).toContainText('Catch up: 12 from earlier days');
+  const box = page.locator('#r2-plan input[data-r2task="leet-1656"]');
+  await page.locator('#r2-plan summary').click();
+  await box.check();
+  await page.reload();
+  // Done, so it leaves the catch-up list, and the tick survives a reload.
+  await expect(page.locator('#r2-plan summary')).toContainText('Catch up: 11 from earlier days');
+  await expect(box).toHaveCount(0);
+  expect(await page.evaluate(() => QT.store.get().code.r2plan.done['leet-1656'])).toBe(1);
+  await page.goto('./#/');
+  await expect(page.locator('main')).toContainText('Optiver interview 2 in 2 days');
+});
+
 test('quant SWE track: its own section, a guide, and the most specific link lights up', async ({ page }) => {
   await page.goto('./#/swe');
   await expect(page.locator('h1')).toHaveText('Quant SWE guide');

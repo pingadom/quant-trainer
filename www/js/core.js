@@ -1,7 +1,7 @@
 // Core helpers: randomness, maths, answer parsing and progress storage.
 (function () {
   const QT = (window.QT = window.QT || {});
-  QT.VERSION = '0.68.0'; // keep in step with package.json and sw.js
+  QT.VERSION = '0.69.0'; // keep in step with package.json and sw.js
 
   QT.rand = {
     int: (a, b) => a + Math.floor(Math.random() * (b - a + 1)),
@@ -204,7 +204,7 @@
   const LOG_CAP = 5000; // per-answer history kept for research/model evaluation
   const blank = () => ({ topics: {}, days: [], mental: {}, market: { games: 0, total: 0, best: null, history: [] }, roadmap: {}, cases: {}, bank: {}, mistakes: [], mastered: 0, skills: {}, errors: [], log: [], demo: false, tricks: {}, estimate: { rounds: 0, best: null, hits: 0, n: 0, history: [] },
     quote: { rounds: 0, n: 0, hits: 0, withFlow: 0, requotes: 0, pnl: 0, history: [] }, kelly: { games: 0, best: null, history: [] },
-    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} }, design: {}, tech: { date: '', start: '', done: {} }, review: {}, smocks: [], spot: {}, trace: {}, spotLog: [], data: {}, fund: {}, fundQ: {}, fundLog: [], r2: {}, r2g: {} }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] }, seqfam: {}, activity: {}, goal: 30 });
+    figgie: { games: 0, total: 0, best: null, wins: 0, history: [] }, daily: {}, oa: {}, talk: { sessions: 0, history: [] }, speed: {}, speedReview: {}, plan: null, flash: {}, handbook: {}, hbExams: {}, stories: {}, screen: { runs: [] }, adapt: { r: {}, sessions: 0, log: [] }, code: { lang: 'py', p: {}, quiz: { runs: [], q: {} }, design: {}, tech: { date: '', start: '', done: {} }, review: {}, smocks: [], spot: {}, trace: {}, spotLog: [], data: {}, fund: {}, fundQ: {}, fundLog: [], r2: {}, r2g: {}, r2plan: { date: '', start: '', done: {} } }, flow: { log: [], rhythm: [], method: {} }, sse: { attempts: [], cards: {}, sims: [], mocks: [] }, seqfam: {}, activity: {}, goal: 30 });
   let state;
 
   // Each save records the app version that wrote it. An older copy of the app (a tab left open
@@ -436,6 +436,8 @@
       smocks: arr(cd.smocks, 30).map((x) => ({ ...when(x), id: text(obj(x).id, 30), s: arr(obj(x).s, 6).map((n) => Math.min(3, Math.max(1, Math.round(num(n, 1))))), f: Math.max(0, Math.round(num(obj(x).f))), h: Math.max(0, Math.round(num(obj(x).h))) })),
       // Technical-interview countdown: the date you set, the day it started, and tasks ticked by hand.
       tech: (() => { const t = obj(cd.tech), dr = /^\d{4}-\d\d-\d\d$/; return { date: dr.test(t.date) ? t.date : '', start: dr.test(t.start) ? t.start : '', done: mapKeys(t.done, (v) => arr(v, 20).map((x) => text(x, 60)), (k) => dr.test(k)) }; })(),
+      // Interview 2 countdown: the date you set, the day the plan started, and tasks ticked by hand.
+      r2plan: (() => { const t = obj(cd.r2plan), dr = /^\d{4}-\d\d-\d\d$/; return { date: dr.test(t.date) ? t.date : '', start: dr.test(t.start) ? t.start : '', done: mapKeys(t.done, () => 1, (k) => /^[a-z0-9-]{1,40}$/.test(k)) }; })(),
     };
     // Flow training: recent + and − answers as [op, x, y, ms], rhythm drills, method drills by kind of sum.
     const fl = obj(r.flow), int = (v) => Math.max(0, Math.min(60000, Math.round(num(v))));

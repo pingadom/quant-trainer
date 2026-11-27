@@ -78,6 +78,7 @@
             <a class="card shortcut" href="#/handbook"><b>Learn from the beginning</b><span>The handbook: a course from the basics up.</span></a>
             <a class="card shortcut" href="#/coach/diagnostic"><b>Find your gaps</b><span>A 15-minute diagnostic, one question from each topic.</span></a>
           </div>
+          <p class="small" style="margin:12px 0 0">Applying for a software engineering or quant developer role? <a href="#/swe">Start with the Quant SWE guide →</a></p>
           <div class="row" style="margin-top:16px"><button type="button" class="ghost" id="demo">Explore with sample data</button><a href="#/tour">Take the 1-minute tour</a></div>
         </div>
         ${QT.plan.todayStatus() ? planCard() : ''}
@@ -119,7 +120,8 @@
 
       <aside class="home-side" aria-label="Today and your progress">
       ${QT.activity ? QT.activity.homeCard() : ''}
-      ${planCard()}
+      ${QT.plan.todayStatus() || !(QT.round2?.planStatus()?.left >= 0) ? planCard() : ''}
+      ${QT.swe?.homeCard ? QT.swe.homeCard() : ''}
       <a class="card shortcut${today?.done ? '' : ' primary'} daily-card" href="#/daily"><b>Daily challenge${today?.done ? `: ${today.r.filter(Boolean).length}/5 today ✓` : ''}</b><span>${today?.done ? 'Done for today. Share your result or come back tomorrow.' : `5 questions, the same for everyone today${dstreak ? ` · ${dstreak}-day streak` : ''}`}</span></a>
 
       <section class="card side-card">
